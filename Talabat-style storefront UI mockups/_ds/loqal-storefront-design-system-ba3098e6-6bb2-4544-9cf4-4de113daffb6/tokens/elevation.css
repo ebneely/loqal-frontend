@@ -1,0 +1,65 @@
+/* Elevation, redesigned.
+
+   The old system was blurred grey shadows. On the device this product actually runs
+   on — a mid-range Android at full brightness in Egyptian daylight — a 4px blur at
+   8% black is invisible: the panel crushes it and the card looks like it is drawn
+   flat on the page. So elevation here is **hard offset**: no blur, a solid step of
+   colour cast one or two pixels off the corner, like a printed sticker or a riso
+   overprint. It survives sunlight, it costs nothing to composite on a cheap GPU,
+   and it gives a press somewhere to go.
+
+   Three ideas make it a system rather than a trick:
+
+   1. **The offset has a direction, and the direction is logical.** --elev-dir is 1
+      in LTR and -1 in RTL (set in tokens/base.css), so the step always falls away
+      from the reading edge. Nothing is mirrored by hand.
+   2. **Press pushes the element into its own shadow.** An interactive surface
+      translates by exactly its offset and drops the shadow to none, so the pixel
+      that moves is the pixel the finger is on. This replaces the old
+      scale(0.985) — a shrink is a hint; landing on the page is an event.
+   3. **The step is tinted, never black.** Neutral surfaces cast --elev-ink (the
+      foreground at 10%); the brand button casts its own colour darkened, so an
+      emerald button reads as one solid object with a shadow of itself.
+
+   Blur is now reserved for exactly one thing: the translucent overlay behind a
+   sheet. If something is blurred, it is a scrim. */
+:root{
+  --elev-dir:1; /* @kind other */  /* flipped to -1 under [dir="rtl"] */
+  --elev-ink:oklch(0.145 0 0 / 0.10);
+  --elev-ink-soft:oklch(0.145 0 0 / 0.06);
+  --elev-brand:color-mix(in oklab,var(--primary) 55%,oklch(0.145 0 0));
+
+  --shadow-none:none;
+  /* seam — the thing sits on the page. Cards, inputs, list rows. */
+  --shadow-xs:calc(1px * var(--elev-dir)) 1px 0 0 var(--elev-ink-soft);
+  /* step — pressable. Buttons, chips, payment rows. */
+  --shadow-sm:calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-ink);
+  /* lift — hover on something pressable, and popovers. */
+  --shadow-md:calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-ink);
+  /* the brand-tinted step a primary button casts. */
+  --shadow-key:calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-brand);
+  --shadow-key-lift:calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-brand);
+  /* upward steps for the two sticky surfaces. */
+  --shadow-sheet:0 -3px 0 0 var(--elev-ink);
+  --shadow-bar:0 -1px 0 0 var(--border),0 -4px 0 0 var(--elev-ink-soft);
+
+  --border-width:1px;
+  --focus-width:2px;
+  --focus-offset:2px;
+
+  /* ── Motion ──────────────────────────────────────────────────────────────
+     Everything leaves briskly and arrives slowly. The house curve takes a short
+     moment to gather — the first frames accelerate rather than jumping — then
+     covers roughly 80% of its distance by the halfway point and coasts almost to
+     a standstill. That tiny wind-up is what separates a thrown object from a
+     teleported one; without it the motion reads as a jump cut. Because the tail
+     is long, durations are longer than they look: a 420ms entrance still reads as
+     instant, because the eye saw where it landed around 200ms. */
+  --ease-out:cubic-bezier(0.22,0.72,0.12,1); /* @kind other */  /* the house curve: a beat of wind-up, then dead slow into the stop */
+  --ease-in:cubic-bezier(0.4,0,1,1); /* @kind other */          /* exits only — accelerate away, never coast out */
+  --ease-in-out:cubic-bezier(0.4,0,0.2,1); /* @kind other */     /* a value changing in place: colour, opacity, width */
+  --dur-fast:140ms; /* @kind other */    /* press, hover, colour */
+  --dur-base:260ms; /* @kind other */    /* sheet, disclosure, toggle */
+  --dur-slow:420ms; /* @kind other */    /* entrances, and anything crossing the screen */
+  --dur-settle:560ms; /* @kind other */  /* the long coast: a status pill landing, a total recalculating */
+}

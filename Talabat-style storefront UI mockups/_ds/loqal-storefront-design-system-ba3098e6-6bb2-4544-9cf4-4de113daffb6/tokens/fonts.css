@@ -1,0 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;500;600;700;800&display=swap");
+/* Same two faces as the Loqal back office, for the same reason: Readex Pro is one
+   family covering Arabic and Latin with matched proportions, so an Arabic price row
+   and an English one are the same height. On the storefront it also carries the
+   marketing register — at 700 and tight tracking it is the wordmark.
+
+   Source Code Pro carries 800 as well as 700: a price is the loudest thing on a
+   product card and the heaviest weight in the system, because it is the one number
+   a shopper is actually deciding on.
+
+   Source Code Pro is the figures face: every price, order number, phone number and
+   countdown. Tabular and lining, so a cart total lines up under a subtotal.
+
+   No font binaries were supplied with the codebase, so these load from Google Fonts
+   and the compiler reports zero @font-face rules. Drop licensed files into
+   assets/fonts/ and swap the @import for real @font-face rules; nothing else moves. */
+:root{
+  --font-sans:"Readex Pro","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-arabic:"Readex Pro","Noto Sans Arabic",Tahoma,sans-serif;
+  --font-mono:"Source Code Pro","SF Mono",ui-monospace,monospace;
+  --font-display:"Readex Pro","Segoe UI",system-ui,sans-serif; /* wordmark + hero */
+}

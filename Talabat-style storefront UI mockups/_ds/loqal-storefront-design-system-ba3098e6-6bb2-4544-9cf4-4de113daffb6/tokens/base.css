@@ -1,0 +1,39 @@
+/* Element defaults. Logical properties only — dir="rtl" is the whole RTL switch. */
+:root{color-scheme:light}
+html{font-family:var(--font-sans);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-page);color:var(--text-body);font-size:var(--text-base);line-height:var(--leading-normal);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums lining-nums}
+:where(html[dir="rtl"]) body{font-family:var(--font-arabic)}
+h1,h2,h3,h4,h5,h6,p,figure{margin:0}
+h1,h2,h3,h4{color:var(--text-title);font-weight:var(--weight-semibold);line-height:var(--leading-tight);text-wrap:pretty}
+a{color:var(--brand);text-decoration:none}
+a:hover{color:var(--brand-hover);text-decoration:underline;text-underline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+img{display:block;max-width:100%}
+:focus-visible{outline:var(--focus-width) solid var(--ring);outline-offset:var(--focus-offset)}
+::selection{background:var(--state-live-bg)}
+/* Every figure a shopper compares vertically. */
+[data-num],.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums lining-nums;letter-spacing:-0.01em}
+/* Prose and titles keep their own punctuation when an English string sits in an
+   Arabic screen. */
+[data-bidi],h1,h2,h3,p{unicode-bidi:plaintext}
+/* Sign for the side-in keyframes: -1 from the left (LTR), 1 from the right (RTL).
+   --elev-dir does the same job for the hard-offset elevation step, so a shadow
+   always falls away from the reading edge without a single mirrored rule. */
+[dir="rtl"]{--side-from:1 /* @kind other */;--elev-dir:-1 /* @kind other */}
+@keyframes lq-sheet-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes lq-sheet-out{from{transform:translateY(0)}to{transform:translateY(100%)}}
+@keyframes lq-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes lq-fade-out{from{opacity:1}to{opacity:0}}
+@keyframes lq-rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+/* A figure that changed rolls in from the direction it moved: up when it grew, down
+   when it shrank. The old value leaves at the same time, so the two cross. */
+@keyframes lq-roll-up{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+@keyframes lq-roll-down{from{transform:translateY(-100%);opacity:0}to{transform:none;opacity:1}}
+@keyframes lq-roll-up-out{from{transform:none;opacity:1}to{transform:translateY(-100%);opacity:0}}
+@keyframes lq-roll-down-out{from{transform:none;opacity:1}to{transform:translateY(100%);opacity:0}}
+@keyframes lq-pop-in{from{opacity:0;transform:translateY(-4px) scale(0.98)}to{opacity:1;transform:none}}
+@keyframes lq-pop{0%{scale:0.86}62%{scale:1.05}100%{scale:1}}
+@keyframes lq-ripple{from{transform:scale(0);opacity:0.32}to{transform:scale(1);opacity:0}}
+@keyframes lq-pulse{0%,100%{opacity:1}50%{opacity:0.45}}
+@keyframes lq-shimmer{from{background-position:100% 0}to{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}

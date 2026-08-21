@@ -1,0 +1,35 @@
+/* The back office is a dense tool at 14px. The storefront is not: a shopper reads
+   sentences, prices and a garment description on a phone held at arm's length in
+   sunlight, so body is 16px and the scale runs further up for the marketing
+   register. Names match the back-office scale; values are deliberately larger.
+   Nothing interactive below 14px, nothing at all below 11px. */
+:root{
+  --text-2xs:0.6875rem;  /* 11px - uppercase micro label, 0.06em tracking only */
+  --text-xs:0.75rem;     /* 12px - meta, stock note, timestamp */
+  --text-sm:0.875rem;    /* 14px - secondary line, brand name on a card */
+  --text-base:1rem;      /* 16px - body default */
+  --text-lg:1.125rem;    /* 18px - product title, cart line */
+  --text-xl:1.375rem;    /* 22px - screen title, price on a product page */
+  --text-2xl:1.75rem;    /* 28px - section heading */
+  --text-3xl:2.25rem;    /* 36px - landing section heading */
+  --text-4xl:3rem;       /* 48px - landing hero, phone */
+  --text-5xl:4.5rem;     /* 72px - wordmark / hero at lg */
+
+  --leading-tight:1.2;
+  --leading-snug:1.35;
+  --leading-normal:1.55;   /* prose, and Arabic needs the room */
+  --leading-loose:1.7;     /* bilingual paragraph blocks */
+
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --weight-bold:700;
+  --weight-figure:800;   /* money, and only money */
+
+  --tracking-tight:-0.015em;
+  --tracking-display:-0.03em;  /* wordmark and hero only */
+  --tracking-normal:0;
+  --tracking-caps:0.06em;
+
+  --numeric:"tnum" 1,"lnum" 1; /* @kind other */
+}

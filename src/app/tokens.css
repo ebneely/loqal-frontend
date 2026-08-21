@@ -1,0 +1,240 @@
+/* ==========================================================================
+   Loqal storefront design system — tokens + component layer, VERBATIM.
+
+   Copied byte-for-byte from
+     Talabat-style storefront UI mockups/_ds/loqal-storefront-.../
+   which is the same file the .dc.html reference screens link. Do not
+   hand-tune a value in here: re-copy the section from the design system
+   instead, so the app and the reference render identical CSS.
+
+   Wrapped in @layer components so Tailwind utilities (layer: utilities)
+   still win when a call site passes an override.
+   ========================================================================== */
+
+/* ---- tokens/colors.css ---- */
+/* Lifted verbatim from apps/loqal-dashboard/src/app/globals.css — same brand
+   emerald, same neutral ramp, same six state tones, same signed-money pair. A
+   storefront and a back office that disagree about what "delivered" is coloured
+   would be two products.
+
+   Storefront-only additions are marked ADDED and are aliases, not new hues. */
+:root{
+  /* Base surfaces + ink */
+  --background:oklch(1 0 0);
+  --foreground:oklch(0.145 0 0);
+  --card:oklch(1 0 0);
+  --card-foreground:oklch(0.145 0 0);
+  --popover:oklch(1 0 0);
+  --popover-foreground:oklch(0.145 0 0);
+  --muted:oklch(0.97 0 0);
+  --muted-foreground:oklch(0.556 0 0);
+  --accent:oklch(0.97 0 0);
+  --accent-foreground:oklch(0.205 0 0);
+  --secondary:oklch(0.97 0 0);
+  --secondary-foreground:oklch(0.205 0 0);
+  --border:oklch(0.922 0 0);
+  --input:oklch(0.922 0 0);
+
+  /* The one brand colour. Dark enough to hold white text on a mid-range Android
+     in Egyptian daylight, saturated enough to survive a low-gamut panel. */
+  --primary:oklch(0.505 0.122 163);
+  --primary-foreground:oklch(0.985 0 0);
+  --ring:oklch(0.505 0.122 163);
+  --destructive:oklch(0.505 0.19 26.5);
+  --destructive-foreground:oklch(0.985 0 0);
+
+  /* Six state tones cover every order enum. fg/bg/border triplets so a pill needs
+     no opacity arithmetic. good == the brand emerald on purpose; live is blue so
+     nothing green ever means "still happening". */
+  --state-neutral-fg:oklch(0.44 0 0);
+  --state-neutral-bg:oklch(0.968 0 0);
+  --state-neutral-border:oklch(0.9 0 0);
+  --state-wait-fg:oklch(0.45 0.115 72);
+  --state-wait-bg:oklch(0.968 0.032 84);
+  --state-wait-border:oklch(0.89 0.06 84);
+  --state-act-fg:oklch(0.44 0.155 30);
+  --state-act-bg:oklch(0.962 0.035 40);
+  --state-act-border:oklch(0.88 0.07 40);
+  --state-live-fg:oklch(0.45 0.115 251);
+  --state-live-bg:oklch(0.962 0.028 251);
+  --state-live-border:oklch(0.885 0.055 251);
+  --state-good-fg:oklch(0.47 0.112 163);
+  --state-good-bg:oklch(0.958 0.035 163);
+  --state-good-border:oklch(0.872 0.066 163);
+  --state-bad-fg:oklch(0.46 0.17 26.5);
+  --state-bad-bg:oklch(0.962 0.03 22);
+  --state-bad-border:oklch(0.88 0.065 22);
+
+  /* Signed money. Credit = owed to you. Debit = owed by you. A debit is not a
+     failure, which is why it is not --state-bad. */
+  --money-credit:oklch(0.47 0.112 163);
+  --money-debit:oklch(0.46 0.17 26.5);
+  --money-zero:oklch(0.556 0 0);
+
+  --overlay:oklch(0 0 0 / 0.45);
+
+  /* ── Semantic aliases (ADDED for the storefront) ─────────────────────────── */
+  --surface-page:var(--background);
+  --surface-card:var(--card);
+  --surface-sunken:oklch(0.97 0 0);      /* photo well, image placeholder tile */
+  --surface-ink:oklch(0.145 0 0);        /* inverted band: marquee, footer */
+  --text-title:var(--foreground);
+  --text-body:oklch(0.28 0 0);
+  --text-muted:var(--muted-foreground);
+  --text-on-brand:var(--primary-foreground);
+  --text-on-ink:oklch(0.985 0 0);
+  --line:var(--border);
+  --line-strong:oklch(0.86 0 0);
+  --brand:var(--primary);
+  --brand-tint:var(--state-good-bg);     /* 3% emerald wash behind a brand note */
+  --brand-hover:color-mix(in oklab,var(--primary) 88%,black);
+  --price:var(--foreground);
+  --price-strike:var(--muted-foreground);
+  --sold-out:var(--muted-foreground);
+}
+
+/* ---- tokens/typography.css ---- */
+/* The back office is a dense tool at 14px. The storefront is not: a shopper reads
+   sentences, prices and a garment description on a phone held at arm's length in
+   sunlight, so body is 16px and the scale runs further up for the marketing
+   register. Names match the back-office scale; values are deliberately larger.
+   Nothing interactive below 14px, nothing at all below 11px. */
+:root{
+  --text-2xs:0.6875rem;  /* 11px - uppercase micro label, 0.06em tracking only */
+  --text-xs:0.75rem;     /* 12px - meta, stock note, timestamp */
+  --text-sm:0.875rem;    /* 14px - secondary line, brand name on a card */
+  --text-base:1rem;      /* 16px - body default */
+  --text-lg:1.125rem;    /* 18px - product title, cart line */
+  --text-xl:1.375rem;    /* 22px - screen title, price on a product page */
+  --text-2xl:1.75rem;    /* 28px - section heading */
+  --text-3xl:2.25rem;    /* 36px - landing section heading */
+  --text-4xl:3rem;       /* 48px - landing hero, phone */
+  --text-5xl:4.5rem;     /* 72px - wordmark / hero at lg */
+
+  --leading-tight:1.2;
+  --leading-snug:1.35;
+  --leading-normal:1.55;   /* prose, and Arabic needs the room */
+  --leading-loose:1.7;     /* bilingual paragraph blocks */
+
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --weight-bold:700;
+  --weight-figure:800;   /* money, and only money */
+
+  --tracking-tight:-0.015em;
+  --tracking-display:-0.03em;  /* wordmark and hero only */
+  --tracking-normal:0;
+  --tracking-caps:0.06em;
+
+  --numeric:"tnum" 1,"lnum" 1; /* @kind other */
+}
+
+/* ---- tokens/spacing.css ---- */
+/* 4px base. Phone gutter is 16px and never smaller. Designed at 390px first. */
+:root{
+  --space-0:0px;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+  --space-20:80px;   /* ADDED - landing section rhythm */
+  --space-24:96px;   /* ADDED - landing section rhythm at md+ */
+
+  --gutter-phone:16px;
+  --gutter-md:24px;
+  --gutter-lg:32px;
+
+  --tap-min:44px;        /* absolute floor for anything tappable */
+  --tap-primary:52px;    /* add to cart / checkout row */
+  --row-density:52px;    /* list row on phone */
+  --bar-height:56px;     /* top app bar */
+  --tabbar-height:60px;  /* ADDED - storefront bottom tab bar with labels */
+  --content-max:1200px;  /* ADDED - the storefront IS centred; a tool is not */
+  --prose-max:62ch;      /* ADDED - landing paragraph measure */
+
+  --radius:0.75rem;
+  --radius-sm:calc(var(--radius) - 4px);   /* 8  - checkbox, chip */
+  --radius-md:calc(var(--radius) - 2px);   /* 10 - input, button */
+  --radius-lg:var(--radius);               /* 12 - card, photo tile */
+  --radius-xl:calc(var(--radius) + 4px);   /* 16 - sheet top corners */
+  --radius-full:9999px;
+
+  --ratio-garment:3/4; /* @kind other */   /* ADDED - every product photo well, no exceptions */
+
+  --bp-md:768px;
+  --bp-lg:1024px;
+}
+
+/* ---- tokens/elevation.css ---- */
+/* Elevation, redesigned.
+
+   The old system was blurred grey shadows. On the device this product actually runs
+   on — a mid-range Android at full brightness in Egyptian daylight — a 4px blur at
+   8% black is invisible: the panel crushes it and the card looks like it is drawn
+   flat on the page. So elevation here is **hard offset**: no blur, a solid step of
+   colour cast one or two pixels off the corner, like a printed sticker or a riso
+   overprint. It survives sunlight, it costs nothing to composite on a cheap GPU,
+   and it gives a press somewhere to go.
+
+   Three ideas make it a system rather than a trick:
+
+   1. **The offset has a direction, and the direction is logical.** --elev-dir is 1
+      in LTR and -1 in RTL (set in tokens/base.css), so the step always falls away
+      from the reading edge. Nothing is mirrored by hand.
+   2. **Press pushes the element into its own shadow.** An interactive surface
+      translates by exactly its offset and drops the shadow to none, so the pixel
+      that moves is the pixel the finger is on. This replaces the old
+      scale(0.985) — a shrink is a hint; landing on the page is an event.
+   3. **The step is tinted, never black.** Neutral surfaces cast --elev-ink (the
+      foreground at 10%); the brand button casts its own colour darkened, so an
+      emerald button reads as one solid object with a shadow of itself.
+
+   Blur is now reserved for exactly one thing: the translucent overlay behind a
+   sheet. If something is blurred, it is a scrim. */
+:root{
+  --elev-dir:1; /* @kind other */  /* flipped to -1 under [dir="rtl"] */
+  --elev-ink:oklch(0.145 0 0 / 0.10);
+  --elev-ink-soft:oklch(0.145 0 0 / 0.06);
+  --elev-brand:color-mix(in oklab,var(--primary) 55%,oklch(0.145 0 0));
+
+  --shadow-none:none;
+  /* seam — the thing sits on the page. Cards, inputs, list rows. */
+  --shadow-xs:calc(1px * var(--elev-dir)) 1px 0 0 var(--elev-ink-soft);
+  /* step — pressable. Buttons, chips, payment rows. */
+  --shadow-sm:calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-ink);
+  /* lift — hover on something pressable, and popovers. */
+  --shadow-md:calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-ink);
+  /* the brand-tinted step a primary button casts. */
+  --shadow-key:calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-brand);
+  --shadow-key-lift:calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-brand);
+  /* upward steps for the two sticky surfaces. */
+  --shadow-sheet:0 -3px 0 0 var(--elev-ink);
+  --shadow-bar:0 -1px 0 0 var(--border),0 -4px 0 0 var(--elev-ink-soft);
+
+  --border-width:1px;
+  --focus-width:2px;
+  --focus-offset:2px;
+
+  /* ── Motion ──────────────────────────────────────────────────────────────
+     Everything leaves briskly and arrives slowly. The house curve takes a short
+     moment to gather — the first frames accelerate rather than jumping — then
+     covers roughly 80% of its distance by the halfway point and coasts almost to
+     a standstill. That tiny wind-up is what separates a thrown object from a
+     teleported one; without it the motion reads as a jump cut. Because the tail
+     is long, durations are longer than they look: a 420ms entrance still reads as
+     instant, because the eye saw where it landed around 200ms. */
+  --ease-out:cubic-bezier(0.22,0.72,0.12,1); /* @kind other */  /* the house curve: a beat of wind-up, then dead slow into the stop */
+  --ease-in:cubic-bezier(0.4,0,1,1); /* @kind other */          /* exits only — accelerate away, never coast out */
+  --ease-in-out:cubic-bezier(0.4,0,0.2,1); /* @kind other */     /* a value changing in place: colour, opacity, width */
+  --dur-fast:140ms; /* @kind other */    /* press, hover, colour */
+  --dur-base:260ms; /* @kind other */    /* sheet, disclosure, toggle */
+  --dur-slow:420ms; /* @kind other */    /* entrances, and anything crossing the screen */
+  --dur-settle:560ms; /* @kind other */  /* the long coast: a status pill landing, a total recalculating */
+}

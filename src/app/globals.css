@@ -1,0 +1,325 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./icons.css";
+@import "./components.css";
+
+/* ==========================================================================
+   Theme wiring — Tailwind v4 @theme.
+
+   Every key points at a token with `var(--x)` indirection rather than a
+   literal, so the design system's own files stay the single source of truth
+   and a token change lands everywhere without touching this block. `inline`
+   means Tailwind resolves the reference at build time instead of chaining a
+   second variable through every generated utility.
+
+   The token files themselves are copied VERBATIM from the design system and
+   must not be edited here — see the header in tokens.css.
+   ========================================================================== */
+@theme inline {
+  --font-sans: var(--font-readex-pro), "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-source-code-pro), "SF Mono", ui-monospace, monospace;
+  --font-display: var(--font-readex-pro), "Segoe UI", system-ui, sans-serif;
+
+  /* Surfaces. A screen carries at most two background values, plus a sunken
+     well for a photo and the ink band for the footer. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-ink: var(--surface-ink);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-text-title: var(--text-title);
+  --color-text-body: var(--text-body);
+  --color-text-muted: var(--text-muted);
+
+  /* Six tones cover every order enum, each an fg/bg/border triplet so a pill
+     needs no opacity arithmetic. */
+  --color-state-neutral-fg: var(--state-neutral-fg);
+  --color-state-neutral-bg: var(--state-neutral-bg);
+  --color-state-neutral-border: var(--state-neutral-border);
+  --color-state-wait-fg: var(--state-wait-fg);
+  --color-state-wait-bg: var(--state-wait-bg);
+  --color-state-wait-border: var(--state-wait-border);
+  --color-state-act-fg: var(--state-act-fg);
+  --color-state-act-bg: var(--state-act-bg);
+  --color-state-act-border: var(--state-act-border);
+  --color-state-live-fg: var(--state-live-fg);
+  --color-state-live-bg: var(--state-live-bg);
+  --color-state-live-border: var(--state-live-border);
+  --color-state-good-fg: var(--state-good-fg);
+  --color-state-good-bg: var(--state-good-bg);
+  --color-state-good-border: var(--state-good-border);
+  --color-state-bad-fg: var(--state-bad-fg);
+  --color-state-bad-bg: var(--state-bad-bg);
+  --color-state-bad-border: var(--state-bad-border);
+
+  --color-money-credit: var(--money-credit);
+  --color-money-debit: var(--money-debit);
+  --color-money-zero: var(--money-zero);
+  --color-overlay: var(--overlay);
+
+  /* Type. Body is 16px here, not the back office's 14: a shopper reads
+     sentences and prices at arm's length in sunlight. */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  --text-5xl: 4.5rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-loose: 1.7;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  /* Money, and only money. A price is the one number a shopper decides on. */
+  --font-weight-figure: 800;
+
+  --tracking-tight: -0.015em;
+  --tracking-display: -0.03em;
+  --tracking-normal: 0em;
+  --tracking-caps: 0.06em;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-full: 9999px;
+
+  /* NOT registered here, deliberately: the shadow and easing tokens live in
+     tokens.css and the shadows are built from --elev-dir, which flips under
+     [dir="rtl"] so the offset always falls away from the reading edge.
+     Repeating the same NAME in @theme is self-referential, and inlining the
+     value would freeze the direction to LTR. Call sites use Tailwind v4's
+     variable shorthand instead — shadow-(--shadow-sm), ease-(--ease-out) —
+     which resolves to the live token. */
+
+  --spacing-gutter-phone: 16px;
+  --spacing-gutter-md: 24px;
+  --spacing-gutter-lg: 32px;
+  --spacing-tap-min: 44px;
+  --spacing-tap-primary: 52px;
+  --spacing-row-density: 52px;
+  --spacing-bar-height: 56px;
+  --spacing-tabbar-height: 60px;
+  --spacing-content-max: 1200px;
+  --spacing-prose-max: 62ch;
+}
+
+/* ==========================================================================
+   Element defaults, from the design system's tokens/base.css.
+
+   Copied rather than imported so the font stack can point at next/font's CSS
+   variables — see the note in layout.tsx. Everything else is verbatim.
+   ========================================================================== */
+@layer base {
+  :root {
+    color-scheme: light;
+    /* The design system's tokens/fonts.css is deliberately NOT copied: it
+       @imports Google Fonts at runtime, and next/font self-hosts the same two
+       families with no render-blocking request and no layout shift. This is
+       the one token the rest of the file still needs from it. */
+    --font-arabic: var(--font-readex-pro), "Noto Sans Arabic", Tahoma, sans-serif;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--surface-page);
+    color: var(--text-body);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  :where(html[dir="rtl"]) body {
+    font-family: var(--font-arabic);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  figure {
+    margin: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--text-title);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-tight);
+    text-wrap: pretty;
+  }
+
+  a {
+    color: var(--brand);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--brand-hover);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  :focus-visible {
+    outline: var(--focus-width) solid var(--ring);
+    outline-offset: var(--focus-offset);
+  }
+
+  ::selection {
+    background: var(--state-live-bg);
+  }
+
+  /* Every figure a shopper compares vertically. */
+  [data-num],
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Prose and titles keep their own punctuation when an English shop name sits
+     inside an Arabic screen. */
+  [data-bidi],
+  h1,
+  h2,
+  h3,
+  p {
+    unicode-bidi: plaintext;
+  }
+
+  /* Sign for the side-in keyframes: -1 from the left (LTR), 1 from the right
+     (RTL). --elev-dir does the same job for the hard-offset elevation step, so
+     a shadow always falls away from the reading edge with no mirrored rule. */
+  [dir="rtl"] {
+    --side-from: 1;
+    --elev-dir: -1;
+  }
+}
+
+/* ==========================================================================
+   Keyframes, verbatim from tokens/base.css.
+   ========================================================================== */
+@keyframes lq-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes lq-sheet-out {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes lq-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lq-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes lq-rise {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+/* A figure that changed rolls in from the direction it moved: up when it grew,
+   down when it shrank. The old value leaves at the same time, so the two cross. */
+@keyframes lq-roll-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes lq-roll-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes lq-roll-up-out {
+  from { transform: none; opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+@keyframes lq-roll-down-out {
+  from { transform: none; opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
+@keyframes lq-pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lq-pop {
+  0% { scale: 0.86; }
+  62% { scale: 1.05; }
+  100% { scale: 1; }
+}
+@keyframes lq-ripple {
+  from { transform: scale(0); opacity: 0.32; }
+  to { transform: scale(1); opacity: 0; }
+}
+@keyframes lq-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@keyframes lq-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,40 @@
+/* 4px base. Phone gutter is 16px and never smaller. Designed at 390px first. */
+:root{
+  --space-0:0px;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+  --space-20:80px;   /* ADDED - landing section rhythm */
+  --space-24:96px;   /* ADDED - landing section rhythm at md+ */
+
+  --gutter-phone:16px;
+  --gutter-md:24px;
+  --gutter-lg:32px;
+
+  --tap-min:44px;        /* absolute floor for anything tappable */
+  --tap-primary:52px;    /* add to cart / checkout row */
+  --row-density:52px;    /* list row on phone */
+  --bar-height:56px;     /* top app bar */
+  --tabbar-height:60px;  /* ADDED - storefront bottom tab bar with labels */
+  --content-max:1200px;  /* ADDED - the storefront IS centred; a tool is not */
+  --prose-max:62ch;      /* ADDED - landing paragraph measure */
+
+  --radius:0.75rem;
+  --radius-sm:calc(var(--radius) - 4px);   /* 8  - checkbox, chip */
+  --radius-md:calc(var(--radius) - 2px);   /* 10 - input, button */
+  --radius-lg:var(--radius);               /* 12 - card, photo tile */
+  --radius-xl:calc(var(--radius) + 4px);   /* 16 - sheet top corners */
+  --radius-full:9999px;
+
+  --ratio-garment:3/4; /* @kind other */   /* ADDED - every product photo well, no exceptions */
+
+  --bp-md:768px;
+  --bp-lg:1024px;
+}

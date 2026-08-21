@@ -1,0 +1,29 @@
+# Dependencies — reinstallable from the lockfile.
+node_modules/
+
+# Next.js build output
+.next/
+out/
+next-env.d.ts
+
+# Test and coverage output
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+
+# Local env. Nothing here needs a secret to run — the API origin and the site
+# URL are the only variables and both have safe defaults — so there is no
+# reason to carry one.
+.env
+.env.local
+.env*.local

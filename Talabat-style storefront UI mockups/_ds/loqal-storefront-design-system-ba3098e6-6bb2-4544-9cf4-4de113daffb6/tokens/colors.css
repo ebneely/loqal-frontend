@@ -1,0 +1,80 @@
+/* Lifted verbatim from apps/loqal-dashboard/src/app/globals.css — same brand
+   emerald, same neutral ramp, same six state tones, same signed-money pair. A
+   storefront and a back office that disagree about what "delivered" is coloured
+   would be two products.
+
+   Storefront-only additions are marked ADDED and are aliases, not new hues. */
+:root{
+  /* Base surfaces + ink */
+  --background:oklch(1 0 0);
+  --foreground:oklch(0.145 0 0);
+  --card:oklch(1 0 0);
+  --card-foreground:oklch(0.145 0 0);
+  --popover:oklch(1 0 0);
+  --popover-foreground:oklch(0.145 0 0);
+  --muted:oklch(0.97 0 0);
+  --muted-foreground:oklch(0.556 0 0);
+  --accent:oklch(0.97 0 0);
+  --accent-foreground:oklch(0.205 0 0);
+  --secondary:oklch(0.97 0 0);
+  --secondary-foreground:oklch(0.205 0 0);
+  --border:oklch(0.922 0 0);
+  --input:oklch(0.922 0 0);
+
+  /* The one brand colour. Dark enough to hold white text on a mid-range Android
+     in Egyptian daylight, saturated enough to survive a low-gamut panel. */
+  --primary:oklch(0.505 0.122 163);
+  --primary-foreground:oklch(0.985 0 0);
+  --ring:oklch(0.505 0.122 163);
+  --destructive:oklch(0.505 0.19 26.5);
+  --destructive-foreground:oklch(0.985 0 0);
+
+  /* Six state tones cover every order enum. fg/bg/border triplets so a pill needs
+     no opacity arithmetic. good == the brand emerald on purpose; live is blue so
+     nothing green ever means "still happening". */
+  --state-neutral-fg:oklch(0.44 0 0);
+  --state-neutral-bg:oklch(0.968 0 0);
+  --state-neutral-border:oklch(0.9 0 0);
+  --state-wait-fg:oklch(0.45 0.115 72);
+  --state-wait-bg:oklch(0.968 0.032 84);
+  --state-wait-border:oklch(0.89 0.06 84);
+  --state-act-fg:oklch(0.44 0.155 30);
+  --state-act-bg:oklch(0.962 0.035 40);
+  --state-act-border:oklch(0.88 0.07 40);
+  --state-live-fg:oklch(0.45 0.115 251);
+  --state-live-bg:oklch(0.962 0.028 251);
+  --state-live-border:oklch(0.885 0.055 251);
+  --state-good-fg:oklch(0.47 0.112 163);
+  --state-good-bg:oklch(0.958 0.035 163);
+  --state-good-border:oklch(0.872 0.066 163);
+  --state-bad-fg:oklch(0.46 0.17 26.5);
+  --state-bad-bg:oklch(0.962 0.03 22);
+  --state-bad-border:oklch(0.88 0.065 22);
+
+  /* Signed money. Credit = owed to you. Debit = owed by you. A debit is not a
+     failure, which is why it is not --state-bad. */
+  --money-credit:oklch(0.47 0.112 163);
+  --money-debit:oklch(0.46 0.17 26.5);
+  --money-zero:oklch(0.556 0 0);
+
+  --overlay:oklch(0 0 0 / 0.45);
+
+  /* ── Semantic aliases (ADDED for the storefront) ─────────────────────────── */
+  --surface-page:var(--background);
+  --surface-card:var(--card);
+  --surface-sunken:oklch(0.97 0 0);      /* photo well, image placeholder tile */
+  --surface-ink:oklch(0.145 0 0);        /* inverted band: marquee, footer */
+  --text-title:var(--foreground);
+  --text-body:oklch(0.28 0 0);
+  --text-muted:var(--muted-foreground);
+  --text-on-brand:var(--primary-foreground);
+  --text-on-ink:oklch(0.985 0 0);
+  --line:var(--border);
+  --line-strong:oklch(0.86 0 0);
+  --brand:var(--primary);
+  --brand-tint:var(--state-good-bg);     /* 3% emerald wash behind a brand note */
+  --brand-hover:color-mix(in oklab,var(--primary) 88%,black);
+  --price:var(--foreground);
+  --price-strike:var(--muted-foreground);
+  --sold-out:var(--muted-foreground);
+}
