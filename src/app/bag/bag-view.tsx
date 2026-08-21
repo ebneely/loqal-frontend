@@ -183,11 +183,20 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
 
   return (
     <div className="lq-line">
-      <div style={{ minInlineSize: 0, display: "grid", gap: 2 }}>
-        <span className="lq-pcard__name" data-bidi>
+      {/*
+        The well is first because `.lq-line` is a `72px 1fr auto` grid and this
+        is its first column. There is no product photography yet, so it holds
+        the same grey tile with a glyph that every other well does.
+      */}
+      <div className="lq-line__well">
+        <span className="lq-icon" data-icon="image" aria-hidden="true" />
+      </div>
+
+      <div style={{ minInlineSize: 0 }}>
+        <span className="lq-line__name" data-bidi>
           {name}
         </span>
-        {attributes ? <span className="lq-hint">{attributes}</span> : null}
+        {attributes ? <span className="lq-line__meta">{attributes}</span> : null}
 
         {/*
           A line the shop cannot currently supply says so with the number it
@@ -205,9 +214,9 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
                 : "Out of stock"}
           </span>
         ) : null}
-      </div>
 
-      <div className="lq-qty">
+        <div className="lq-line__foot">
+          <div className="lq-qty">
         <button
           type="button"
           className="lq-iconbtn lq-iconbtn--outline"
@@ -240,19 +249,27 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
         >
           <span className="lq-icon" data-icon="plus" aria-hidden="true" />
         </button>
+          </div>
+
+          <button
+            type="button"
+            className="lq-iconbtn"
+            disabled={busy}
+            aria-label={locale === "ar" ? "شيل" : "Remove"}
+            onClick={() => remove.mutate({ variantId: line.variantId })}
+          >
+            <span className="lq-icon" data-icon="trash-2" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
-      <span className="lq-money">{formatPrice(line.lineTotal, locale, { decimals: true })}</span>
-
-      <button
-        type="button"
-        className="lq-iconbtn"
-        disabled={busy}
-        aria-label={locale === "ar" ? "شيل" : "Remove"}
-        onClick={() => remove.mutate({ variantId: line.variantId })}
-      >
-        <span className="lq-icon" data-icon="trash-2" aria-hidden="true" />
-      </button>
+      {/* The third column. Money is aligned to the inline end so a column of
+          line totals lines up under the subtotal. */}
+      <div className="lq-line__end">
+        <span className="lq-money">
+          {formatPrice(line.lineTotal, locale, { decimals: true })}
+        </span>
+      </div>
     </div>
   );
 }

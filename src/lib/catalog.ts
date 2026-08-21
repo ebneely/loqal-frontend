@@ -3,6 +3,7 @@ import {
   publicCategoryListSchema,
   publicProductDetailSchema,
   publicProductPageSchema,
+  searchResultPageSchema,
   type ListPublicProductsQuery,
 } from "@loqal/contracts/storefront.contract";
 
@@ -85,9 +86,11 @@ export function fetchProduct(brandSlug: string, productSlug: string) {
  * entries nobody reads twice. It is also the one read where freshness is the
  * point: somebody searching "هودي" wants what is sellable now.
  */
-export function searchProducts(q: string, page = 1, perPage = 24) {
-  return api.get(publicProductPageSchema, "/v1/search/products", {
-    query: { q, page, perPage },
+export function searchProducts(query: string, page = 1, perPage = 20) {
+  return api.get(searchResultPageSchema, "/v1/search/products", {
+    // `query`, not `q` — the API's DTO is .strict(), so the wrong name is a
+    // 400 rather than an ignored parameter.
+    query: { query, page, perPage },
     cache: "no-store",
   });
 }

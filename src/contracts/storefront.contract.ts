@@ -145,11 +145,61 @@ export type PublicCategory = z.infer<typeof publicCategorySchema>;
 
 export const publicCategoryListSchema = z.array(publicCategorySchema);
 
+/**
+ * The parameter is `query`, not `q` — and the DTO is `.strict()`, so sending
+ * `q` is a 400 rather than an ignored key. `perPage` caps at 50 here, not 60.
+ */
 export const searchProductsQuerySchema = z
   .object({
-    q: z.string().trim().min(1).max(120),
+    query: z.string().trim().min(1).max(200),
     page: z.coerce.number().int().min(1).default(1),
-    perPage: z.coerce.number().int().min(1).max(60).default(24),
+    perPage: z.coerce.number().int().min(1).max(50).default(20),
   })
   .strict();
 export type SearchProductsQuery = z.infer<typeof searchProductsQuerySchema>;
+
+/**
+ * SEARCH ANSWERS A DIFFERENT SHAPE, and this is not a tidiness problem.
+ *
+ * `/v1/search/products` is a raw trigram similarity query over Product joined
+ * to Brand. It selects id, slug, name, basePrice and the brand — and nothing
+ * else. There is no `coverUrl`, no `priceFrom`, no `inStock` and no `total`,
+ * because none of those are in the query and computing them would mean a
+ * second pass over every match.
+ *
+ * So a search result CANNOT be rendered by `ProductCard`, which needs the
+ * cover and the stock flag. Reusing `publicProductPageSchema` here — which is
+ * what this app did at first — fails to parse every response, and `.strict()`
+ * is what turns that into an error at the boundary rather than an undefined
+ * price three components away.
+ *
+ * `hasMore` rather than `total`: an exact count over a similarity search is not
+ * a meaningful number and costs a second query, so the API fetches one extra
+ * row instead. A screen can offer "more" and cannot offer "page 7 of 12".
+ */
+export const searchResultSchema = z
+  .object({
+    id: z.string().uuid(),
+    slug: z.string(),
+    name: bilingualSchema.nullable(),
+    /** Nullable: an ACTIVE product may still have no price set. */
+    basePrice: moneySchema.nullable(),
+    brandId: z.string().uuid(),
+    brandName: z.string(),
+    brandSlug: z.string(),
+    /** Trigram similarity, 0..1. Ordering only — never shown to a shopper. */
+    rank: z.number(),
+  })
+  .strict();
+export type SearchResult = z.infer<typeof searchResultSchema>;
+
+export const searchResultPageSchema = z
+  .object({
+    items: z.array(searchResultSchema),
+    page: z.number().int().min(1),
+    perPage: z.number().int().min(1),
+    hasMore: z.boolean(),
+  })
+  .strict();
+export type SearchResultPage = z.infer<typeof searchResultPageSchema>;
+
