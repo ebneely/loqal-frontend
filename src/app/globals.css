@@ -323,3 +323,74 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================================================
+   Desktop chrome.
+
+   NOT in the design system's components.css — the system ships the storefront
+   as two kits, `index.html` (phone) and `desktop.html`, and expresses the
+   difference with inline styles per screen rather than as classes. These are
+   those inline styles, lifted into rules so one component can serve both.
+
+   Kept here rather than hand-edited into the verbatim copy, so that file can
+   still be re-copied when the system moves.
+
+   CONTAINER queries, not media queries. `.lq-shell` sets
+   `container-type: inline-size`, and the storefront rule is that a 430px phone
+   frame embedded in a desktop page still lays out like a phone — so this reads
+   the SHELL's width, never the window's.
+   ========================================================================== */
+@layer components {
+  /* Phone: the tab bar is the navigation and the desktop links do not exist. */
+  .lq-topbar__nav {
+    display: none;
+  }
+
+  @container (min-width: 1024px) {
+    /*
+      The bottom tab bar is a phone affordance. On a desktop it is a row of
+      five buttons stuck to the bottom of a 1080px window with nothing near
+      them — which is what it looked like, and why it read as "mobile on
+      desktop".
+    */
+    .lq-tabbar {
+      display: none;
+    }
+
+    .lq-topbar {
+      min-block-size: 72px;
+      padding-inline: var(--gutter-lg);
+      gap: var(--space-6);
+    }
+
+    .lq-topbar__mark {
+      font-size: var(--text-2xl);
+    }
+
+    .lq-topbar__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      /* Pushed to the inline END — the far edge from the mark. Logical, so it
+         is the left in Arabic and the right in English with no mirrored rule. */
+      margin-inline-start: auto;
+    }
+
+    .lq-topbar__nav a {
+      font-size: var(--text-sm);
+      color: var(--text-body);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .lq-topbar__nav a:hover {
+      color: var(--text-title);
+      text-decoration: none;
+    }
+
+    .lq-topbar__nav a[aria-current="page"] {
+      color: var(--brand);
+      font-weight: var(--weight-medium);
+    }
+  }
+}

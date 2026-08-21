@@ -223,7 +223,7 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
             update.mutate({ variantId: line.variantId, quantity: line.quantity - 1 });
           }}
         >
-          <span className="lq-icon" data-icon="subtract" aria-hidden="true" />
+          <span className="lq-icon" data-icon="minus" aria-hidden="true" />
         </button>
 
         <span data-num>{line.quantity}</span>
@@ -238,7 +238,7 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
             update.mutate({ variantId: line.variantId, quantity: line.quantity + 1 })
           }
         >
-          <span className="lq-icon" data-icon="add" aria-hidden="true" />
+          <span className="lq-icon" data-icon="plus" aria-hidden="true" />
         </button>
       </div>
 
@@ -251,7 +251,7 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
         aria-label={locale === "ar" ? "شيل" : "Remove"}
         onClick={() => remove.mutate({ variantId: line.variantId })}
       >
-        <span className="lq-icon" data-icon="delete" aria-hidden="true" />
+        <span className="lq-icon" data-icon="trash-2" aria-hidden="true" />
       </button>
     </div>
   );

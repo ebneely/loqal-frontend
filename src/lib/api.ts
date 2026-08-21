@@ -89,7 +89,41 @@ export type RequestOptions = {
 
 const isServer = typeof window === "undefined";
 
-const API_ORIGIN = process.env.LOQAL_API_ORIGIN ?? "http://127.0.0.1:3001";
+/**
+ * Where the backend lives, for SERVER-side calls only.
+ *
+ * Defaulting to localhost is right in development and dangerous in production:
+ * a deployed storefront with this unset reaches nothing, every catalogue read
+ * rejects, and the screens render their empty states — so a total outage looks
+ * exactly like a marketplace with no shops in it. That is what a first deploy
+ * to Vercel actually did.
+ *
+ * So a server call with it unset throws this sentence instead of quietly
+ * dialling localhost. Resolved PER CALL rather than at module load on purpose:
+ * throwing at import time would fail `next build` outright, including for the
+ * static pages that need no API at all. This way the build still succeeds, the
+ * screens render the error state they already have, and the reason is in the
+ * server log rather than nowhere.
+ */
+function resolveApiOrigin(): string {
+  const configured = process.env.LOQAL_API_ORIGIN;
+  if (configured) return configured;
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "LOQAL_API_ORIGIN is not set. The storefront has no backend to read from — " +
+        "set it to the API's origin (for example https://api.loqal.com) in the " +
+        "deployment's environment variables."
+    );
+  }
+
+  // 127.0.0.1 rather than localhost: localhost resolves to ::1 first on
+  // Windows and Nest listens on IPv4, so `localhost` fails to connect here for
+  // no visible reason.
+  return "http://127.0.0.1:3001";
+}
+
+
 
 /**
  * On the server the backend is addressed directly, mount prefix and all. In the
@@ -98,7 +132,7 @@ const API_ORIGIN = process.env.LOQAL_API_ORIGIN ?? "http://127.0.0.1:3001";
  */
 const resolve = (path: string) => {
   const rooted = path.startsWith("/") ? path : `/${path}`;
-  if (isServer) return `${API_ORIGIN}/api${rooted}`;
+  if (isServer) return `${resolveApiOrigin()}/api${rooted}`;
   return `/api${rooted}`;
 };
 

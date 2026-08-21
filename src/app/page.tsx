@@ -20,12 +20,15 @@ export default async function HomePage() {
   const locale = defaultLocale;
 
   /**
-   * Both reads in parallel. Sequential awaits here would serialise two
-   * independent queries and add the slower one's latency to the faster one for
-   * no reason — and this is the page a first-time visitor lands on.
+   * Both reads in parallel. Sequential awaits would serialise two independent
+   * queries and add the slower one's latency to the faster one for nothing —
+   * and this is the page a first-time visitor lands on.
    *
-   * `allSettled`, not `all`: a category list that fails should not blank the
-   * shop rail. Each section decides on its own whether it has anything to draw.
+   * `allSettled`, not `all`, so a failing category list does not blank the shop
+   * rail. But the failure is CARRIED, not swallowed: an earlier version mapped
+   * a rejected promise straight to `[]`, so an unreachable API rendered the
+   * "no shops yet" empty state — a total outage and a brand-new marketplace
+   * looked identical, on the one screen where the difference matters most.
    */
   const [categories, brands] = await Promise.allSettled([
     fetchCategories(),
@@ -34,6 +37,7 @@ export default async function HomePage() {
 
   const cats = categories.status === "fulfilled" ? categories.value : [];
   const shops = brands.status === "fulfilled" ? brands.value.items : [];
+  const shopsFailed = brands.status === "rejected";
 
   return (
     <Shell>
@@ -70,7 +74,18 @@ export default async function HomePage() {
             </h1>
           </div>
 
-          {shops.length === 0 ? (
+          {shopsFailed ? (
+            /*
+              The API could not be reached. Says so plainly rather than
+              pretending the marketplace is empty — and names the retry, because
+              this is a page a shopper WILL reload.
+            */
+            <p className="lq-hint lq-hint--error" role="alert">
+              {locale === "ar"
+                ? "مش قادرين نوصل للمحلات دلوقتي. حدّث الصفحة بعد شوية."
+                : "We cannot reach the shops right now. Reload in a moment."}
+            </p>
+          ) : shops.length === 0 ? (
             /* Describes what will appear, not the emptiness. */
             <p className="lq-hint">
               {locale === "ar"
