@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>نتايج البحث — «قميص» · لوكال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>
+.results .grid{border-block-start:0}
+</style>
+</head>
+<body>
+
+<div class="util">
+  <span>توصيل في نفس اليوم — القاهرة والجيزة</span>
+  <span>الدفع عند الاستلام</span>
+  <span>استبدال خلال ١٤ يوم</span>
+</div>
+
+<header>
+  <div class="hbar">
+    <a class="mark" href="index.html">لوكال</a>
+    <label class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" value="قميص" aria-label="بحث">
+    </label>
+    <nav class="tools">
+      <a href="categories.html"><span class="lbl">الأقسام</span></a>
+      <a href="shops.html" data-mega aria-expanded="false"><span class="lbl">المحلات</span></a>
+      <a href="basket.html">السلة <span class="cart-n">٣</span></a>
+    </nav>
+  </div>
+</header>
+
+<div class="rhead">
+  <h1>١٤ نتيجة لـ «قميص»</h1>
+  <div class="sort">
+    <span>ترتيب</span>
+    <select aria-label="ترتيب النتايج">
+      <option>الأحدث</option>
+      <option>أقل سعر</option>
+      <option>أعلى سعر</option>
+      <option>الأقرب لي</option>
+    </select>
+  </div>
+</div>
+
+<div class="active" id="active"></div>
+
+<div class="results">
+  <aside class="frail" aria-label="فلتر">
+    <div class="hd">
+      <h2>فلتر</h2>
+      <button type="button" id="clear">مسح</button>
+    </div>
+
+    <div class="fgrp">
+      <h3>المحل</h3>
+      <label class="chk"><span><input type="checkbox" data-f="shop" value="Versattire" checked><span class="bx"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span>
+        <span style="flex:1">Versattire</span><span class="n">٦</span></label>
+      <label class="chk"><span><input type="checkbox" data-f="shop" value="Dryp" checked><span class="bx"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span>
+        <span style="flex:1">Dryp</span><span class="n">٤</span></label>
+      <label class="chk"><span><input type="checkbox" data-f="shop" value="Slack"><span class="bx"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span>
+        <span style="flex:1">Slack</span><span class="n">٣</span></label>
+      <label class="chk"><span><input type="checkbox" data-f="shop" value="Denjoe"><span class="bx"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span>
+        <span style="flex:1">Denjoe</span><span class="n">١</span></label>
+    </div>
+
+    <div class="fgrp">
+      <h3>المقاس</h3>
+      <div class="szrow">
+        <button class="szpill" aria-pressed="false" data-f="size">S</button>
+        <button class="szpill" aria-pressed="true" data-f="size">M</button>
+        <button class="szpill" aria-pressed="true" data-f="size">L</button>
+        <button class="szpill" aria-pressed="false" data-f="size">XL</button>
+      </div>
+    </div>
+
+    <div class="fgrp">
+      <h3>اللون</h3>
+      <div class="swrow">
+        <button class="swbtn" aria-pressed="false" aria-label="أوف وايت" style="background:#EFEDE7"></button>
+        <button class="swbtn" aria-pressed="false" aria-label="زيتي" style="background:#5A6544"></button>
+        <button class="swbtn" aria-pressed="false" aria-label="أسود" style="background:#1D1D1B"></button>
+        <button class="swbtn" aria-pressed="true" aria-label="بيچ" style="background:#D9BE92"></button>
+      </div>
+    </div>
+
+    <div class="fgrp">
+      <h3>السعر</h3>
+      <div class="range">
+        <span class="track"></span><span class="fill" id="fill"></span>
+        <input type="range" id="lo" min="200" max="1200" step="10" value="300" aria-label="أقل سعر">
+        <input type="range" id="hi" min="200" max="1200" step="10" value="800" aria-label="أعلى سعر">
+      </div>
+      <div class="rlabel"><span id="hiL">٨٠٠</span><span>—</span><span id="loL">٣٠٠</span></div>
+    </div>
+  </aside>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="more"><button type="button">اعرض المزيد</button></div>
+
+<footer></footer>
+
+<script src="app.js"></script>
+<script>
+var RES = [
+  ['Versattire','قميص كتان','٤٥٠','','shirt','',0],
+  ['Versattire','قميص أوكسفورد','٥٢٠','','shirt','',0],
+  ['Dryp','قميص دنيم','٦١٠','','shirt','',0],
+  ['Slack','قميص فانيلا','٤٣٠','','shirt','',1],
+  ['Dryp','قميص مقلّم','٥٨٠','٦٧٠','shirt','−١٣٪',0],
+  ['Denjoe','قميص شتوي','٧٤٠','','shirt','',0],
+  ['Versattire','قميص بوبلين','٤٩٠','','shirt','',0],
+  ['Dryp','قميص أوفرسايز','٦٥٠','','shirt','',0]
+];
+
+document.getElementById('grid').innerHTML = RES.map(function(p,i){
+  var tag  = p[5] ? '<span class="tag off">'+p[5]+'</span>' : '';
+  var was  = p[3] ? '<span class="was">'+p[3]+'</span>' : '';
+  var sold = p[6] ? '<span class="sold">خلص</span>' : '';
+  var add  = p[6] ? '' : '<button class="add" type="button">أضف للسلة</button>';
+  return '<a class="card rv" style="--d:'+(i%4*70)+'ms" href="product.html">'
+    + '<span class="thumb">'+tag
+    + '<svg viewBox="0 0 120 120">'+SHAPES[p[4]]+'</svg>'+sold
+    + '<button class="wish" type="button" aria-pressed="false" aria-label="حفظ">'
+    + '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.6C19 15.4 12 20 12 20z"/></svg></button>'
+    + add + '</span>'
+    + '<span class="body"><span class="b">'+p[0]+'</span><span class="t">'+p[1]+'</span>'
+    + '<span class="prices"><span class="now'+(p[3]?' red':'')+'">'+p[2]+' ج.م</span>'+was+'</span>'
+    + '</span></a>';
+}).join('');
+reveal();
+
+/* Active chips are DERIVED from the controls, never a second list to keep in
+   sync — that is how a chip ends up saying something the filter no longer does. */
+function activeChips(){
+  var out = [];
+  document.querySelectorAll('[data-f="shop"]:checked').forEach(function(c){ out.push(['shop', c.value, c]); });
+  document.querySelectorAll('.szpill[aria-pressed="true"]').forEach(function(b){ out.push(['size', b.textContent.trim(), b]); });
+  document.querySelectorAll('.swbtn[aria-pressed="true"]').forEach(function(b){ out.push(['color', b.getAttribute('aria-label'), b]); });
+
+  document.getElementById('active').innerHTML = out.map(function(o,i){
+    return '<button type="button" data-i="'+i+'">'
+      + '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>' + o[1] + '</button>';
+  }).join('');
+
+  document.querySelectorAll('#active button').forEach(function(b, i){
+    b.addEventListener('click', function(){
+      var el = out[i][2];
+      if (el.tagName === 'INPUT') el.checked = false;
+      else el.setAttribute('aria-pressed','false');
+      activeChips();
+    });
+  });
+}
+
+document.querySelectorAll('[data-f="shop"]').forEach(function(c){ c.addEventListener('change', activeChips); });
+document.querySelectorAll('.szpill, .swbtn').forEach(function(b){
+  b.addEventListener('click', function(){
+    b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+    activeChips();
+  });
+});
+document.getElementById('clear').addEventListener('click', function(){
+  document.querySelectorAll('[data-f="shop"]').forEach(function(c){ c.checked = false; });
+  document.querySelectorAll('.szpill,.swbtn').forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+  activeChips();
+});
+activeChips();
+
+/* two thumbs, one track — they must not cross */
+var lo = document.getElementById('lo'), hi = document.getElementById('hi'),
+    fill = document.getElementById('fill');
+var ar = function(n){ return String(n).replace(/\d/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'[d]; }); };
+function band(){
+  var a = Math.min(+lo.value, +hi.value), b = Math.max(+lo.value, +hi.value);
+  var min = +lo.min, max = +lo.max;
+  fill.style.insetInlineStart = ((a - min) / (max - min) * 100) + '%';
+  fill.style.inlineSize = ((b - a) / (max - min) * 100) + '%';
+  document.getElementById('loL').textContent = ar(a);
+  document.getElementById('hiL').textContent = ar(b);
+}
+lo.addEventListener('input', band); hi.addEventListener('input', band); band();
+</script>
+</body>
+</html>

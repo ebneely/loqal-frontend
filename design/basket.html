@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>السلة · لوكال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>
+.cart{display:grid;grid-template-columns:1fr;gap:0;border-block-start:1px solid var(--line)}
+@media(min-width:960px){.cart{grid-template-columns:1fr minmax(310px,25vw)}}
+
+/* One basket, split by shop — because that is what actually happens:
+   each shop packs, books and delivers its own half. Hiding that would
+   promise one parcel and deliver two. */
+.lots{border-inline-end:1px solid var(--line)}
+@media(max-width:959px){.lots{border-inline-end:0}}
+.lot{border-block-end:1px solid var(--line)}
+.lot-hd{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1rem var(--pad);background:var(--raise);flex-wrap:wrap}
+.lot-hd .who{display:grid;gap:.15rem}
+.lot-hd .nm{font-size:1rem;font-weight:500;letter-spacing:-.015em}
+.lot-hd .hd2{font-size:.8rem;opacity:.6;font-weight:300;
+  display:flex;align-items:center;gap:.4rem}
+.lot-hd .eta{font-size:.78rem;font-weight:400;color:var(--green);
+  border:1px solid var(--green-line);background:var(--green-soft);
+  padding:.28rem .6rem;border-radius:99px;white-space:nowrap}
+
+.line{display:grid;grid-template-columns:76px 1fr auto;gap:1rem;
+  padding:1rem var(--pad);align-items:start;border-block-start:1px solid var(--line)}
+.line:first-of-type{border-block-start:0}
+.line .pic{aspect-ratio:4/5;background:var(--field);border:1px solid var(--line);
+  display:grid;place-items:center}
+.line .pic svg{inline-size:60%;block-size:60%;fill:none;stroke:var(--ink);
+  stroke-width:.9;opacity:.24;stroke-linejoin:round;stroke-linecap:round}
+.line .meta{display:grid;gap:.25rem;min-inline-size:0}
+.line .b{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;opacity:.5}
+.line .t{font-size:.92rem;font-weight:400;line-height:1.4}
+.line .v{font-size:.8rem;opacity:.6;font-weight:300}
+.line .rm{background:none;border:0;font:inherit;font-size:.78rem;color:inherit;
+  opacity:.5;cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+  justify-self:start;padding:0;margin-block-start:.15rem}
+.line .rm:hover{opacity:1;color:var(--signal)}
+.line .right{display:grid;gap:.6rem;justify-items:end}
+.line .p{font-weight:600;font-variant-numeric:tabular-nums;font-size:.95rem}
+.qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:.35rem;
+  overflow:hidden}
+.qty button{inline-size:1.9rem;block-size:1.9rem;border:0;background:var(--paper);
+  color:inherit;font:inherit;font-size:1rem;cursor:pointer;line-height:1;
+  transition:background .3s var(--ease)}
+.qty button:hover{background:var(--green-soft);color:var(--green)}
+.qty span{min-inline-size:2rem;text-align:center;font-size:.88rem;
+  font-variant-numeric:tabular-nums}
+
+/* the summary sticks — the total is the thing you keep glancing at */
+.sum{padding:clamp(1.25rem,3vw,2rem) var(--pad);align-content:start;display:grid;gap:1rem;
+  position:sticky;top:calc(3.4rem + 1px)}
+@media(max-width:959px){.sum{position:static}}
+.sum h2{font-size:1.05rem;font-weight:500;letter-spacing:-.02em}
+.rows{display:grid;gap:.6rem;font-size:.88rem;font-weight:300}
+.rows div{display:flex;justify-content:space-between;gap:1rem}
+.rows .v{font-variant-numeric:tabular-nums;font-weight:400}
+.rows .free{color:var(--green);font-weight:500}
+.tot{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+  padding-block-start:.9rem;border-block-start:1px solid var(--line);
+  font-size:1.15rem;font-weight:600;font-variant-numeric:tabular-nums}
+.btn.go{background:var(--green);border-color:var(--green);color:#fff;
+  inline-size:100%;font-weight:500}
+.btn.go:hover{background:transparent;color:var(--green)}
+.pay{display:flex;gap:.4rem;flex-wrap:wrap}
+.pay span{display:inline-flex;align-items:center;gap:.35rem;font-size:.7rem;
+  border:1px solid var(--line);padding:.3rem .5rem;border-radius:.3rem;opacity:.65}
+.pay svg{inline-size:.9rem;block-size:.9rem;fill:none;stroke:currentColor;
+  stroke-width:1.2;stroke-linejoin:round;stroke-linecap:round}
+.note{font-size:.78rem;opacity:.55;font-weight:300;line-height:1.55}
+</style>
+</head>
+<body>
+
+<div class="util">
+  <span>توصيل في نفس اليوم — القاهرة والجيزة</span>
+  <span>الدفع عند الاستلام</span>
+  <span>استبدال خلال ١٤ يوم</span>
+</div>
+
+<header>
+  <div class="hbar">
+    <a class="mark" href="index.html">لوكال</a>
+    <label class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" placeholder="دوّر على قطعة أو محل…" aria-label="بحث">
+    </label>
+    <nav class="tools">
+      <a href="categories.html"><span class="lbl">الأقسام</span></a>
+      <a href="shops.html" data-mega aria-expanded="false"><span class="lbl">المحلات</span></a>
+      <a href="basket.html" aria-current="page">السلة <span class="cart-n">٣</span></a>
+    </nav>
+  </div>
+</header>
+
+<div class="phead">
+  <h1>السلة <em>٣ قطع من محلين</em></h1>
+  <p>كل محل بيجهّز ويبعت نصّه بنفسه، فبيوصلوك في وقتين مختلفين — ودي حاجة كويسة، مش مشكلة.</p>
+</div>
+
+<div class="cart">
+  <div class="lots">
+
+    <section class="lot">
+      <div class="lot-hd">
+        <div class="who">
+          <span class="nm">Versattire</span>
+          <span class="hd2"><i class="dot"></i> الزمالك — مفتوح دلوقتي</span>
+        </div>
+        <span class="eta">يوصلك النهاردة قبل ٩ م</span>
+      </div>
+
+      <div class="line">
+        <span class="pic"><svg viewBox="0 0 120 120" id="s1"></svg></span>
+        <span class="meta">
+          <span class="b">Versattire</span>
+          <span class="t">قميص كتان — أوف وايت</span>
+          <span class="v">مقاس M · أوف وايت</span>
+          <button class="rm" type="button">شيل</button>
+        </span>
+        <span class="right">
+          <span class="p">٤٥٠ ج.م</span>
+          <span class="qty"><button type="button" aria-label="زوّد">+</button><span>١</span><button type="button" aria-label="قلّل">−</button></span>
+        </span>
+      </div>
+
+      <div class="line">
+        <span class="pic"><svg viewBox="0 0 120 120" id="s2"></svg></span>
+        <span class="meta">
+          <span class="b">Versattire</span>
+          <span class="t">تيشيرت قطن — زيتي</span>
+          <span class="v">مقاس L · زيتي</span>
+          <button class="rm" type="button">شيل</button>
+        </span>
+        <span class="right">
+          <span class="p">٥٢٠ ج.م</span>
+          <span class="qty"><button type="button" aria-label="زوّد">+</button><span>١</span><button type="button" aria-label="قلّل">−</button></span>
+        </span>
+      </div>
+    </section>
+
+    <section class="lot">
+      <div class="lot-hd">
+        <div class="who">
+          <span class="nm">Dryp</span>
+          <span class="hd2"><i class="dot"></i> مصر الجديدة — مفتوح دلوقتي</span>
+        </div>
+        <span class="eta">يوصلك بكرة قبل ٢ م</span>
+      </div>
+
+      <div class="line">
+        <span class="pic"><svg viewBox="0 0 120 120" id="s3"></svg></span>
+        <span class="meta">
+          <span class="b">Dryp</span>
+          <span class="t">تريكو صوف مضلّع — كحلي</span>
+          <span class="v">مقاس M · كحلي</span>
+          <button class="rm" type="button">شيل</button>
+        </span>
+        <span class="right">
+          <span class="p">٨٩٠ ج.م</span>
+          <span class="qty"><button type="button" aria-label="زوّد">+</button><span>١</span><button type="button" aria-label="قلّل">−</button></span>
+        </span>
+      </div>
+    </section>
+
+  </div>
+
+  <aside class="sum" aria-label="ملخص الأوردر">
+    <h2>الملخص</h2>
+    <div class="rows">
+      <div><span>القطع (٣)</span><span class="v">١٬٨٦٠ ج.م</span></div>
+      <div><span>توصيل Versattire</span><span class="v">٤٠ ج.م</span></div>
+      <div><span>توصيل Dryp</span><span class="v free">مجانا</span></div>
+    </div>
+    <div class="tot"><span>الإجمالي</span><span>١٬٩٠٠ ج.م</span></div>
+
+    <button class="btn go" type="button">إتمام الأوردر</button>
+
+    <div class="pay">
+      <span><svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2"/><path d="M2.5 9.5h19"/></svg>بطاقات</span>
+      <span><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="1.5"/><circle cx="12" cy="12" r="2.6"/></svg>كاش</span>
+      <span><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10 7.5h4.5L13 6"/></svg>InstaPay</span>
+    </div>
+
+    <p class="note">كل محل بيراجع الرف قبل ما يأكد نصّه. لو قطعة خلصت، بنلغيها ومش بتتحاسب عليها — وباقي الأوردر بيكمّل عادي.</p>
+  </aside>
+</div>
+
+<footer></footer>
+
+<script src="app.js"></script>
+<script>
+/* the garment line art comes from app.js, same as everywhere else */
+document.getElementById('s1').innerHTML = SHAPES.shirt;
+document.getElementById('s2').innerHTML = SHAPES.tee;
+document.getElementById('s3').innerHTML = SHAPES.knit;
+
+/* quantity steppers: floor at 1, and never let the row read "٠" */
+document.querySelectorAll('.qty').forEach(function(q){
+  var out = q.querySelector('span'), n = 1;
+  var ar = function(v){ return String(v).replace(/\d/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'[d]; }); };
+  q.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click', function(){
+      n = b.textContent === '+' ? Math.min(n + 1, 9) : Math.max(n - 1, 1);
+      out.textContent = ar(n);
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تريكو صوف — كحلي · Dryp · لوكال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>
+/* The gallery scrolls, the info column stays. Images carry the page. */
+.pdp{display:grid;grid-template-columns:1fr;border-block-end:1px solid var(--line)}
+@media(min-width:900px){.pdp{grid-template-columns:1fr minmax(330px,30vw)}}
+
+.gallery{display:grid;gap:1px;background:var(--line);
+  border-inline-end:1px solid var(--line)}
+.shot{background:var(--field);aspect-ratio:4/5;display:grid;place-items:center;
+  position:relative;overflow:hidden}
+.shot svg{inline-size:46%;block-size:46%;fill:none;stroke:var(--ink);stroke-width:.8;
+  opacity:.24;stroke-linejoin:round;stroke-linecap:round;
+  transition:transform 1.2s var(--slow),opacity .5s var(--ease)}
+.shot:hover svg{transform:scale(1.04);opacity:.34}
+.shot .note{position:absolute;inset-block-end:.8rem;inset-inline-start:.9rem;
+  font-family:var(--la);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;opacity:.32}
+@media(min-width:600px) and (max-width:899px){
+  .gallery{grid-template-columns:1fr 1fr}
+  .shot:first-child{grid-column:1/-1;aspect-ratio:1/1}
+}
+
+.info{padding:clamp(1.5rem,3.5vw,2.5rem);display:grid;gap:1.15rem;align-content:start;
+  position:sticky;top:calc(3.4rem + 1px);max-block-size:calc(100vh - 3.4rem);
+  overflow-y:auto;scrollbar-width:none}
+.info::-webkit-scrollbar{display:none}
+@media(max-width:899px){.info{position:static;max-block-size:none;overflow:visible}}
+
+.info .brand{font-family:var(--la);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  opacity:.55;text-decoration:none;color:inherit}
+.info .brand:hover{opacity:1}
+.info h1{font-size:clamp(1.3rem,1.05rem + 1vw,1.75rem);font-weight:300;
+  letter-spacing:-.028em;line-height:1.28;text-wrap:balance}
+.pr{display:flex;align-items:baseline;gap:.7rem;font-family:var(--la);font-variant-numeric:tabular-nums}
+.pr .now{font-size:1.3rem;font-weight:600;color:var(--signal)}
+.pr .was{font-size:.92rem;opacity:.4;text-decoration:line-through}
+.pr .off{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--signal);color:var(--signal);padding:.15rem .45rem}
+hr{border:0;border-block-start:1px solid var(--line)}
+
+.opt{display:grid;gap:.6rem}
+.opt .lbl{font-size:.8rem;opacity:.6;font-weight:300;display:flex;
+  justify-content:space-between;align-items:baseline;gap:.75rem}
+.opt .lbl b{font-weight:400;opacity:1}
+.opt .lbl a{font-size:.76rem;color:inherit;opacity:.7;text-decoration:none;
+  border-block-end:1px solid currentColor}
+.sizes{display:flex;gap:.4rem;flex-wrap:wrap}
+.sz{font:inherit;font-family:var(--la);font-size:.85rem;min-inline-size:3rem;padding:.55rem .7rem;
+  border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer;
+  transition:border-color .35s var(--ease),background .35s var(--ease)}
+.sz:hover:not(:disabled){border-color:var(--ink)}
+.sz[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.sz:disabled{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+.swatches{display:flex;gap:.5rem}
+.sw{inline-size:2rem;block-size:2rem;border-radius:50%;border:1px solid var(--line);
+  cursor:pointer;padding:0;position:relative;transition:transform .35s var(--ease)}
+.sw:hover{transform:scale(1.08)}
+.sw[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;
+  border:1px solid var(--ink);border-radius:50%}
+.buy{display:grid;gap:.6rem}
+
+.from{border:1px solid var(--line);background:var(--raise);padding:1rem 1.1rem;display:grid;gap:.55rem}
+.from .top{display:flex;align-items:baseline;justify-content:space-between;gap:.75rem}
+.from .nm{font-family:var(--la);font-size:1.02rem;font-weight:500}
+.from .go{font-size:.76rem;opacity:.6;color:inherit;text-decoration:none;
+  border-block-end:1px solid currentColor;flex:none}
+.from .go:hover{opacity:1}
+.from .hood{font-size:.82rem;opacity:.6;font-weight:300}
+.from .row{display:flex;align-items:center;gap:.45rem;font-size:.8rem;font-weight:300;
+  padding-block-start:.55rem;border-block-start:1px solid var(--line)}
+
+.facts{display:grid;gap:.5rem;font-size:.83rem;font-weight:300}
+.facts div{display:flex;gap:.6rem;align-items:flex-start;opacity:.75}
+.facts svg{inline-size:.95rem;block-size:.95rem;fill:none;stroke:currentColor;stroke-width:1.3;
+  flex:none;margin-block-start:.28rem;opacity:.6}
+
+details{border-block-start:1px solid var(--line)}
+details summary{cursor:pointer;list-style:none;padding-block:.85rem;font-size:.9rem;font-weight:300;
+  display:flex;justify-content:space-between;align-items:center;gap:1rem}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";font-family:var(--la);opacity:.5}
+details[open] summary::after{content:"−"}
+details .in{padding-block-end:1rem;font-size:.86rem;font-weight:300;opacity:.72;max-width:56ch}
+details .in ul{padding-inline-start:1.1rem;display:grid;gap:.3rem}
+
+.rel{padding-block:clamp(2rem,5vw,3.5rem)}
+.rel h2{font-size:clamp(1.05rem,.95rem + .6vw,1.35rem);font-weight:400;letter-spacing:-.022em;
+  padding-inline:var(--pad);margin-block-end:1.25rem}
+.rel h2 em{font-style:normal;opacity:.5;font-weight:300;font-size:.85em;font-family:var(--la)}
+
+.bar{position:fixed;inset-inline:0;inset-block-end:0;z-index:50;
+  background:color-mix(in srgb,var(--paper) 94%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-block-start:1px solid var(--line);padding:.7rem var(--pad);
+  display:none;align-items:center;gap:1rem}
+.bar .p{font-family:var(--la);font-weight:600;font-variant-numeric:tabular-nums;flex:none}
+.bar .btn{flex:1;padding:.75rem}
+@media(max-width:899px){.bar{display:flex}body{padding-block-end:4.5rem}}
+</style>
+</head>
+<body>
+
+<div class="util">
+  <span>توصيل في نفس اليوم — القاهرة والجيزة</span>
+  <span>الدفع عند الاستلام</span>
+  <span>استبدال خلال ١٤ يوم</span>
+</div>
+
+<header>
+  <div class="hbar">
+    <a class="mark" href="index.html">لوكال</a>
+    <label class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" placeholder="دوّر على قطعة أو محل…" aria-label="بحث">
+    </label>
+    <nav class="tools">
+      <a href="categories.html"><span class="lbl">الأقسام</span></a>
+      <a href="shops.html" data-mega aria-expanded="false"><span class="lbl">المحلات</span></a>
+      <a href="#">السلة <span class="cart-n">٢</span></a>
+    </nav>
+  </div>
+</header>
+
+<nav class="crumb" aria-label="مسار">
+  <a href="index.html">الرئيسية</a><span>/</span>
+  <a href="categories.html">تريكو</a><span>/</span>
+  <a href="shops.html">Dryp</a><span>/</span>
+  <span>تريكو صوف — كحلي</span>
+</nav>
+
+<main class="pdp">
+  <div class="gallery" id="gallery"></div>
+
+  <div class="info">
+    <a class="brand" href="shops.html">Dryp</a>
+    <h1>تريكو صوف مضلّع — كحلي</h1>
+
+    <div class="pr">
+      <span class="now">٨٩٠ ج.م</span>
+      <span class="was">١٬١٠٠ ج.م</span>
+      <span class="off">−١٩٪</span>
+    </div>
+
+    <hr>
+
+    <div class="opt">
+      <span class="lbl">اللون — <b>كحلي</b></span>
+      <div class="swatches">
+        <button class="sw" aria-pressed="true" aria-label="كحلي" style="background:#26314A"></button>
+        <button class="sw" aria-pressed="false" aria-label="أوف وايت" style="background:#E8E4DA"></button>
+        <button class="sw" aria-pressed="false" aria-label="زيتي" style="background:#4A4B3A"></button>
+      </div>
+    </div>
+
+    <div class="opt">
+      <span class="lbl">المقاس <a href="#">دليل المقاسات</a></span>
+      <div class="sizes">
+        <button class="sz" aria-pressed="false">S</button>
+        <button class="sz" aria-pressed="true">M</button>
+        <button class="sz" aria-pressed="false">L</button>
+        <button class="sz" aria-pressed="false">XL</button>
+        <button class="sz" disabled>XXL</button>
+      </div>
+    </div>
+
+    <div class="buy">
+      <button class="btn solid" id="add">أضف للسلة</button>
+      <button class="btn ghost">اسأل المحل عن القطعة</button>
+    </div>
+
+    <div class="from">
+      <div class="top">
+        <span class="nm">Dryp</span>
+        <a class="go" href="shops.html">كل قطع المحل</a>
+      </div>
+      <span class="hood">مصر الجديدة — شارع كليوباترا ١٤</span>
+      <span class="row"><i class="dot"></i> مفتوح دلوقتي — بيقفل ١٠ م</span>
+    </div>
+
+    <div class="facts">
+      <div><svg viewBox="0 0 24 24"><path d="M3 7h13v10H3z"/><path d="M16 10h4l1 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>
+        <span>لو طلبت قبل ٤ م، يوصلك النهاردة داخل القاهرة والجيزة.</span></div>
+      <div><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V7z"/></svg>
+        <span>ادفع كاش لما يوصلك، أو بالكارت أونلاين.</span></div>
+      <div><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 1 2.5 5.8"/><path d="M4 20v-5h5"/></svg>
+        <span>استبدال أو استرجاع خلال ١٤ يوم من المحل نفسه.</span></div>
+    </div>
+
+    <details open>
+      <summary>عن القطعة</summary>
+      <div class="in">تريكو صوف مضلّع بقصّة عادية، رقبة مدوّرة وحواف مضلّعة عند الأكمام والأسفل. الموديل طوله ١٨٠ سم ولابس مقاس M.</div>
+    </details>
+    <details>
+      <summary>الخامة والعناية</summary>
+      <div class="in"><ul>
+        <li>٧٠٪ صوف ميرينو، ٣٠٪ أكريليك</li>
+        <li>غسيل يدوي على بارد</li>
+        <li>يُنشر مفرودًا، من غير تعليق</li>
+        <li>من غير مكواة مباشرة</li>
+      </ul></div>
+    </details>
+    <details>
+      <summary>التوصيل والاستبدال</summary>
+      <div class="in">التوصيل من المحل نفسه، مش من مخزن. الطلبات اللي قبل ٤ م بتوصل في نفس اليوم داخل القاهرة والجيزة. الاستبدال خلال ١٤ يوم، سواء بمندوب أو بنفسك من المحل.</div>
+    </details>
+    <details>
+      <summary>المتاح في المحل</summary>
+      <div class="in">العدد اللي فوق هو آخر حاجة المحل قالها لنا. المحل بيراجع الرف قبل ما يأكد الأوردر، وساعتها بنبعتلك تأكيد. لو القطعة خلصت، بنلغي الأوردر ومش بيتخصم منك حاجة.</div>
+    </details>
+  </div>
+</main>
+
+<section class="rel">
+  <h2>من نفس المحل <em>Dryp</em></h2>
+  <div class="grid" id="rel"></div>
+</section>
+
+<div class="bar">
+  <span class="p">٨٩٠ ج.م</span>
+  <button class="btn solid" id="add2">أضف للسلة</button>
+</div>
+
+<footer>
+  <div class="mark">لوكال</div>
+  <nav>
+    <a href="categories.html">الأقسام</a><a href="shops.html">المحلات</a>
+    <a href="#">انضم كمحل</a><a href="#">الشحن والاستبدال</a><a href="#">الأسئلة</a>
+  </nav>
+</footer>
+
+<script src="app.js"></script>
+<script>
+/* four large shots — the gallery is the page on a PDP */
+var SHOTS = [['knit','Front'],['knit','Back'],['knit','Detail'],['knit','On body']];
+document.getElementById('gallery').innerHTML = SHOTS.map(function(s){
+  return '<div class="shot"><svg viewBox="0 0 120 120">'+SHAPES[s[0]]+'</svg>'
+    + '<span class="note">'+s[1]+'</span></div>';
+}).join('');
+
+var R = [['Dryp','تيشيرت قطن — أوف وايت','٤٥٠','tee'],
+         ['Dryp','قميص كتان — سماوي','٦٨٠','shirt'],
+         ['Dryp','كاب قطن — أسود','٢٩٠','cap'],
+         ['Dryp','تريكو رقبة V — بيچ','٨٤٠','knit']];
+document.getElementById('rel').innerHTML = R.map(function(p,i){
+  return '<a class="card rv" style="--d:'+(i*70)+'ms" href="product.html">'
+    + '<span class="thumb"><svg viewBox="0 0 120 120">'+SHAPES[p[3]]+'</svg></span>'
+    + '<span class="body"><span class="b">'+p[0]+'</span><span class="t">'+p[1]+'</span>'
+    + '<span class="prices"><span class="now">'+p[2]+' ج.م</span></span></span></a>';
+}).join('');
+
+reveal();
+exclusive('.sz:not(:disabled)');
+exclusive('.sw');
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الأقسام · لوكال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>
+/* the category index: one big hairline grid, illustration-led */
+.cats{display:grid;gap:1px;background:var(--line);border-block:1px solid var(--line);
+  grid-template-columns:repeat(auto-fill,minmax(min(50%,208px),1fr))}
+.cat{background:var(--paper);padding:clamp(1.25rem,3vw,2rem) 1rem clamp(1.1rem,2.5vw,1.5rem);
+  display:grid;gap:.15rem;justify-items:center;text-align:center;
+  text-decoration:none;color:inherit;position:relative;
+  transition:background .45s var(--ease)}
+.cat:hover{background:var(--raise)}
+.cat figure{block-size:clamp(88px,10vw,132px);inline-size:100%;
+  display:grid;place-items:center;margin-block-end:.65rem}
+.cat svg{inline-size:100%;block-size:100%;fill:none;stroke:var(--ink);stroke-width:1;
+  stroke-linejoin:round;stroke-linecap:round;opacity:.8;
+  transition:transform .8s var(--slow),opacity .4s var(--ease)}
+.cat svg .solid{fill:var(--ink);opacity:.07;stroke:none}
+.cat:hover svg{transform:translateY(-7px) scale(1.03);opacity:1}
+.cat b{font-weight:400;font-size:.98rem;letter-spacing:-.012em}
+.cat small{font-family:var(--la);font-size:.64rem;letter-spacing:.13em;
+  text-transform:uppercase;opacity:.4;display:block;margin-block-start:.15rem}
+.cat .n{font-family:var(--la);font-size:.72rem;opacity:.45;margin-block-start:.35rem;
+  font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<div class="util">
+  <span>توصيل في نفس اليوم — القاهرة والجيزة</span>
+  <span>الدفع عند الاستلام</span>
+  <span>استبدال خلال ١٤ يوم</span>
+</div>
+
+<header>
+  <div class="hbar">
+    <a class="mark" href="index.html">لوكال</a>
+    <label class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" placeholder="دوّر على قطعة أو محل…" aria-label="بحث">
+    </label>
+    <nav class="tools">
+      <a href="categories.html" aria-current="page"><span class="lbl">الأقسام</span></a>
+      <a href="shops.html" data-mega aria-expanded="false"><span class="lbl">المحلات</span></a>
+      <a href="#">السلة <span class="cart-n">٢</span></a>
+    </nav>
+  </div>
+</header>
+
+<nav class="crumb" aria-label="مسار">
+  <a href="index.html">الرئيسية</a><span>/</span><span>الأقسام</span>
+</nav>
+
+<div class="phead">
+  <h1>الأقسام <em>١٢</em></h1>
+  <p>كل قسم بيوديك على القطع اللي موجودة دلوقتي على رفوف المحلات — مش على كتالوج.</p>
+</div>
+
+<div class="cats" id="cats"></div>
+
+<footer>
+  <div class="mark">لوكال</div>
+  <nav>
+    <a href="shops.html">المحلات</a><a href="#">انضم كمحل</a><a href="#">الشحن والاستبدال</a>
+    <a href="#">الأسئلة</a><a href="#">تواصل معنا</a>
+  </nav>
+</footer>
+
+<script src="app.js"></script>
+<script>
+var CATS = [
+  ['تيشيرتات','T-Shirts','tee','٩٤'],
+  ['قمصان','Shirts','shirt','٧١'],
+  ['تريكو','Knitwear','knit','٥٨'],
+  ['سويت شيرت','Sweatshirts','sweat','٤٦'],
+  ['بناطيل','Pants','pants','٨٣'],
+  ['شورتات','Shorts','shorts','٣٢'],
+  ['جواكت','Outerwear','jacket','٣٩'],
+  ['فساتين','Dresses','dress','٥٥'],
+  ['أحذية','Shoes','shoe','٤١'],
+  ['شنط','Bags','bag','٢٨'],
+  ['كابات','Caps','cap','١٩'],
+  ['شرابات','Socks','socks','١٦']
+];
+document.getElementById('cats').innerHTML = CATS.map(function(c,i){
+  return '<a class="cat rv" style="--d:'+(i%6*60)+'ms" href="index.html">'
+    + '<figure><svg viewBox="0 0 120 120">'+SHAPES[c[2]]+'</svg></figure>'
+    + '<b>'+c[0]+'</b><small>'+c[1]+'</small>'
+    + '<span class="n">'+c[3]+' قطعة</span></a>';
+}).join('');
+reveal();
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المحلات · لوكال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>
+/* The card itself lives in app.css as .shopcard — the home rail uses the very
+   same object. Only this page's own layout belongs here. */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:0 var(--pad) clamp(1.25rem,3vw,1.75rem);flex-wrap:wrap}
+.shops{display:grid;gap:1px;background:var(--line);border-block:1px solid var(--line);
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr))}
+.shops .sbody{padding:1rem 1.15rem 1.25rem}
+</style>
+</head>
+<body>
+
+<div class="util">
+  <span>توصيل في نفس اليوم — القاهرة والجيزة</span>
+  <span>الدفع عند الاستلام</span>
+  <span>استبدال خلال ١٤ يوم</span>
+</div>
+
+<header>
+  <div class="hbar">
+    <a class="mark" href="index.html">لوكال</a>
+    <label class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" placeholder="دوّر على قطعة أو محل…" aria-label="بحث">
+    </label>
+    <nav class="tools">
+      <a href="categories.html"><span class="lbl">الأقسام</span></a>
+      <a href="shops.html" aria-current="page" data-mega aria-expanded="false"><span class="lbl">المحلات</span></a>
+      <a href="#">السلة <span class="cart-n">٢</span></a>
+    </nav>
+  </div>
+</header>
+
+<nav class="crumb" aria-label="مسار">
+  <a href="index.html">الرئيسية</a><span>/</span><span>المحلات</span>
+</nav>
+
+<div class="phead">
+  <h1>المحلات <em>٢٤</em></h1>
+  <p>كل محل هنا له عنوان تقدر تعدّي عليه. تطلب أونلاين، والمحل نفسه يجهّز ويبعت.</p>
+</div>
+
+<div class="bar">
+  <div class="chips">
+    <button class="chip" aria-pressed="true">كل المناطق</button>
+    <button class="chip" aria-pressed="false">الزمالك</button>
+    <button class="chip" aria-pressed="false">وسط البلد</button>
+    <button class="chip" aria-pressed="false">مصر الجديدة</button>
+    <button class="chip" aria-pressed="false">المهندسين</button>
+    <button class="chip" aria-pressed="false">مدينة نصر</button>
+    <button class="chip" aria-pressed="false">المعادي</button>
+  </div>
+  <div class="chips">
+    <button class="chip" id="openonly" aria-pressed="false">المفتوح دلوقتي بس</button>
+  </div>
+</div>
+
+<div class="shops" id="shops"></div>
+
+<div class="more"><button type="button">اعرض المزيد</button></div>
+
+<footer>
+  <div class="mark">لوكال</div>
+  <nav>
+    <a href="categories.html">الأقسام</a><a href="#">انضم كمحل</a><a href="#">الشحن والاستبدال</a>
+    <a href="#">الأسئلة</a><a href="#">تواصل معنا</a>
+  </nav>
+</footer>
+
+<script src="app.js"></script>
+<script>
+/* SHOPS and shopCard both come from app.js, so this page and the home
+   rail can never drift into two different ideas of what a shop looks like. */
+function render(list){
+  var el = document.getElementById('shops');
+  el.innerHTML = list.length
+    ? list.map(function(s,i){ return shopCard(s, 'rv').replace('style=""','')
+        .replace('<a class="shopcard rv"','<a class="shopcard rv" style="--d:'+(i%4*70)+'ms"'); }).join('')
+    : '<p class="empty">مفيش محل مفتوح في المنطقة دي دلوقتي. جرّب منطقة تانية أو شيل الفلتر.</p>';
+  reveal();
+}
+render(SHOPS);
+
+/* the neighbourhood filter actually filters — a dead chip teaches nothing */
+document.querySelectorAll('.bar .chips:first-child .chip').forEach(function(c){
+  c.addEventListener('click', function(){
+    var hood = c.textContent.trim();
+    render(hood === 'كل المناطق' ? SHOPS : SHOPS.filter(function(s){ return s[1] === hood; }));
+  });
+});
+document.getElementById('openonly').addEventListener('click', function(){
+  var on = this.getAttribute('aria-pressed') !== 'true';
+  this.setAttribute('aria-pressed', on ? 'true' : 'false');
+  render(on ? SHOPS.filter(function(s){ return s[4]; }) : SHOPS);
+});
+</script>
+</body>
+</html>

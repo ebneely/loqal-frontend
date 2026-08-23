@@ -46,6 +46,7 @@
   ],
   "exclude": [
     "node_modules",
-    "Talabat-style storefront UI mockups"
+    "Talabat-style storefront UI mockups",
+    "design"
   ]
 }
