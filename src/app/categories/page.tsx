@@ -50,7 +50,7 @@ export default async function CategoriesPage() {
         <section className="lq-sec">
           <div className="lq-sec__head">
             <div>
-              <h1 className="lq-sec__title">{locale === "ar" ? "الأقسام" : "Categories"}</h1>
+              <h1 className="lq-phead__title">{locale === "ar" ? "الأقسام" : "Categories"}</h1>
               <p className="lq-eyebrow">
                 {locale === "ar"
                   ? "كل قطعة على رف في محل — مش في مخزن."

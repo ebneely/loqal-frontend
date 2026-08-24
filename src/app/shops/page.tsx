@@ -53,7 +53,7 @@ export default async function ShopsPage() {
         <section className="lq-sec">
           <div className="lq-sec__head">
             <div>
-              <h1 className="lq-sec__title">{locale === "ar" ? "المحلات" : "Shops"}</h1>
+              <h1 className="lq-phead__title">{locale === "ar" ? "المحلات" : "Shops"}</h1>
               <p className="lq-eyebrow">
                 {locale === "ar"
                   ? "محلات ليها عناوين حقيقية تقدر تعدّي عليها."

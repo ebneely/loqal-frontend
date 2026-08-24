@@ -93,26 +93,10 @@ const BAR: React.CSSProperties = {
   gap: "var(--space-2)",
 };
 
-/* The native marker is KEPT. `design/` swapped it for a +/− drawn in
-   `summary::after`, which a page file cannot reach; stripping it with
-   `list-style:none` and putting nothing back would leave a heading with no
-   affordance that it opens. The triangle mirrors under `dir="rtl"` on its own. */
-const SUMMARY: React.CSSProperties = {
-  cursor: "pointer",
-  paddingBlock: "var(--space-4)",
-  fontSize: "var(--text-base)",
-};
-
-const DETAIL_BODY: React.CSSProperties = {
-  paddingBlockEnd: "var(--space-4)",
-  maxInlineSize: "56ch",
-  lineHeight: "var(--leading-normal)",
-};
-
 /**
- * `<details>`, hairline-ruled. There is no disclosure component in the `lq-*`
- * layer, so the rule and the summary padding are set here rather than invented
- * as a class in a file this screen does not own.
+ * `<details>`, hairline-ruled — `.lq-disc` in the component layer. The rule, the
+ * 44px summary row and the `+` that becomes a `−` all live there, so this
+ * screen sets nothing but the reveal delay.
  */
 function Disclosure({
   title,
@@ -127,19 +111,12 @@ function Disclosure({
 }) {
   return (
     <details
-      className="lq-rv"
+      className="lq-disc lq-rv"
       open={open}
-      style={
-        {
-          borderBlockStart: "var(--border-width) solid var(--line)",
-          "--lq-d": `${delayMs}ms`,
-        } as React.CSSProperties
-      }
+      style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
     >
-      <summary style={SUMMARY}>{title}</summary>
-      <div className="lq-hint" style={DETAIL_BODY}>
-        {children}
-      </div>
+      <summary>{title}</summary>
+      <div className="lq-disc__body">{children}</div>
     </details>
   );
 }
@@ -394,14 +371,9 @@ export function ProductView({
             </Link>
 
             <h1
-              className="lq-rv"
+              className="lq-phead__title lq-rv"
               data-bidi
-              style={
-                {
-                  fontSize: "var(--text-2xl)",
-                  "--lq-d": "70ms",
-                } as React.CSSProperties
-              }
+              style={{ "--lq-d": "70ms" } as React.CSSProperties}
             >
               {name}
             </h1>
@@ -424,11 +396,15 @@ export function ProductView({
                 decimals. Latin numerals in both languages, and the currency
                 mark trails the figure in Arabic — all of that lives in `Money`.
 
-                The live figure stays INK even on a discount. `design/` set it in
-                `--signal`, and there is no `.lq-money--sale` in the component
-                layer to say so; the strike and the badge below already carry the
-                drop, and colour is never the only carrier anyway. */}
-              <Money className="lq-money" amount={price} locale={locale} />
+                The live figure takes `.lq-money--sale` when the price genuinely
+                dropped — red means exactly two things in this system and a price
+                that dropped is one of them. The strike and the badge carry the
+                same drop in words, so colour is never the only carrier. */}
+              <Money
+                className={off != null ? "lq-money lq-money--sale" : "lq-money"}
+                amount={price}
+                locale={locale}
+              />
               <MoneyWas amount={compareAt} locale={locale} />
               {/* Red means a price that dropped, and the badge carries the word —
                 colour and a strike-through are never the only carriers. */}

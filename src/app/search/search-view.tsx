@@ -159,9 +159,6 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
                 maxLength={200}
                 /* enterKeyHint so an Android keyboard shows "search", not "go" */
                 enterKeyHint="search"
-                /* Room for the clear button, which sits inside the field. The
-                   start padding is the icon's and stays as the class set it. */
-                style={{ paddingInlineEnd: "var(--space-10)" }}
               />
               {term.length > 0 ? (
                 <button
@@ -186,7 +183,7 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
 
         {/* ── Heading ──────────────────────────────────────────────────── */}
         <div className="lq-sec__head">
-          <h1 className="lq-sec__title" data-bidi>
+          <h1 className="lq-phead__title" data-bidi>
             {submitted.length > 0 ? heading : t.title}
           </h1>
 
@@ -209,237 +206,225 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
         </div>
 
         {/* ── Rail + results ───────────────────────────────────────────────
-            Flex-wrap rather than a media query, because nothing in this
-            register may read the viewport: the two columns hold while the
-            column stems fit side by side and stack the moment they do not, so
-            a 430px phone frame embedded in a desktop page stacks like a phone.
-            There is no `lq-*` class for a two-column page body. */}
-        <div
-          className="lq-sec"
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            alignItems: "flex-start",
-            gap: "var(--space-6)",
-          }}
-        >
-          <aside
-            className="lq-card lq-card--flat lq-card--pad"
-            aria-labelledby="lq-search-filters"
-            style={{ flex: "1 1 240px", minInlineSize: 0 }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "var(--space-2)",
-                marginBlockEnd: "var(--space-3)",
-              }}
+            `.lq-body` is flex-wrap rather than a media query, because nothing
+            in this register may read the viewport: the two columns hold while
+            the column stems fit side by side and stack the moment they do not,
+            so a 430px phone frame embedded in a desktop page stacks like a
+            phone. It sits INSIDE `.lq-sec` rather than beside it on the same
+            element, because `.lq-sec` is a flex COLUMN and would turn the two
+            stems into a stack at every width. */}
+        <div className="lq-sec">
+          <div className="lq-body">
+            <aside
+              className="lq-card lq-card--flat lq-card--pad lq-body__rail"
+              aria-labelledby="lq-search-filters"
             >
-              <span
-                className="lq-icon"
-                data-icon="sliders-horizontal"
-                aria-hidden="true"
-              />
-              <h2 id="lq-search-filters" className="lq-label">
-                {t.railTitle}
-              </h2>
-            </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                  marginBlockEnd: "var(--space-3)",
+                }}
+              >
+                <span
+                  className="lq-icon"
+                  data-icon="sliders-horizontal"
+                  aria-hidden="true"
+                />
+                <h2 id="lq-search-filters" className="lq-label">
+                  {t.railTitle}
+                </h2>
+              </div>
 
-            <hr className="lq-rule" />
+              <hr className="lq-rule" />
 
-            {/* No checkboxes, no size pills, no swatches, no range and no sort
-                — see the note at the top of this file. The register would
-                rather explain an absence than draw a control that lies. */}
-            <p
-              className="lq-hint"
-              style={{ marginBlockStart: "var(--space-3)" }}
+              {/* No checkboxes, no size pills, no swatches, no range and no sort
+                  — see the note at the top of this file. The register would
+                  rather explain an absence than draw a control that lies. */}
+              <p
+                className="lq-hint"
+                style={{ marginBlockStart: "var(--space-3)" }}
+              >
+                {t.railNote}
+              </p>
+              <p className="lq-hint" style={{ marginBlockStart: "var(--space-2)" }}>
+                {t.railSort}
+              </p>
+              <p className="lq-hint" style={{ marginBlockStart: "var(--space-3)" }}>
+                {t.railTip}{" "}
+                <Link href="/shops" style={{ color: "var(--green)" }}>
+                  {t.railLink}
+                </Link>
+                .
+              </p>
+            </aside>
+
+            <section
+              className="lq-body__main"
+              aria-label={ar ? "النتايج" : "Results"}
             >
-              {t.railNote}
-            </p>
-            <p className="lq-hint" style={{ marginBlockStart: "var(--space-2)" }}>
-              {t.railSort}
-            </p>
-            <p className="lq-hint" style={{ marginBlockStart: "var(--space-3)" }}>
-              {t.railTip}{" "}
-              <Link href="/shops" style={{ color: "var(--green)" }}>
-                {t.railLink}
-              </Link>
-              .
-            </p>
-          </aside>
-
-          <section
-            style={{ flex: "999 1 420px", minInlineSize: 0 }}
-            aria-label={ar ? "النتايج" : "Results"}
-          >
-            {submitted.length === 0 ? (
-              <>
-                <p className="lq-hint">{t.prompt}</p>
-                <p
-                  className="lq-eyebrow"
-                  style={{ marginBlock: "var(--space-4) var(--space-2)" }}
-                >
-                  {t.openers}
-                </p>
-                <div className="lq-cats">
-                  {OPENERS[locale].map((word) => (
-                    <button
-                      key={word}
-                      type="button"
-                      className="lq-cat"
-                      onClick={() => run(word)}
+              {submitted.length === 0 ? (
+                <>
+                  <p className="lq-hint">{t.prompt}</p>
+                  <p
+                    className="lq-eyebrow"
+                    style={{ marginBlock: "var(--space-4) var(--space-2)" }}
+                  >
+                    {t.openers}
+                  </p>
+                  <div className="lq-cats">
+                    {OPENERS[locale].map((word) => (
+                      <button
+                        key={word}
+                        type="button"
+                        className="lq-cat"
+                        onClick={() => run(word)}
+                      >
+                        {word}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : results.isPending ? (
+                /* A skeleton in the shape of the row it becomes — shop line,
+                   name line, figure — never a spinner in the middle of content. */
+                <div className="lq-rows">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "var(--space-4)",
+                        padding: "var(--space-4)",
+                      }}
                     >
-                      {word}
-                    </button>
+                      <span style={{ display: "grid", gap: 6, flex: "1 1 auto" }}>
+                        <span
+                          className="lq-skel"
+                          style={{ blockSize: 10, inlineSize: "28%" }}
+                        />
+                        <span
+                          className="lq-skel"
+                          style={{ blockSize: 14, inlineSize: "62%" }}
+                        />
+                      </span>
+                      <span
+                        className="lq-skel"
+                        style={{ blockSize: 14, inlineSize: 64, flex: "none" }}
+                      />
+                    </div>
                   ))}
                 </div>
-              </>
-            ) : results.isPending ? (
-              /* A skeleton in the shape of the row it becomes — shop line,
-                 name line, figure — never a spinner in the middle of content. */
-              <div className="lq-cells" style={{ gridTemplateColumns: "1fr" }}>
-                {[0, 1, 2, 3, 4].map((i) => (
+              ) : results.isError ? (
+                <div style={{ display: "grid", gap: "var(--space-3)", justifyItems: "start" }}>
+                  <p className="lq-hint lq-hint--error" role="alert">
+                    {t.failed}
+                  </p>
+                  <button
+                    type="button"
+                    className="lq-btn lq-btn--secondary lq-btn--sm"
+                    onClick={() => void results.refetch()}
+                  >
+                    <span
+                      className="lq-icon"
+                      data-icon="refresh-cw"
+                      aria-hidden="true"
+                    />
+                    {t.retry}
+                  </button>
+                </div>
+              ) : rows.length === 0 ? (
+                <p className="lq-hint">{t.none}</p>
+              ) : (
+                <>
+                  {/* The hairline grid, one column. Cells share their borders —
+                      a 1px gap over a --line ground — so every interior edge is
+                      drawn exactly once. `.lq-rows` rather than `.lq-cells`
+                      because that one widens to two and three columns on its
+                      own, and a result row is a full-width line of text and a
+                      figure. */}
+                  <div className="lq-rows">
+                    {rows.map((row, index) => (
+                      <Link
+                        key={row.id}
+                        href={`/shop/${row.brandSlug}/${row.slug}`}
+                        /*
+                          `.lq-card--link` carries the hover and press states and
+                          NOT `.lq-card`, whose own 1px border would double-draw
+                          every edge this grid already owns.
+
+                          NOT `.lq-line` either. That is the cart-line component
+                          and its grid is `72px 1fr auto` — a photo well, details,
+                          an end column. A search result has no photograph to put
+                          in the well, because the query does not select one.
+                        */
+                        className="lq-card--link lq-rv"
+                        style={
+                          {
+                            display: "flex",
+                            alignItems: "baseline",
+                            justifyContent: "space-between",
+                            gap: "var(--space-4)",
+                            padding: "var(--space-4)",
+                            minBlockSize: "var(--tap-min)",
+                            "--lq-d": `${(index % 6) * 70}ms`,
+                          } as React.CSSProperties
+                        }
+                      >
+                        <span style={{ display: "grid", gap: 2, minInlineSize: 0 }}>
+                          {/* The shop over the item: on a mixed result list a
+                              shopper is choosing a shop as much as a garment, and
+                              the shop is a place she could walk to. */}
+                          <span className="lq-pcard__brand" data-bidi>
+                            {row.brandName}
+                          </span>
+                          <span className="lq-pcard__name" data-bidi>
+                            {row.name?.[locale] ?? row.name?.ar ?? row.name?.en ?? row.slug}
+                          </span>
+                        </span>
+
+                        {/* basePrice, because the search query has no priceFrom to
+                            give. `Money` prints an em dash when it is null — a
+                            zero would be a claim the API never made. */}
+                        <Money
+                          amount={row.basePrice}
+                          locale={locale}
+                          className="lq-money"
+                        />
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* ── More, never page 7 of 12 ──────────────────────────── */}
                   <div
-                    key={i}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "var(--space-4)",
-                      padding: "var(--space-4)",
+                      display: "grid",
+                      gap: "var(--space-2)",
+                      justifyItems: "center",
+                      marginBlockStart: "var(--space-6)",
                     }}
                   >
-                    <span style={{ display: "grid", gap: 6, flex: "1 1 auto" }}>
-                      <span
-                        className="lq-skel"
-                        style={{ blockSize: 10, inlineSize: "28%" }}
-                      />
-                      <span
-                        className="lq-skel"
-                        style={{ blockSize: 14, inlineSize: "62%" }}
-                      />
-                    </span>
-                    <span
-                      className="lq-skel"
-                      style={{ blockSize: 14, inlineSize: 64, flex: "none" }}
-                    />
+                    {results.hasNextPage ? (
+                      <button
+                        type="button"
+                        className="lq-btn lq-btn--secondary"
+                        onClick={() => void results.fetchNextPage()}
+                        disabled={results.isFetchingNextPage}
+                        aria-busy={results.isFetchingNextPage}
+                      >
+                        {results.isFetchingNextPage ? t.loadingMore : t.more}
+                      </button>
+                    ) : (
+                      <p className="lq-hint">{t.end}</p>
+                    )}
                   </div>
-                ))}
-              </div>
-            ) : results.isError ? (
-              <div style={{ display: "grid", gap: "var(--space-3)", justifyItems: "start" }}>
-                <p className="lq-hint lq-hint--error" role="alert">
-                  {t.failed}
-                </p>
-                <button
-                  type="button"
-                  className="lq-btn lq-btn--secondary lq-btn--sm"
-                  onClick={() => void results.refetch()}
-                >
-                  <span
-                    className="lq-icon"
-                    data-icon="refresh-cw"
-                    aria-hidden="true"
-                  />
-                  {t.retry}
-                </button>
-              </div>
-            ) : rows.length === 0 ? (
-              <p className="lq-hint">{t.none}</p>
-            ) : (
-              <>
-                {/* The hairline grid, pinned to one column. Cells share their
-                    borders — a 1px gap over a --line ground — so every interior
-                    edge is drawn exactly once. `.lq-cells` widens to two and
-                    three columns on its own; a result row is a full-width line
-                    of text and a figure, so it is held at one. */}
-                <div className="lq-cells" style={{ gridTemplateColumns: "1fr" }}>
-                  {rows.map((row, index) => (
-                    <Link
-                      key={row.id}
-                      href={`/shop/${row.brandSlug}/${row.slug}`}
-                      /*
-                        `.lq-card--link` carries the hover and press states and
-                        NOT `.lq-card`, whose own 1px border would double-draw
-                        every edge this grid already owns.
-
-                        NOT `.lq-line` either. That is the cart-line component
-                        and its grid is `72px 1fr auto` — a photo well, details,
-                        an end column. A search result has no photograph to put
-                        in the well, because the query does not select one.
-                      */
-                      className="lq-card--link lq-rv"
-                      style={
-                        {
-                          display: "flex",
-                          alignItems: "baseline",
-                          justifyContent: "space-between",
-                          gap: "var(--space-4)",
-                          padding: "var(--space-4)",
-                          minBlockSize: "var(--tap-min)",
-                          /* `.lq-card--link:active` lands the block 4px off its
-                             own corner. That is a leftover of the elevation
-                             system the shadow tokens already retired, and
-                             inside a shared-hairline grid it tears a 4px strip
-                             of the --line ground open under the pressed row.
-                             DESIGN.md's press is a background change and
-                             nothing moving, which is what is left here. */
-                          translate: "none",
-                          "--lq-d": `${(index % 6) * 70}ms`,
-                        } as React.CSSProperties
-                      }
-                    >
-                      <span style={{ display: "grid", gap: 2, minInlineSize: 0 }}>
-                        {/* The shop over the item: on a mixed result list a
-                            shopper is choosing a shop as much as a garment, and
-                            the shop is a place she could walk to. */}
-                        <span className="lq-pcard__brand" data-bidi>
-                          {row.brandName}
-                        </span>
-                        <span className="lq-pcard__name" data-bidi>
-                          {row.name?.[locale] ?? row.name?.ar ?? row.name?.en ?? row.slug}
-                        </span>
-                      </span>
-
-                      {/* basePrice, because the search query has no priceFrom to
-                          give. `Money` prints an em dash when it is null — a
-                          zero would be a claim the API never made. */}
-                      <Money
-                        amount={row.basePrice}
-                        locale={locale}
-                        className="lq-money"
-                      />
-                    </Link>
-                  ))}
-                </div>
-
-                {/* ── More, never page 7 of 12 ──────────────────────────── */}
-                <div
-                  style={{
-                    display: "grid",
-                    gap: "var(--space-2)",
-                    justifyItems: "center",
-                    marginBlockStart: "var(--space-6)",
-                  }}
-                >
-                  {results.hasNextPage ? (
-                    <button
-                      type="button"
-                      className="lq-btn lq-btn--secondary"
-                      onClick={() => void results.fetchNextPage()}
-                      disabled={results.isFetchingNextPage}
-                      aria-busy={results.isFetchingNextPage}
-                    >
-                      {results.isFetchingNextPage ? t.loadingMore : t.more}
-                    </button>
-                  ) : (
-                    <p className="lq-hint">{t.end}</p>
-                  )}
-                </div>
-              </>
-            )}
-          </section>
+                </>
+              )}
+            </section>
+          </div>
         </div>
       </div>
     </Shell>

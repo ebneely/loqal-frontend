@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import type { CartBrand, CartLine, CartSummary } from "@loqal/contracts/cart.contract";
@@ -48,6 +49,8 @@ export function BagView() {
   const locale = useLocale();
   const { data: cart, isPending, isError, refetch } = useCart();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  /** Revealed by the checkout button. See the long note where it is rendered. */
+  const [checkoutNote, setCheckoutNote] = useState(false);
 
   const title = t("السلة", "Bag");
 
@@ -65,7 +68,7 @@ export function BagView() {
     return (
       <Shell title={title}>
         <div className="lq-wrap lq-pad lq-sec">
-          <h1 className="lq-sec__title" style={PAGE_TITLE}>
+          <h1 className="lq-phead__title">
             {title}
           </h1>
           <p className="lq-hint lq-hint--error" role="alert">
@@ -107,7 +110,7 @@ export function BagView() {
             what decides how many deliveries arrive and how many times
             delivery is charged. */}
         <header className="lq-sec">
-          <h1 className="lq-sec__title" style={PAGE_TITLE}>
+          <h1 className="lq-phead__title">
             {title}
           </h1>
           <p className="lq-hint">
@@ -126,7 +129,7 @@ export function BagView() {
               en={{ one: "shop", other: "shops" }}
             />
           </p>
-          <p style={PROSE}>
+          <p className="lq-prose">
             {t(
               "كل محل بيجهّز ويبعت نصّه بنفسه، فبيوصلوك في وقتين مختلفين.",
               "Each shop packs and sends its own half, so they arrive at different times."
@@ -163,6 +166,19 @@ export function BagView() {
         ))}
 
         <Summary cart={cart} locale={locale} blocked={blocked} />
+
+        {/* Sits above the action bar rather than inside it: `.lq-actionbar` is a
+            single flex row sized for a figure and a button, and a sentence
+            wedged into it would either squeeze the price or push the button
+            out of thumb reach. */}
+        {checkoutNote ? (
+          <p className="lq-prose" role="status">
+            {t(
+              "إتمام الأوردر لسه مش شغال. حاجاتك محفوظة في السلة، وتقدر تكلّم المحل على واتساب لو محتاج القطعة دلوقتي.",
+              "Checkout is not live yet. Your bag is saved, and you can message the shop on WhatsApp if you need the piece now."
+            )}
+          </p>
+        ) : null}
       </div>
 
       {/* ── The one action of the screen ────────────────────────────────────
@@ -175,15 +191,38 @@ export function BagView() {
           <span className="lq-actionbar__label">{t("القطع", "Items")}</span>
           <Money className="lq-money" amount={cart.subtotal} locale={locale} reconciled />
         </div>
-        <Link
-          href="/checkout"
+        {/*
+          A BUTTON, NOT A LINK, because /checkout does not exist.
+
+          This was `<Link href="/checkout">` — the primary action of the busiest
+          screen in the app, pointing at the one missing route in the whole
+          project. A shopper who filled a bag and tapped it landed on a 404,
+          which is the same failure the order lookup had: the product breaks
+          precisely when somebody does everything right.
+
+          It is not built because nothing can build it yet. There is no
+          create-order body anywhere in order.contract.ts — only
+          transitionBrandOrderBodySchema, which is the brand's side — and
+          shippingAddressSchema is a snapshot INSIDE an order rather than an
+          address book to pick from. A checkout screen would have to invent the
+          contract that takes somebody's money and address, which is the last
+          thing to guess at.
+
+          So the button says so and names what the shopper can still do: the bag
+          is saved, and the shop is reachable. The delivery method above it IS
+          wired, so the screen is not inert — the one checkout decision the API
+          can currently answer is answerable here.
+        */}
+        <button
+          type="button"
           className="lq-btn lq-btn--primary lq-btn--lg"
           // Every shop's minimum has to be met, because each one is a separate
           // order that shop has to be willing to fulfil.
           aria-disabled={blocked.length > 0}
+          onClick={() => setCheckoutNote(true)}
         >
           {t("إتمام الأوردر", "Checkout")}
-        </Link>
+        </button>
       </div>
     </Shell>
   );
@@ -269,12 +308,12 @@ function ShopLot({
 
       {/* This shop's own two figures. They are here rather than in one basket
           footer because the shop charges them, not Loqal. */}
-      <div className="lq-sec__head">
+      <div className="lq-sum__row">
         <span className="lq-hint">{t("مجموع المحل", "Shop subtotal")}</span>
         <Money className="lq-money" amount={brand.subtotal} locale={locale} reconciled />
       </div>
 
-      <div className="lq-sec__head">
+      <div className="lq-sum__row">
         <span style={STACK}>
           <span className="lq-hint">{t("توصيل المحل", "Shop delivery")}</span>
           {deliveryMethod ? (
@@ -318,13 +357,13 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
           photography and the cart line carries no image URL, so the well holds
           the same hairline-framed line art the catalogue draws, seeded from the
           product's own id so the piece keeps one drawing across reloads. */}
-      <span className="lq-line__well lq-pcard__well">
+      <span className="lq-line__well">
         <Garment className="lq-garment" kind={garmentFor(line.productId)} />
       </span>
 
       {/* A grid stack, because `.lq-line__name` and `.lq-line__meta` are both
           inline and would otherwise run together on one line. */}
-      <div style={STACK}>
+      <div className="lq-line__body">
         <span className="lq-line__name" data-bidi>
           {name}
         </span>
@@ -443,7 +482,7 @@ function Summary({
       <hr className="lq-rule" />
       <h2 className="lq-sec__title">{t("الملخص", "Summary")}</h2>
 
-      <div className="lq-sec__head">
+      <div className="lq-sum__row">
         <span className="lq-hint">
           {t("القطع", "Items")}{" ("}
           <span data-num>{cart.itemCount}</span>
@@ -454,7 +493,7 @@ function Summary({
 
       <DeliveryPicker cart={cart} locale={locale} />
 
-      <div className="lq-sec__head">
+      <div className="lq-sum__row">
         <span className="lq-hint">
           {t("التوصيل — كل محل لوحده", "Delivery — each shop separately")}
         </span>
@@ -472,7 +511,7 @@ function Summary({
         )}
       </div>
 
-      <div className="lq-sec__head">
+      <div className="lq-sum__row">
         <span className="lq-sec__title">{t("الإجمالي التقريبي", "Estimated total")}</span>
         <Money
           className="lq-money"
@@ -484,13 +523,13 @@ function Summary({
 
       {/* The two sentences that explain the two things a shopper discovers at
           the worst possible moment otherwise. Both stay verbatim. */}
-      <p style={PROSE}>
+      <p className="lq-prose">
         {t(
           "مصاريف التوصيل لكل محل لوحده — الأوردر من محلين بيتحسب مرتين.",
           "Delivery is charged per shop — an order from two shops is charged twice."
         )}
       </p>
-      <p style={PROSE}>
+      <p className="lq-prose">
         {t(
           "كل محل بيراجع الرف قبل ما يأكد نصّه. لو قطعة خلصت، بنلغيها ومش بتتحاسب عليها — وباقي الأوردر بيكمّل عادي.",
           "Each shop checks its shelf before it confirms its half. A piece that has sold out is dropped and not charged, and the rest of the order carries on."
@@ -529,7 +568,7 @@ function EmptyBag({ locale }: { locale: Locale }) {
 
   return (
     <div className="lq-wrap lq-pad lq-sec">
-      <h1 className="lq-sec__title" style={PAGE_TITLE}>
+      <h1 className="lq-phead__title">
         {t("السلة", "Bag")}
       </h1>
 
@@ -541,7 +580,7 @@ function EmptyBag({ locale }: { locale: Locale }) {
         <Garment className="lq-garment" kind="bag" />
       </span>
 
-      <p style={PROSE}>
+      <p className="lq-prose">
         {t(
           "الحاجات اللي تختارها من أي محل تظهر هنا، كل محل في قسم لوحده — بمجموعه ومصاريف توصيله، لأن كل محل بيبعت نصّه بنفسه.",
           "Whatever you pick from any shop shows up here, each shop in its own section — with its own subtotal and its own delivery fee, because each shop sends its own half."
@@ -573,7 +612,7 @@ function BagSkeleton() {
           {[0, 1].map((line) => (
             <div className="lq-line" key={line}>
               <span className="lq-skel" style={{ aspectRatio: "var(--ratio-garment)" }} />
-              <span style={STACK}>
+              <span className="lq-line__body">
                 <span className="lq-skel" style={{ blockSize: 16, inlineSize: "70%" }} />
                 <span className="lq-skel" style={{ blockSize: 13, inlineSize: "40%" }} />
                 <span className="lq-skel" style={{ blockSize: 44, inlineSize: "9rem" }} />
@@ -748,23 +787,10 @@ function deliveryLabel(method: DeliveryMethod, locale: Locale): string {
   return labels[method][locale === "ar" ? 0 : 1];
 }
 
-/**
- * Three inline styles, and they are here rather than in components.css because
- * the class layer is copied verbatim from the design system and is not this
- * screen's to extend. Each one is a gap reported alongside the work: there is
- * no page-title class (26px is the register's page title and `.lq-sec__title`
- * is the 20px section title), and no prose class capping a paragraph at the
- * 62ch measure the system specifies.
- */
-const PAGE_TITLE: CSSProperties = { fontSize: "var(--text-2xl)" };
 
-const PROSE: CSSProperties = {
-  maxInlineSize: "var(--prose-max)",
-  color: "var(--ink-2)",
-  fontSize: "var(--text-sm)",
-  fontWeight: 300,
-};
-
+/* Still inline where the stack is NOT a cart line body: a shop header, the
+   delivery label pair, the picker. `.lq-line__body` is the same three
+   declarations but it is named for the cart line and only belongs there. */
 const STACK: CSSProperties = {
   display: "grid",
   gap: "var(--space-1)",

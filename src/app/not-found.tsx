@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
 
 /**
  * The 404.
@@ -24,25 +23,6 @@ import type { CSSProperties } from "react";
  * an incident.
  */
 
-const ROW: CSSProperties = {
-  minBlockSize: "var(--tap-primary)",
-  paddingInline: "var(--space-4)",
-  paddingBlock: "var(--space-3)",
-  gap: "var(--space-3)",
-};
-
-const LEAD: CSSProperties = { fontSize: 16, color: "var(--ink-2)", flex: "none" };
-
-const TRAIL: CSSProperties = {
-  marginInlineStart: "auto",
-  fontSize: 16,
-  color: "var(--ink-3)",
-  flex: "none",
-};
-
-/** One column at every width — `.lq-cells` goes 2-up at 520 and 3-up at 720. */
-const LIST: CSSProperties = { gridTemplateColumns: "1fr" };
-
 const WAYS_OUT = [
   { href: "/", icon: "house", ar: "الرئيسية", en: "Home" },
   { href: "/shops", icon: "store", ar: "المحلات", en: "Shops" },
@@ -64,17 +44,11 @@ export default function NotFound() {
           </Link>
 
           <div style={{ display: "grid", gap: "var(--space-2)" }}>
-            <h1 className="lq-sec__title" style={{ fontSize: "var(--text-2xl)" }}>
-              العنوان ده مش موجود
-            </h1>
-            <p className="lq-hint" style={{ maxInlineSize: "62ch", lineHeight: "var(--leading-normal)" }}>
+            <h1 className="lq-phead__title">العنوان ده مش موجود</h1>
+            <p className="lq-prose">
               يمكن الرابط اتغيّر، أو القطعة اتشالت من رفّ المحل.
             </p>
-            <p
-              className="lq-hint"
-              lang="en"
-              style={{ maxInlineSize: "62ch", lineHeight: "var(--leading-normal)" }}
-            >
+            <p className="lq-prose" lang="en">
               This address does not exist. The link may have changed, or the piece may
               have come off the shop&apos;s shelf.
             </p>
@@ -82,18 +56,18 @@ export default function NotFound() {
 
           {/* The same hairline list the rest of the app navigates with: cells
               share their borders, so every interior edge is drawn once. */}
-          <div className="lq-cells" style={LIST}>
+          <div className="lq-rows">
             {WAYS_OUT.map((way) => (
-              <Link key={way.href} href={way.href} className="lq-selitem" style={ROW}>
-                <span className="lq-icon" data-icon={way.icon} style={LEAD} aria-hidden="true" />
-                <span style={{ display: "grid", gap: 2, minInlineSize: 0 }}>
+              <Link key={way.href} href={way.href} className="lq-row">
+                <span className="lq-icon lq-row__lead" data-icon={way.icon} aria-hidden="true" />
+                <span className="lq-row__body">
                   <span>{way.ar}</span>
                   <span className="lq-hint" lang="en" data-bidi>
                     {way.en}
                   </span>
                 </span>
                 {/* Mirrors under RTL by the one base-layer rule in globals.css. */}
-                <span className="lq-icon" data-icon="chevron-right" style={TRAIL} aria-hidden="true" />
+                <span className="lq-icon lq-row__end" data-icon="chevron-right" aria-hidden="true" />
               </Link>
             ))}
           </div>

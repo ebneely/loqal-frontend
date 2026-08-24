@@ -192,7 +192,7 @@ export function OrdersView() {
         <section className="lq-sec">
           <div className="lq-sec__head">
             <div>
-              <h1 className="lq-sec__title">{t.title}</h1>
+              <h1 className="lq-phead__title">{t.title}</h1>
               <p className="lq-eyebrow">{t.lead}</p>
             </div>
           </div>
@@ -299,20 +299,21 @@ export function OrdersView() {
               <p className="lq-hint">{t.comingLead}</p>
               <p className="lq-hint">{t.journeyLead}</p>
 
-              {/* The hairline stack: cells share their borders. Forced to one
-                  column because this is a SEQUENCE — the container query would
-                  otherwise wrap it into three across at 720 and the order of
-                  the steps would stop being the order of the reading. */}
+              {/* The hairline stack: cells share their borders. `.lq-rows` and
+                  not `.lq-cells` because this is a SEQUENCE — `.lq-cells` steps
+                  to two across at 520 and three at 720, and the order of the
+                  steps would stop being the order of the reading. The list
+                  reset stays inline: `.lq-rows` is a grid, not a list. */}
               <ol
-                className="lq-cells"
-                style={{
-                  gridTemplateColumns: "1fr",
-                  listStyle: "none",
-                  margin: 0,
-                  padding: 0,
-                }}
+                className="lq-rows"
+                style={{ listStyle: "none", margin: 0, padding: 0 }}
               >
                 {JOURNEY.map((step, index) => (
+                  /* NOT `.lq-row`. That class is a tappable destination — it
+                     carries a pointer cursor and a `--raise` hover — and these
+                     steps go nowhere. It also has no `flex-wrap`, and the
+                     sentence beside the pill is `flex:1 1 16rem` precisely so
+                     it drops to its own line on a phone. */
                   <li
                     key={step.status}
                     className="lq-rv"

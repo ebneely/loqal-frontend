@@ -54,39 +54,6 @@ export async function generateMetadata({
   };
 }
 
-/**
- * The hairline product grid.
- *
- * Cells SHARE their borders — a 1px gap over a `--line` ground with one rule
- * top and bottom, which is the register's whole structural move. `.lq-grid2`
- * already carries the container-query column steps the system asks for (2-up
- * phone, 3-up at 768, 4-up at 1024); the gap and the ground are overridden here
- * rather than in a new class, because components.css is not this screen's file.
- *
- * Each card sits in a padded paper cell instead of flush against the rule, the
- * way `.lq-shopcard` sits inside `.lq-cells` — `.lq-pcard` frames its own well,
- * and two hairlines touching read as one 2px line.
- */
-const GRID: React.CSSProperties = {
-  gap: "1px",
-  background: "var(--line)",
-  borderBlock: "var(--border-width) solid var(--line)",
-};
-
-const CELL: React.CSSProperties = {
-  background: "var(--paper)",
-  padding: "var(--space-3)",
-};
-
-const CRUMB: React.CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: "var(--space-2)",
-  paddingBlock: "var(--space-3)",
-  borderBlockEnd: "var(--border-width) solid var(--line)",
-};
-
 export default async function ShopPage({ params }: { params: Promise<Params> }) {
   const { brand } = await params;
   const page = await load(brand);
@@ -100,7 +67,7 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
       <div className="lq-wrap">
         {/* The trail back out. A shopper who arrived on a shop from a search
             result has no other way up to the shop index. */}
-        <nav className="lq-pad" style={CRUMB} aria-label={ar ? "مسار" : "Breadcrumb"}>
+        <nav className="lq-pad lq-crumb" aria-label={ar ? "مسار" : "Breadcrumb"}>
           <Link className="lq-eyebrow" href="/">
             {ar ? "الرئيسية" : "Home"}
           </Link>
@@ -165,20 +132,22 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
               : "This shop has not listed anything yet. The first piece it adds shows up here."}
           </p>
         ) : (
-          <div className="lq-grid2" style={GRID}>
+          /* Cells SHARE their borders and `.lq-pgrid > *` supplies the paper
+             ground and the padding, so the card is the cell — a wrapper here
+             would only re-pad what the grid already padded. */
+          <div className="lq-pgrid">
             {page.items.map((product, index) => (
-              <div key={product.id} style={CELL}>
-                <ProductCard
-                  product={product}
-                  brandSlug={brand}
-                  brandName={brand}
-                  locale={locale}
-                  /* The first row is the LCP. Everything below it stays lazy. */
-                  priority={index < 2}
-                  /* Staggered by column, so a row enters as a row. */
-                  delayMs={(index % 4) * 70}
-                />
-              </div>
+              <ProductCard
+                key={product.id}
+                product={product}
+                brandSlug={brand}
+                brandName={brand}
+                locale={locale}
+                /* The first row is the LCP. Everything below it stays lazy. */
+                priority={index < 2}
+                /* Staggered by column, so a row enters as a row. */
+                delayMs={(index % 4) * 70}
+              />
             ))}
           </div>
         )}

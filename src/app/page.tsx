@@ -18,19 +18,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-/**
- * A rail cell has to be told how wide it is.
- *
- * `.lq-rail > *` is `flex:none`, which leaves a cell at its content width — so
- * a two-word category and a five-word one would be two different sizes in the
- * same hairline row, and the shared 1px edges would land on no rhythm at all.
- * These are the two widths from `design/index.html` (`#rail1 .item`,
- * `#rail2 .shopcard`), carried here as inline sizes because a rail cell width
- * is not in the `lq-*` layer and this file may not add to it.
- */
-const CAT_CELL = "clamp(104px, 12vw, 140px)";
-const SHOP_CELL = "clamp(224px, 22vw, 272px)";
-
 export default async function HomePage() {
   const locale = defaultLocale;
 
@@ -88,7 +75,7 @@ export default async function HomePage() {
                     : "Every piece is on a shelf in a shop, not in a warehouse."}
                 </p>
               </div>
-              <Link className="lq-btn lq-btn--ghost lq-btn--sm" href="/categories">
+              <Link className="lq-sec__more" href="/categories">
                 {locale === "ar" ? "كل الأقسام" : "All categories"}
               </Link>
             </div>
@@ -99,28 +86,32 @@ export default async function HomePage() {
                 a category keeps the same drawing here and on `/categories`. */}
             <div className="lq-rail">
               {cats.map((category, index) => (
-                <Link
-                  key={category.id}
-                  href={`/search?category=${encodeURIComponent(category.slug)}`}
-                  className="lq-tile lq-rv"
-                  style={
-                    {
-                      /* Modulo, not the raw index: a rail shows about six cells
-                         at a time, and a straight stagger would leave the
-                         twelfth category sitting visible and unanimated for
-                         three-quarters of a second after it scrolls in. */
-                      "--lq-d": `${(index % 6) * 70}ms`,
-                      inlineSize: CAT_CELL,
-                    } as React.CSSProperties
-                  }
-                >
-                  <span className="lq-tile__art">
-                    <Garment className="lq-garment" kind={garmentFor(category.slug)} />
-                  </span>
-                  <span className="lq-tile__name" data-bidi>
-                    {category.name[locale] ?? category.name.ar ?? category.name.en}
-                  </span>
-                </Link>
+                /* The width lives on the CELL, not on the tile: `.lq-rail__cell`
+                   carries `display:grid` as well as the width, and `.lq-tile` is
+                   a centred flex column — putting both on one element would let
+                   the later rule win and slide the drawing off centre. */
+                <div key={category.id} className="lq-rail__cell lq-rail__cell--tile">
+                  <Link
+                    href={`/search?category=${encodeURIComponent(category.slug)}`}
+                    className="lq-tile lq-rv"
+                    style={
+                      {
+                        /* Modulo, not the raw index: a rail shows about six cells
+                           at a time, and a straight stagger would leave the
+                           twelfth category sitting visible and unanimated for
+                           three-quarters of a second after it scrolls in. */
+                        "--lq-d": `${(index % 6) * 70}ms`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <span className="lq-tile__art">
+                      <Garment className="lq-garment" kind={garmentFor(category.slug)} />
+                    </span>
+                    <span className="lq-tile__name" data-bidi>
+                      {category.name[locale] ?? category.name.ar ?? category.name.en}
+                    </span>
+                  </Link>
+                </div>
               ))}
             </div>
           </section>
@@ -142,7 +133,7 @@ export default async function HomePage() {
             {/* Rendered whatever the fetch did. The rail below is the first page
                 of twenty-four, and `/shops` is still the right destination when
                 the rail is empty or the read failed. */}
-            <Link className="lq-btn lq-btn--ghost lq-btn--sm" href="/shops">
+            <Link className="lq-sec__more" href="/shops">
               {locale === "ar" ? "كل المحلات" : "All shops"}
             </Link>
           </div>
@@ -183,7 +174,7 @@ export default async function HomePage() {
                    the rail: a shop with a one-line description and one with a
                    three-line one would otherwise leave a band of bare paper
                    under the shorter card, inside a frame made of hairlines. */
-                <div key={shop.id} style={{ inlineSize: SHOP_CELL, display: "grid" }}>
+                <div key={shop.id} className="lq-rail__cell">
                   <ShopCard shop={shop} locale={locale} delayMs={(index % 4) * 70} />
                 </div>
               ))}

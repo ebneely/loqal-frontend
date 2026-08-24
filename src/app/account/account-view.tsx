@@ -13,10 +13,11 @@ import { Shell } from "@/components/shell";
  * Account.
  *
  * A HAIRLINE LIST OF ROWS, because this screen is a set of destinations rather
- * than a page of prose. Every group is a `.lq-cells` grid forced to one column:
- * cells share their borders — a 1px gap over a `--line` background with one
- * border around the outside — so every interior edge is drawn exactly once.
- * That is the register's structural move, and it is why there is no card here.
+ * than a page of prose. Every group is a `.lq-rows` stack, the one-column
+ * hairline grid: cells share their borders — a 1px gap over a `--line`
+ * background with one border around the outside — so every interior edge is
+ * drawn exactly once. That is the register's structural move, and it is why
+ * there is no card here.
  *
  * WHY THIS SCREEN CARRIES THE FOOTER'S LINKS. The dark footer is desktop-only —
  * a container query in components.css hides it under 720px, where a 400px dark
@@ -45,45 +46,11 @@ import { Shell } from "@/components/shell";
  */
 
 /**
- * The row.
- *
- * 52px is `--tap-primary`, the floor for the primary action of a screen — and
- * on this screen every row is one. `.lq-selitem` is the vocabulary's only
- * list-row primitive (a flex row with a start-aligned label and a `--raise`
- * hover); the geometry below is the difference between its 44px select-panel
- * size and the 52px this screen needs. See the note in the final report: there
- * is no `.lq-row` in components.css to carry this.
+ * The row is `.lq-row`, the register's own list-row primitive: 52px, which is
+ * `--tap-primary`, the floor for the primary action of a screen — and on this
+ * screen every row is one. `.lq-selitem` is sized for the Select popover (44px)
+ * and was only ever standing in for this while it did not exist.
  */
-const ROW: CSSProperties = {
-  minBlockSize: "var(--tap-primary)",
-  paddingInline: "var(--space-4)",
-  paddingBlock: "var(--space-3)",
-  gap: "var(--space-3)",
-};
-
-/** One column at every width. `.lq-cells` goes 2-up at 520 and 3-up at 720. */
-const LIST: CSSProperties = { gridTemplateColumns: "1fr" };
-
-/** 16px is the icon size for a list row. */
-const LEAD: CSSProperties = { fontSize: 16, color: "var(--ink-2)", flex: "none" };
-
-/**
- * Pushed to the inline END by `margin-inline-start:auto` — logical, so it is
- * the left in Arabic and the right in English with no mirrored rule. The
- * chevron glyph itself is flipped by the one base-layer rule in globals.css.
- */
-const TRAIL: CSSProperties = {
-  marginInlineStart: "auto",
-  fontSize: 16,
-  color: "var(--ink-3)",
-  flex: "none",
-};
-
-const STACK: CSSProperties = { display: "grid", gap: 2, minInlineSize: 0 };
-
-/** Prose caps at 62ch and Arabic needs the leading. */
-const PROSE: CSSProperties = { maxInlineSize: "62ch", lineHeight: "var(--leading-normal)" };
-
 function RowLink({
   icon,
   label,
@@ -100,8 +67,8 @@ function RowLink({
 }) {
   const body = (
     <>
-      <span className="lq-icon" data-icon={icon} style={LEAD} aria-hidden="true" />
-      <span style={STACK}>
+      <span className="lq-icon lq-row__lead" data-icon={icon} aria-hidden="true" />
+      <span className="lq-row__body">
         <span>{label}</span>
         {meta ? (
           <span className="lq-hint" data-bidi>
@@ -109,22 +76,17 @@ function RowLink({
           </span>
         ) : null}
       </span>
-      <span className="lq-icon" data-icon="chevron-right" style={TRAIL} aria-hidden="true" />
+      {/* Mirrors under RTL by the one base-layer rule in globals.css. */}
+      <span className="lq-icon lq-row__end" data-icon="chevron-right" aria-hidden="true" />
     </>
   );
 
   return external ? (
-    <a
-      className="lq-selitem"
-      style={ROW}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <a className="lq-row" href={href} target="_blank" rel="noopener noreferrer">
       {body}
     </a>
   ) : (
-    <Link className="lq-selitem" style={ROW} href={href}>
+    <Link className="lq-row" href={href}>
       {body}
     </Link>
   );
@@ -154,15 +116,14 @@ function RowDisclosure({
     <div>
       <button
         type="button"
-        className="lq-selitem"
-        style={ROW}
+        className="lq-row"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={onToggle}
       >
-        <span className="lq-icon" data-icon={icon} style={LEAD} aria-hidden="true" />
+        <span className="lq-icon lq-row__lead" data-icon={icon} aria-hidden="true" />
         <span>{label}</span>
-        <span className="lq-icon lq-chev" data-icon="chevron-down" style={TRAIL} aria-hidden="true" />
+        <span className="lq-icon lq-chev lq-row__end" data-icon="chevron-down" aria-hidden="true" />
       </button>
       {open ? (
         <div
@@ -256,7 +217,7 @@ export function AccountView() {
         <section className="lq-sec lq-rv">
           <div className="lq-sec__head">
             <div>
-              <h1 className="lq-sec__title">{t.title}</h1>
+              <h1 className="lq-phead__title">{t.title}</h1>
               <p className="lq-eyebrow">{t.lede}</p>
             </div>
           </div>
@@ -275,12 +236,8 @@ export function AccountView() {
               <span className="lq-pcard__name" style={{ fontSize: "var(--text-base)" }}>
                 {t.guest}
               </span>
-              <p className="lq-hint" style={PROSE}>
-                {t.guestBody}
-              </p>
-              <p className="lq-hint" style={PROSE}>
-                {t.noSignIn}
-              </p>
+              <p className="lq-prose">{t.guestBody}</p>
+              <p className="lq-prose">{t.noSignIn}</p>
               {/* The way out of the guest state. It existed nowhere before:
                   auth-client exported `signIn`, nothing called it, and a
                   shopper who signed out could not sign back in. */}
@@ -290,13 +247,12 @@ export function AccountView() {
             </div>
           )}
 
-          <div className="lq-cells" style={LIST}>
+          <div className="lq-rows">
             <RowLink icon="package" label={t.orders} href="/orders" />
             {session?.user ? (
               <button
                 type="button"
-                className="lq-selitem"
-                style={ROW}
+                className="lq-row"
                 onClick={() => {
                   /*
                     A DOCUMENT LOAD, and the lint rule that objects to it is
@@ -311,7 +267,7 @@ export function AccountView() {
                   void signOut().finally(() => window.location.assign("/"));
                 }}
               >
-                <span className="lq-icon" data-icon="arrow-right" style={LEAD} aria-hidden="true" />
+                <span className="lq-icon lq-row__lead" data-icon="arrow-right" aria-hidden="true" />
                 <span>{t.signOut}</span>
               </button>
             ) : null}
@@ -322,15 +278,14 @@ export function AccountView() {
         {/* The ONLY place the language switches. One language per session. */}
         <section className="lq-sec lq-rv" style={{ "--lq-d": "70ms" } as CSSProperties}>
           <span className="lq-eyebrow">{t.language}</span>
-          <div className="lq-cells" style={LIST}>
+          <div className="lq-rows">
             {(["ar", "en"] as const).map((code) => {
               const current = locale === code;
               return (
                 <button
                   key={code}
                   type="button"
-                  className="lq-selitem"
-                  style={ROW}
+                  className="lq-row"
                   aria-pressed={current}
                   data-active={current ? "true" : undefined}
                   onClick={() => setLocaleCookie(code)}
@@ -342,9 +297,12 @@ export function AccountView() {
                       carries the state as well as the colour does. */}
                   {current ? (
                     <span
-                      className="lq-icon"
+                      className="lq-icon lq-row__end"
                       data-icon="check"
-                      style={{ ...TRAIL, color: "var(--green)" }}
+                      /* The one thing the class cannot carry: green is
+                         "checked", per the colour rule, and `.lq-row__end` is
+                         the muted chevron colour. */
+                      style={{ color: "var(--green)" }}
                       aria-hidden="true"
                     />
                   ) : null}
@@ -359,7 +317,7 @@ export function AccountView() {
             the domain under each label and a new tab. */}
         <section className="lq-sec lq-rv" style={{ "--lq-d": "140ms" } as CSSProperties}>
           <span className="lq-eyebrow">{t.loqal}</span>
-          <div className="lq-cells" style={LIST}>
+          <div className="lq-rows">
             <RowLink
               icon="info"
               label={t.about}
@@ -380,7 +338,7 @@ export function AccountView() {
         {/* ── Help ──────────────────────────────────────────────────────── */}
         <section className="lq-sec lq-rv" style={{ "--lq-d": "210ms" } as CSSProperties}>
           <span className="lq-eyebrow">{t.help}</span>
-          <div className="lq-cells" style={LIST}>
+          <div className="lq-rows">
             <RowDisclosure
               id="lq-acc-shipping"
               icon="truck"
@@ -388,12 +346,12 @@ export function AccountView() {
               open={open === "shipping"}
               onToggle={() => toggle("shipping")}
             >
-              <p className="lq-hint" style={PROSE}>
+              <p className="lq-prose">
                 {ar
                   ? "المحل بيجهّز الأوردر من رفّه ويحجز المندوب بنفسه. القاهرة والجيزة في نفس اليوم."
                   : "The shop packs the order off its own shelf and books the courier itself. Cairo and Giza, same day."}
               </p>
-              <p className="lq-hint" style={PROSE}>
+              <p className="lq-prose">
                 {ar
                   ? "لو اشتريت من أكتر من محل، كل محل بيبعت نصّه لوحده وبرسوم توصيل خاصة بيه، وليه حالة منفصلة في أوردراتي. مفيش وقت وصول واحد للأوردر كله."
                   : "If you bought from more than one shop, each shop sends its own half with its own delivery fee and its own status in your orders. There is no single arrival time for the whole order."}
@@ -407,12 +365,12 @@ export function AccountView() {
               open={open === "returns"}
               onToggle={() => toggle("returns")}
             >
-              <p className="lq-hint" style={PROSE}>
+              <p className="lq-prose">
                 {ar
                   ? "استبدال خلال 14 يوم من الاستلام، والقطعة بحالتها زي ما وصلتك."
                   : "Exchange within 14 days of delivery, with the piece in the state it arrived in."}
               </p>
-              <p className="lq-hint" style={PROSE}>
+              <p className="lq-prose">
                 {ar
                   ? "الاستبدال بيمشي مع المحل اللي باعلك، لأن القطعة رجعت لرفّه هو. كلّم المحل من صفحة الأوردر."
                   : "The exchange goes through the shop that sold you the piece, because it goes back onto that shop's shelf. Contact the shop from the order page."}
@@ -431,7 +389,7 @@ export function AccountView() {
                   <span style={{ fontSize: "var(--text-sm)", fontWeight: "var(--weight-medium)" }}>
                     {item.q}
                   </span>
-                  <p className="lq-hint" style={PROSE}>
+                  <p className="lq-prose">
                     {item.a}
                   </p>
                 </div>
