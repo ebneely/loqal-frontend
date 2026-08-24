@@ -80,7 +80,7 @@
 .lq-selitem[disabled]{color:var(--text-muted);pointer-events:none}
 .lq-selitem__tick{margin-inline-start:auto;color:var(--brand);opacity:0}
 .lq-selitem[aria-selected="true"] .lq-selitem__tick{opacity:1;animation:lq-pop var(--dur-base) var(--ease-out)}
-.lq-selgroup{padding:var(--space-2) var(--space-3) var(--space-1);font-size:var(--text-2xs);font-weight:var(--weight-semibold);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-muted)}
+.lq-selgroup{padding:var(--space-2) var(--space-3) var(--space-1);font-size:var(--text-xs);font-weight:var(--weight-regular);color:var(--ink-2)}
 
 /* ── Checkbox ─────────────────────────────────────────────────────────────── */
 .lq-check{display:flex;align-items:flex-start;gap:var(--space-3);min-block-size:var(--tap-min);cursor:pointer}
@@ -91,13 +91,20 @@
 .lq-check__text{align-self:center;font-size:var(--text-base);color:var(--text-body)}
 
 /* ── Badge ────────────────────────────────────────────────────────────────── */
-.lq-badge{display:inline-flex;align-items:center;gap:var(--space-1);padding:3px var(--space-2);border:var(--border-width) solid transparent;border-radius:var(--radius-full);font-size:var(--text-2xs);font-weight:var(--weight-semibold);letter-spacing:var(--tracking-caps);text-transform:uppercase;white-space:nowrap}
+/* A badge says جديد or خصم, so no tracking and no uppercase, and a square
+   hairline rather than a pill — the round ones left in this register are the
+   things that are round because they are round. */
+.lq-badge{display:inline-flex;align-items:center;gap:var(--space-1);padding:3px var(--space-2);border:var(--border-width) solid transparent;font-size:var(--text-2xs);font-weight:var(--weight-medium);white-space:nowrap}
 .lq-badge--neutral{background:var(--state-neutral-bg);border-color:var(--state-neutral-border);color:var(--state-neutral-fg)}
 .lq-badge--brand{background:var(--brand);color:var(--text-on-brand)}
 .lq-badge--tint{background:var(--brand-tint);border-color:var(--state-good-border);color:var(--state-good-fg)}
 .lq-badge--ink{background:var(--surface-ink);color:var(--text-on-ink)}
 .lq-badge--sale{background:var(--state-act-bg);border-color:var(--state-act-border);color:var(--state-act-fg)}
-.lq-badge--count{min-inline-size:18px;block-size:18px;padding:0 5px;justify-content:center;background:var(--destructive);color:var(--destructive-foreground);font-family:var(--font-mono);font-size:var(--text-2xs);letter-spacing:0;text-transform:none;animation:lq-pop 180ms var(--ease-out)}
+/* GREEN, not --destructive. A count of things waiting to be bought is a GO
+   signal, and red in this system means exactly two things: a price that dropped
+   and something that failed. A red cart badge reads as an error on the one
+   affordance the shopper is being invited to use. */
+.lq-badge--count{min-inline-size:18px;block-size:18px;padding:0 5px;justify-content:center;border-radius:var(--radius-full);background:var(--green);color:var(--text-on-brand);font-family:var(--font-mono);font-size:var(--text-2xs);font-weight:var(--weight-semibold);letter-spacing:0;text-transform:none;animation:lq-pop 180ms var(--ease-out)}
 
 /* ── Card ─────────────────────────────────────────────────────────────────── */
 .lq-card{border:var(--border-width) solid var(--line);border-radius:var(--radius-lg);background:var(--surface-card);box-shadow:var(--shadow-xs)}
@@ -120,15 +127,21 @@
 
 /* ── ProductCard ──────────────────────────────────────────────────────────── */
 .lq-pcard{position:relative;display:flex;flex-direction:column;gap:var(--space-2);color:inherit;text-decoration:none}
-.lq-pcard__well{position:relative;aspect-ratio:var(--ratio-garment);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface-sunken);display:grid;place-items:center}
+.lq-pcard__well{position:relative;aspect-ratio:var(--ratio-garment);overflow:hidden;background:var(--raise);border:var(--border-width) solid var(--line);display:grid;place-items:center;transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
+.lq-pcard:hover .lq-pcard__well{border-color:var(--line-strong)}
 .lq-pcard__well img{inline-size:100%;block-size:100%;object-fit:cover}
 .lq-pcard__ph{color:var(--text-muted);font-size:28px}
 .lq-pcard:hover .lq-pcard__well img{transform:scale(1.02)}
 .lq-pcard__well img{transition:transform var(--dur-slow) var(--ease-out)}
 .lq-pcard__fav{position:absolute;inset-block-start:var(--space-2);inset-inline-end:var(--space-2);inline-size:36px;block-size:36px}
 .lq-pcard__tag{position:absolute;inset-block-start:var(--space-2);inset-inline-start:var(--space-2)}
-.lq-pcard__brand{font-size:var(--text-xs);color:var(--text-muted);letter-spacing:var(--tracking-caps);text-transform:uppercase}
-.lq-pcard__name{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--text-title);line-height:var(--leading-snug)}
+/* NO tracking and NO uppercase. This is a SHOP NAME, and plenty of them are
+   Arabic — uppercase does nothing to Arabic and letter-spacing pulls a cursive
+   script apart at the joins. The design system called an uppercase 11px label
+   over a product card one of the two places --tracking-caps was allowed, which
+   is only true in a catalogue where every shop is named in Latin. */
+.lq-pcard__brand{font-size:var(--text-xs);font-weight:var(--weight-light);color:var(--ink-2)}
+.lq-pcard__name{font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink);line-height:var(--leading-snug)}
 .lq-pcard__out{position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--paper) 80%,transparent);font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--sold-out)}
 
 /* ── BrandTab ─────────────────────────────────────────────────────────────── */
@@ -141,7 +154,8 @@
 /* ── VariantPicker ────────────────────────────────────────────────────────── */
 .lq-vp{display:flex;flex-direction:column;gap:var(--space-3)}
 .lq-vp__head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3)}
-.lq-vp__label{font-size:var(--text-2xs);font-weight:var(--weight-semibold);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-muted)}
+/* Reads المقاس / اللون. No tracking, no uppercase. */
+.lq-vp__label{font-size:var(--text-xs);font-weight:var(--weight-regular);color:var(--ink-2)}
 .lq-vp__aside{font-size:var(--text-xs);color:var(--text-muted)}
 .lq-vp__row{display:flex;flex-wrap:wrap;gap:var(--space-2)}
 .lq-chip{position:relative;display:inline-grid;place-items:center;min-inline-size:var(--tap-min);min-block-size:var(--tap-min);padding:0 var(--space-3);border:var(--border-width) solid var(--line-strong);border-radius:var(--radius-md);background:var(--surface-card);color:var(--text-title);font-size:var(--text-sm);font-weight:var(--weight-medium);cursor:pointer;transition:border-color var(--dur-fast),background var(--dur-fast),transform var(--dur-fast)}

@@ -8,6 +8,7 @@ import { useBagCount } from "@/lib/cart";
 import { useLocale } from "@/lib/locale-context";
 import { BrandsMenu } from "@/components/brands-menu";
 import { SiteFooter } from "@/components/site-footer";
+import { Reveal } from "@/components/reveal";
 
 /**
  * The storefront chrome.
@@ -81,6 +82,11 @@ export function Shell({
 
   return (
     <div className="lq-shell">
+      {/* Renders nothing. Mounted once here so a SERVER component can opt into
+          the entrance with a `.lq-rv` class and never has to become a client
+          component just to animate. */}
+      <Reveal />
+
       {/* ── Desktop ─────────────────────────────────────────────────────── */}
       <div className="lq-util">
         {CLAIMS.map((claim) => (
