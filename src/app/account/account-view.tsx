@@ -210,10 +210,12 @@ export function AccountView() {
     returns: ar ? "الاستبدال والاسترجاع" : "Exchanges and returns",
     faq: ar ? "الأسئلة الشائعة" : "Common questions",
     contact: ar ? "تواصل معنا" : "Contact us",
-    /* Named as what is missing, not as "coming soon". */
+    signIn: ar ? "ادخل على حسابك" : "Sign in",
+    /* Named as what is missing, not as "coming soon". Email sign-in works now;
+       it is the PHONE route that does not, so the sentence says which. */
     noSignIn: ar
-      ? "الدخول برقم الموبايل لسه مش شغّال — السيرفر لسه مبيبعتش كود."
-      : "Signing in by phone is not live yet — the server does not send a code.",
+      ? "الدخول برقم الموبايل وكود لسه مش شغّال. دلوقتي الدخول بالإيميل."
+      : "Signing in with a phone and a code is not live yet. For now it is email.",
   };
 
   /** Q and A, kept in one shape so the FAQ body is a list rather than prose. */
@@ -279,6 +281,12 @@ export function AccountView() {
               <p className="lq-hint" style={PROSE}>
                 {t.noSignIn}
               </p>
+              {/* The way out of the guest state. It existed nowhere before:
+                  auth-client exported `signIn`, nothing called it, and a
+                  shopper who signed out could not sign back in. */}
+              <Link className="lq-btn lq-btn--secondary" href="/account/sign-in">
+                {t.signIn}
+              </Link>
             </div>
           )}
 
