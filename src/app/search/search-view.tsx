@@ -1,432 +1,642 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { searchProducts } from "@/lib/catalog";
+import type {
+  SearchFacets,
+  SearchResult,
+  SearchSort,
+} from "@loqal/contracts/storefront.contract";
+import { searchProducts, queryKeys, type SearchFilters } from "@/lib/catalog";
+import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
-import { Money } from "@/components/money";
 import { Shell } from "@/components/shell";
+import { Money, MoneyWas } from "@/components/money";
+import { Garment, garmentFor } from "@/components/garment";
 
 /**
- * Search.
+ * Search, with the filter rail.
  *
- * TWO COLUMNS, ONE OF WHICH ADMITS IT IS EMPTY. `design/search.html` puts a
- * filter rail beside the results: shops with counts, size pills, colour
- * swatches, a price range, active chips and a sort select. Every one of those
- * is a control this API cannot serve — `searchProductsQuerySchema` is
- * `.strict()` and accepts `query`, `page` and `perPage`, full stop. There is no
- * facet endpoint, no shop parameter, no size or colour or price bound and no
- * sort key.
+ * EVERY CONTROL HERE IS SERVED BY THE API. The rail used to be a paragraph
+ * explaining that filters did not exist, because `/v1/search/products` took
+ * only a query and a page. It now takes brands, sizes, colours, a price range,
+ * a stock flag and a sort, and answers with facet counts — so the rail is
+ * built from what came back rather than from a guess about what exists.
  *
- * So the rail is built and the controls are not. A checkbox that does nothing
- * is worse than no checkbox: the shopper ticks it, the list does not move, and
- * she stops trusting the screen. PRODUCT.md's line is "say what is absent and
- * why" — the rail says it, in the same voice as the rest of the surface, and it
- * points at the one thing that genuinely narrows a search today (the shop's
- * name, typed into the box, because the trigram query spans Product joined to
- * Brand).
+ * COUNTS COME FROM THE SERVER, NEVER FROM THE LOADED PAGE. Counting the rows
+ * in hand would describe the first twenty results and lie about everything
+ * behind "show more" — and the number beside a shop is exactly the thing a
+ * shopper uses to decide whether ticking it is worth the tap.
  *
- * THE RESULTS ARE A LIST, NOT CARDS, and that is the API's shape rather than a
- * shortcut. `/v1/search/products` is a raw trigram similarity query selecting
- * id, slug, name, basePrice and the brand — no `coverUrl` and no `inStock`. A
- * `ProductCard` needs both: it would render an empty 3:4 well and a stock badge
- * that is a guess on every single row. See the long note on `searchResultSchema`
- * in `storefront.contract.ts`; this is deliberate and is not a gap to close.
+ * Each facet excludes its own filter and applies the others, which is what
+ * makes a filter reversible: with Dryp ticked the shop list still offers
+ * Versattire, but the size list has already narrowed to Dryp's sizes.
  *
- * PAGING IS "MORE", NEVER A PAGE NUMBER. The response carries `hasMore` and no
- * `total`, because an exact count over a similarity scan is not a meaningful
- * figure and costs a second query. `useInfiniteQuery` appends the next batch to
- * the list already on screen, which is the only paging shape `hasMore` can
- * honestly drive.
+ * ── Not here, and why ───────────────────────────────────────────────────────
+ *
+ * "المفتوح بس" and "فيه تجربة" are in the reference board and are not built.
+ * `Brand` carries no opening hours anywhere in the schema, and there is no
+ * try-on capability flag — `TryOnRender` is a render job, and `ProductMedia`
+ * carries only a sort order, so nothing marks a garment photo as one that can
+ * be tried on. Both are a migration plus data somebody has to curate, not a
+ * checkbox. The wishlist heart is absent for the same reason: no model.
  */
 
 /**
- * Openers for a blank screen. These are not filters and not a taxonomy — they
- * are words that go in the box, and tapping one runs exactly the query typing
- * it would. Empty states teach the interface; this one shows what the box eats.
+ * Colour swatches from free text.
+ *
+ * `attributes` has no hex — it is whatever a shop typed — so a swatch has to
+ * be resolved from the word. Anything unrecognised still renders, as a named
+ * chip rather than a wrong colour: showing beige for a word we did not
+ * understand is worse than showing the word.
+ *
+ * THE NAME IS ALWAYS PRESENT, in the label and the accessible name. Colour is
+ * never the only carrier of meaning, and roughly one man in twelve cannot
+ * separate two of the entries below by eye.
  */
-const OPENERS = {
-  ar: ["قميص", "تيشيرت", "هودي", "جينز", "جاكيت"],
-  en: ["shirt", "tee", "hoodie", "jeans", "jacket"],
-} as const;
+const SWATCHES: Record<string, string> = {
+  black: "#14130F",
+  أسود: "#14130F",
+  white: "#F7F6F3",
+  أبيض: "#F7F6F3",
+  beige: "#D8C7A9",
+  بيج: "#D8C7A9",
+  grey: "#8B8880",
+  gray: "#8B8880",
+  رمادي: "#8B8880",
+  navy: "#1F2A44",
+  كحلي: "#1F2A44",
+  blue: "#2E5C8A",
+  أزرق: "#2E5C8A",
+  green: "#4A5D3A",
+  زيتي: "#4A5D3A",
+  أخضر: "#4A5D3A",
+  olive: "#6B6B3A",
+  brown: "#6B4A2F",
+  بني: "#6B4A2F",
+  khaki: "#A89968",
+  كاكي: "#A89968",
+  red: "#A5122A",
+  أحمر: "#A5122A",
+  pink: "#D9A6AE",
+  وردي: "#D9A6AE",
+};
+
+const swatchFor = (value: string): string | null =>
+  SWATCHES[value.trim().toLowerCase()] ?? null;
+
+const SORTS: { value: SearchSort; ar: string; en: string }[] = [
+  { value: "relevance", ar: "الأقرب للكلمة", en: "Best match" },
+  { value: "newest", ar: "الأحدث", en: "Newest" },
+  { value: "priceAsc", ar: "الأرخص", en: "Price: low to high" },
+  { value: "priceDesc", ar: "الأغلى", en: "Price: high to low" },
+];
+
+/** Toggling a value in or out of a filter list. */
+const toggle = (list: string[] | undefined, value: string): string[] => {
+  const current = list ?? [];
+  return current.includes(value)
+    ? current.filter((entry) => entry !== value)
+    : [...current, value];
+};
 
 export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
   const locale = useLocale();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
   const [term, setTerm] = useState(initialQuery);
-
   /**
-   * The submitted term, not the typed one. Firing a similarity query on every
+   * The SUBMITTED term, not the typed one. Firing a similarity query on every
    * keystroke is a Postgres scan per character, and a shopper on Egyptian
-   * mobile data pays for each round trip. Enter submits, the button submits,
-   * and nothing else does.
+   * mobile data pays for each round trip.
    */
   const [submitted, setSubmitted] = useState(initialQuery);
+  const [filters, setFilters] = useState<SearchFilters>({});
+
+  const patch = (next: Partial<SearchFilters>) =>
+    setFilters((current) => ({ ...current, ...next }));
 
   const results = useInfiniteQuery({
-    /* Deliberately NOT `queryKeys.search(q, page)` — that key names one page,
-       and this query owns every page of one term at once. */
-    queryKey: ["search", submitted],
-    queryFn: ({ pageParam }) => searchProducts(submitted, pageParam),
+    queryKey: queryKeys.search(submitted, 1, filters),
+    queryFn: ({ pageParam }) => searchProducts(submitted, pageParam, 20, filters),
     initialPageParam: 1,
-    /* `hasMore`, never `total`. The API fetches one extra row rather than
-       counting, so the only question it can answer is "is there another page". */
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     enabled: submitted.length > 0,
   });
 
-  const rows = results.data?.pages.flatMap((page) => page.items) ?? [];
+  const pages = results.data?.pages ?? [];
+  const items = pages.flatMap((page) => page.items);
+  /** Facets describe the whole match set, so the first page is authoritative. */
+  const facets: SearchFacets | undefined = pages[0]?.facets;
 
-  const run = (value: string) => {
-    const next = value.trim().slice(0, 200);
-    setTerm(next);
-    setSubmitted(next);
-  };
-
-  const clear = () => {
-    setTerm("");
-    setSubmitted("");
-    inputRef.current?.focus();
-  };
-
-  const ar = locale === "ar";
-  const t = {
-    title: ar ? "البحث" : "Search",
-    placeholder: ar ? "دوّر على قطعة أو محل" : "Search for an item or a shop",
-    submit: ar ? "دوّر" : "Search",
-    clear: ar ? "امسح" : "Clear",
-    openers: ar ? "جرّب" : "Try",
-    prompt: ar
-      ? "اكتب اسم قطعة أو اسم محل. اللي هيظهر هنا قطع موجودة عند محلات بتوصّل للقاهرة والجيزة، والاسم اللي فوق كل قطعة هو المحل اللي عنده."
-      : "Type the name of a piece or a shop. What appears here are pieces at shops delivering across Cairo and Giza, and the name above each one is the shop that has it.",
-    none: ar
-      ? "مفيش قطعة اسمها قريب من كده. جرّب كلمة أقصر، أو اكتب اسم المحل."
-      : "Nothing is named close to that. Try a shorter word, or type the shop's name.",
-    failed: ar
-      ? "مش قادرين ندوّر دلوقتي. البحث بيروح للسيرفر كل مرة، فجرّب تاني بعد شوية."
-      : "We cannot search right now. Every search goes to the server, so try again in a moment.",
-    retry: ar ? "جرّب تاني" : "Try again",
-    more: ar ? "اعرض المزيد" : "Show more",
-    loadingMore: ar ? "بنجيب المزيد" : "Loading more",
-    end: ar ? "دي كل النتايج للكلمة دي." : "That is every result for that word.",
-    railTitle: ar ? "فلتر" : "Filters",
-    railNote: ar
-      ? "لسه مفيش فلاتر هنا. البحث بيقارن الكلام بس — مش بيشوف مقاس ولا لون ولا سعر، وأي خانة نحطها هنا دلوقتي مش هتشيل ولا نتيجة."
-      : "There are no filters here yet. Search compares words only — it does not see size, colour or price, and a box put here today would not remove a single result.",
-    railSort: ar
-      ? "والترتيب بيجي من قرب الكلمة للي كتبته، مش من السعر."
-      : "Order comes from how close the word is to what you typed, not from price.",
-    railTip: ar
-      ? "اللي بيضيّق النتايج فعلاً دلوقتي: اكتب اسم المحل جوه البحث نفسه، أو افتح المحل من"
-      : "What actually narrows a search today: put the shop's name in the box, or open the shop from",
-    railLink: ar ? "صفحة المحلات" : "the shops page",
-  };
-
-  const heading = ar ? `نتايج «${submitted}»` : `Results for “${submitted}”`;
+  const activeCount =
+    (filters.brands?.length ?? 0) +
+    (filters.sizes?.length ?? 0) +
+    (filters.colors?.length ?? 0) +
+    (filters.priceMin != null || filters.priceMax != null ? 1 : 0) +
+    (filters.inStockOnly ? 1 : 0);
 
   return (
-    <Shell title={t.title}>
+    <Shell title={t("البحث", "Search")}>
       <div className="lq-wrap lq-pad">
-        {/* ── The box ──────────────────────────────────────────────────── */}
         <form
           className="lq-sec"
-          role="search"
           onSubmit={(event) => {
             event.preventDefault();
-            run(term);
+            setSubmitted(term.trim());
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "var(--space-3)",
-              alignItems: "center",
-            }}
-          >
-            <div className="lq-search" style={{ flex: "1 1 260px" }}>
-              <span className="lq-icon" data-icon="search" aria-hidden="true" />
-              <input
-                ref={inputRef}
-                type="search"
-                value={term}
-                onChange={(event) => setTerm(event.target.value)}
-                placeholder={t.placeholder}
-                aria-label={t.title}
-                maxLength={200}
-                /* enterKeyHint so an Android keyboard shows "search", not "go" */
-                enterKeyHint="search"
-              />
-              {term.length > 0 ? (
-                <button
-                  type="button"
-                  className="lq-iconbtn lq-search__clear"
-                  onClick={clear}
-                  aria-label={t.clear}
-                >
-                  <span className="lq-icon" data-icon="x" aria-hidden="true" />
-                </button>
-              ) : null}
-            </div>
-
-            {/* A real submit, not only the Enter key. The word is beside the
-                icon — an icon alone on the one action of a screen is a guess. */}
-            <button type="submit" className="lq-btn lq-btn--primary">
-              <span className="lq-icon" data-icon="search" aria-hidden="true" />
-              {t.submit}
-            </button>
-          </div>
+          <label className="lq-search">
+            <span className="lq-icon" data-icon="search" aria-hidden="true" />
+            <input
+              type="search"
+              enterKeyHint="search"
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              placeholder={t("دوّر على قطعة أو محل…", "Search for a piece or a shop…")}
+              aria-label={t("بحث", "Search")}
+            />
+          </label>
         </form>
 
-        {/* ── Heading ──────────────────────────────────────────────────── */}
-        <div className="lq-sec__head">
-          <h1 className="lq-phead__title" data-bidi>
-            {submitted.length > 0 ? heading : t.title}
-          </h1>
-
-          {/* The COUNT SHOWN, which is a fact, next to whether there is more,
-              which is the only other thing the response knows. Never "14
-              results" — nothing counted them.
-
-              The element is always in the tree, empty or not: a live region
-              mounted at the same moment its text arrives is a region a screen
-              reader was not watching, and the count goes unannounced. Empty, it
-              generates no line box and costs no height. */}
-          <p className="lq-eyebrow" aria-live="polite">
-            {submitted.length > 0 && rows.length > 0 ? (
-              <>
-                <span data-num>{rows.length}</span> {ar ? "نتيجة ظاهرة" : "shown"}
-                {results.hasNextPage ? (ar ? " — وفيه كمان" : " — there are more") : null}
-              </>
-            ) : null}
+        {submitted.length === 0 ? (
+          <p className="lq-prose">
+            {t(
+              "اكتب اسم قطعة أو محل. البحث بيقارن الكلام، فمش لازم تكتبه بالظبط.",
+              "Type the name of a piece or a shop. Search compares words, so it does not have to be exact."
+            )}
           </p>
-        </div>
-
-        {/* ── Rail + results ───────────────────────────────────────────────
-            `.lq-body` is flex-wrap rather than a media query, because nothing
-            in this register may read the viewport: the two columns hold while
-            the column stems fit side by side and stack the moment they do not,
-            so a 430px phone frame embedded in a desktop page stacks like a
-            phone. It sits INSIDE `.lq-sec` rather than beside it on the same
-            element, because `.lq-sec` is a flex COLUMN and would turn the two
-            stems into a stack at every width. */}
-        <div className="lq-sec">
+        ) : (
           <div className="lq-body">
+            {/* ── The rail ────────────────────────────────────────────────── */}
             <aside
-              className="lq-card lq-card--flat lq-card--pad lq-body__rail"
-              aria-labelledby="lq-search-filters"
+              className="lq-body__rail lq-body__sticky"
+              aria-label={t("فلتر", "Filters")}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "var(--space-2)",
-                  marginBlockEnd: "var(--space-3)",
-                }}
-              >
-                <span
-                  className="lq-icon"
-                  data-icon="sliders-horizontal"
-                  aria-hidden="true"
-                />
-                <h2 id="lq-search-filters" className="lq-label">
-                  {t.railTitle}
-                </h2>
-              </div>
-
-              <hr className="lq-rule" />
-
-              {/* No checkboxes, no size pills, no swatches, no range and no sort
-                  — see the note at the top of this file. The register would
-                  rather explain an absence than draw a control that lies. */}
-              <p
-                className="lq-hint"
-                style={{ marginBlockStart: "var(--space-3)" }}
-              >
-                {t.railNote}
-              </p>
-              <p className="lq-hint" style={{ marginBlockStart: "var(--space-2)" }}>
-                {t.railSort}
-              </p>
-              <p className="lq-hint" style={{ marginBlockStart: "var(--space-3)" }}>
-                {t.railTip}{" "}
-                <Link href="/shops" style={{ color: "var(--green)" }}>
-                  {t.railLink}
-                </Link>
-                .
-              </p>
-            </aside>
-
-            <section
-              className="lq-body__main"
-              aria-label={ar ? "النتايج" : "Results"}
-            >
-              {submitted.length === 0 ? (
-                <>
-                  <p className="lq-hint">{t.prompt}</p>
-                  <p
-                    className="lq-eyebrow"
-                    style={{ marginBlock: "var(--space-4) var(--space-2)" }}
-                  >
-                    {t.openers}
-                  </p>
-                  <div className="lq-cats">
-                    {OPENERS[locale].map((word) => (
-                      <button
-                        key={word}
-                        type="button"
-                        className="lq-cat"
-                        onClick={() => run(word)}
-                      >
-                        {word}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : results.isPending ? (
-                /* A skeleton in the shape of the row it becomes — shop line,
-                   name line, figure — never a spinner in the middle of content. */
-                <div className="lq-rows">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "var(--space-4)",
-                        padding: "var(--space-4)",
-                      }}
-                    >
-                      <span style={{ display: "grid", gap: 6, flex: "1 1 auto" }}>
-                        <span
-                          className="lq-skel"
-                          style={{ blockSize: 10, inlineSize: "28%" }}
-                        />
-                        <span
-                          className="lq-skel"
-                          style={{ blockSize: 14, inlineSize: "62%" }}
-                        />
-                      </span>
-                      <span
-                        className="lq-skel"
-                        style={{ blockSize: 14, inlineSize: 64, flex: "none" }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : results.isError ? (
-                <div style={{ display: "grid", gap: "var(--space-3)", justifyItems: "start" }}>
-                  <p className="lq-hint lq-hint--error" role="alert">
-                    {t.failed}
-                  </p>
+              <div className="lq-sum__row">
+                <h2 className="lq-sec__title">{t("فلتر", "Filters")}</h2>
+                {activeCount > 0 ? (
                   <button
                     type="button"
-                    className="lq-btn lq-btn--secondary lq-btn--sm"
-                    onClick={() => void results.refetch()}
+                    className="lq-sec__more"
+                    onClick={() => setFilters({})}
                   >
-                    <span
-                      className="lq-icon"
-                      data-icon="refresh-cw"
-                      aria-hidden="true"
+                    {t("مسح", "Clear")}
+                  </button>
+                ) : null}
+              </div>
+
+              {facets ? (
+                <>
+                  <FacetGroup title={t("المحل", "Shop")}>
+                    {facets.brands.map((brand) => (
+                      <Check
+                        key={brand.slug}
+                        label={brand.name}
+                        count={brand.count}
+                        checked={filters.brands?.includes(brand.slug) ?? false}
+                        onChange={() =>
+                          patch({ brands: toggle(filters.brands, brand.slug) })
+                        }
+                      />
+                    ))}
+                  </FacetGroup>
+
+                  {facets.sizes.length > 0 ? (
+                    <FacetGroup title={t("المقاس", "Size")}>
+                      <div className="lq-vp__row">
+                        {facets.sizes.map((size) => (
+                          <button
+                            key={size.value}
+                            type="button"
+                            className="lq-chip"
+                            aria-pressed={filters.sizes?.includes(size.value) ?? false}
+                            onClick={() =>
+                              patch({ sizes: toggle(filters.sizes, size.value) })
+                            }
+                          >
+                            {size.value}
+                          </button>
+                        ))}
+                      </div>
+                    </FacetGroup>
+                  ) : null}
+
+                  {facets.colors.length > 0 ? (
+                    <FacetGroup title={t("اللون", "Colour")}>
+                      <div className="lq-vp__row">
+                        {facets.colors.map((color) => {
+                          const hex = swatchFor(color.value);
+                          const on = filters.colors?.includes(color.value) ?? false;
+                          return hex ? (
+                            <button
+                              key={color.value}
+                              type="button"
+                              className="lq-swatch"
+                              aria-pressed={on}
+                              /* The word is the accessible name. A swatch alone
+                                 is unusable to anyone who cannot separate two
+                                 of these by eye. */
+                              aria-label={color.value}
+                              title={color.value}
+                              onClick={() =>
+                                patch({ colors: toggle(filters.colors, color.value) })
+                              }
+                            >
+                              <i style={{ background: hex }} />
+                            </button>
+                          ) : (
+                            /* Unrecognised word: render it, never guess a
+                               colour for it. */
+                            <button
+                              key={color.value}
+                              type="button"
+                              className="lq-chip"
+                              aria-pressed={on}
+                              onClick={() =>
+                                patch({ colors: toggle(filters.colors, color.value) })
+                              }
+                            >
+                              {color.value}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </FacetGroup>
+                  ) : null}
+
+                  {facets.price ? (
+                    <FacetGroup title={t("السعر", "Price")}>
+                      <PriceRange
+                        min={Number(facets.price.min)}
+                        max={Number(facets.price.max)}
+                        valueMin={filters.priceMin}
+                        valueMax={filters.priceMax}
+                        locale={locale}
+                        onChange={(next) => patch(next)}
+                      />
+                    </FacetGroup>
+                  ) : null}
+
+                  <FacetGroup title={t("المتاح", "Availability")}>
+                    <Check
+                      label={t("المتاح بس", "In stock only")}
+                      checked={filters.inStockOnly ?? false}
+                      onChange={() => patch({ inStockOnly: !filters.inStockOnly })}
                     />
-                    {t.retry}
+                  </FacetGroup>
+                </>
+              ) : results.isPending ? (
+                <p className="lq-hint">{t("بنجيب الفلاتر…", "Loading filters…")}</p>
+              ) : null}
+            </aside>
+
+            {/* ── Results ─────────────────────────────────────────────────── */}
+            <section className="lq-body__main">
+              <div className="lq-sum__row">
+                <p className="lq-hint" aria-live="polite">
+                  {results.isPending
+                    ? t("بندوّر…", "Searching…")
+                    : t(
+                        `${items.length} نتيجة لـ «${submitted}»`,
+                        `${items.length} results for “${submitted}”`
+                      )}
+                </p>
+
+                <label className="lq-sum__row" style={{ gap: "var(--space-2)" }}>
+                  <span className="lq-hint">{t("ترتيب", "Sort")}</span>
+                  {/*
+                    The design system forbids a native <select> — the OS wheel
+                    cannot be styled and cannot carry a second line of Arabic.
+                    These are four chips, which is also fewer taps than opening
+                    a menu to choose between four things.
+                  */}
+                  <span className="lq-vp__row">
+                    {SORTS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className="lq-chip"
+                        aria-pressed={(filters.sort ?? "relevance") === option.value}
+                        onClick={() => patch({ sort: option.value })}
+                      >
+                        {t(option.ar, option.en)}
+                      </button>
+                    ))}
+                  </span>
+                </label>
+              </div>
+
+              <ActiveChips
+                filters={filters}
+                locale={locale}
+                onRemove={(next) => setFilters(next)}
+              />
+
+              {results.isError ? (
+                <p className="lq-hint lq-hint--error" role="alert">
+                  {t(
+                    "مش قادرين ندوّر دلوقتي. جرّب تاني.",
+                    "We cannot search right now. Try again."
+                  )}
+                </p>
+              ) : items.length === 0 && !results.isPending ? (
+                <p className="lq-prose">
+                  {activeCount > 0
+                    ? t(
+                        "مفيش نتيجة بالفلاتر دي. شيل فلتر أو اتنين وجرّب تاني.",
+                        "Nothing matches these filters. Drop one or two and try again."
+                      )
+                    : t(
+                        "مفيش نتيجة للكلمة دي. جرّب كلمة أقصر أو اسم المحل.",
+                        "Nothing matches that word. Try a shorter one, or a shop name."
+                      )}
+                </p>
+              ) : (
+                <div className="lq-pgrid">
+                  {items.map((item, index) => (
+                    <SearchCard
+                      key={item.id}
+                      item={item}
+                      locale={locale}
+                      delayMs={(index % 4) * 70}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {results.hasNextPage ? (
+                <div style={{ paddingBlock: "var(--space-6)" }}>
+                  <button
+                    type="button"
+                    className="lq-btn lq-btn--secondary lq-btn--block"
+                    aria-busy={results.isFetchingNextPage}
+                    onClick={() => results.fetchNextPage()}
+                  >
+                    {results.isFetchingNextPage
+                      ? t("بنجيب المزيد…", "Loading…")
+                      : t("اعرض المزيد", "Show more")}
                   </button>
                 </div>
-              ) : rows.length === 0 ? (
-                <p className="lq-hint">{t.none}</p>
-              ) : (
-                <>
-                  {/* The hairline grid, one column. Cells share their borders —
-                      a 1px gap over a --line ground — so every interior edge is
-                      drawn exactly once. `.lq-rows` rather than `.lq-cells`
-                      because that one widens to two and three columns on its
-                      own, and a result row is a full-width line of text and a
-                      figure. */}
-                  <div className="lq-rows">
-                    {rows.map((row, index) => (
-                      <Link
-                        key={row.id}
-                        href={`/shop/${row.brandSlug}/${row.slug}`}
-                        /*
-                          `.lq-card--link` carries the hover and press states and
-                          NOT `.lq-card`, whose own 1px border would double-draw
-                          every edge this grid already owns.
-
-                          NOT `.lq-line` either. That is the cart-line component
-                          and its grid is `72px 1fr auto` — a photo well, details,
-                          an end column. A search result has no photograph to put
-                          in the well, because the query does not select one.
-                        */
-                        className="lq-card--link lq-rv"
-                        style={
-                          {
-                            display: "flex",
-                            alignItems: "baseline",
-                            justifyContent: "space-between",
-                            gap: "var(--space-4)",
-                            padding: "var(--space-4)",
-                            minBlockSize: "var(--tap-min)",
-                            "--lq-d": `${(index % 6) * 70}ms`,
-                          } as React.CSSProperties
-                        }
-                      >
-                        <span style={{ display: "grid", gap: 2, minInlineSize: 0 }}>
-                          {/* The shop over the item: on a mixed result list a
-                              shopper is choosing a shop as much as a garment, and
-                              the shop is a place she could walk to. */}
-                          <span className="lq-pcard__brand" data-bidi>
-                            {row.brandName}
-                          </span>
-                          <span className="lq-pcard__name" data-bidi>
-                            {row.name?.[locale] ?? row.name?.ar ?? row.name?.en ?? row.slug}
-                          </span>
-                        </span>
-
-                        {/* basePrice, because the search query has no priceFrom to
-                            give. `Money` prints an em dash when it is null — a
-                            zero would be a claim the API never made. */}
-                        <Money
-                          amount={row.basePrice}
-                          locale={locale}
-                          className="lq-money"
-                        />
-                      </Link>
-                    ))}
-                  </div>
-
-                  {/* ── More, never page 7 of 12 ──────────────────────────── */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: "var(--space-2)",
-                      justifyItems: "center",
-                      marginBlockStart: "var(--space-6)",
-                    }}
-                  >
-                    {results.hasNextPage ? (
-                      <button
-                        type="button"
-                        className="lq-btn lq-btn--secondary"
-                        onClick={() => void results.fetchNextPage()}
-                        disabled={results.isFetchingNextPage}
-                        aria-busy={results.isFetchingNextPage}
-                      >
-                        {results.isFetchingNextPage ? t.loadingMore : t.more}
-                      </button>
-                    ) : (
-                      <p className="lq-hint">{t.end}</p>
-                    )}
-                  </div>
-                </>
-              )}
+              ) : null}
             </section>
           </div>
-        </div>
+        )}
       </div>
     </Shell>
+  );
+}
+
+function FacetGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="lq-sec">
+      <hr className="lq-rule" />
+      <h3 className="lq-vp__label">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function Check({
+  label,
+  count,
+  checked,
+  onChange,
+}: {
+  label: string;
+  count?: number;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className="lq-check">
+      <input type="checkbox" checked={checked} onChange={onChange} />
+      <span className="lq-check__box" aria-hidden="true" />
+      <span className="lq-check__text" data-bidi>
+        {label}
+        {count != null ? (
+          <span className="lq-hint" data-num>
+            {" "}
+            ({count})
+          </span>
+        ) : null}
+      </span>
+    </label>
+  );
+}
+
+/**
+ * Two range inputs over one track.
+ *
+ * A native `<input type="range">` has one thumb, so a two-ended range is two
+ * of them stacked — the lower one owns the left half of the track and the
+ * upper the right. Each clamps against the other so the handles cannot cross,
+ * which is the bug every hand-rolled dual slider ships with.
+ *
+ * The figures are printed as well as dragged. A slider alone is unusable with
+ * a keyboard-only estimate of where 450 is, and the numbers are the thing a
+ * shopper is actually deciding on.
+ */
+function PriceRange({
+  min,
+  max,
+  valueMin,
+  valueMax,
+  locale,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  valueMin?: number;
+  valueMax?: number;
+  locale: Locale;
+  onChange: (next: { priceMin?: number; priceMax?: number }) => void;
+}) {
+  const low = valueMin ?? min;
+  const high = valueMax ?? max;
+  /** A single-priced result set has nothing to drag between. */
+  const flat = max <= min;
+
+  return (
+    <div className="lq-range">
+      <div className="lq-sum__row">
+        <Money className="lq-money" amount={String(low)} locale={locale} />
+        <Money className="lq-money" amount={String(high)} locale={locale} />
+      </div>
+
+      {flat ? null : (
+        <div className="lq-range__track">
+          <input
+            type="range"
+            min={min}
+            max={max}
+            value={low}
+            aria-label={locale === "ar" ? "أقل سعر" : "Minimum price"}
+            onChange={(event) =>
+              onChange({ priceMin: Math.min(Number(event.target.value), high) })
+            }
+          />
+          <input
+            type="range"
+            min={min}
+            max={max}
+            value={high}
+            aria-label={locale === "ar" ? "أعلى سعر" : "Maximum price"}
+            onChange={(event) =>
+              onChange({ priceMax: Math.max(Number(event.target.value), low) })
+            }
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The applied filters, each removable.
+ *
+ * A rail scrolled out of view is a filter a shopper forgot they set, and "no
+ * results" with an invisible cause is the worst state this screen has. The
+ * chips sit above the grid, where the emptiness would be.
+ */
+function ActiveChips({
+  filters,
+  locale,
+  onRemove,
+}: {
+  filters: SearchFilters;
+  locale: Locale;
+  onRemove: (next: SearchFilters) => void;
+}) {
+  const chips: { key: string; label: string; next: SearchFilters }[] = [];
+
+  for (const slug of filters.brands ?? []) {
+    chips.push({
+      key: `brand:${slug}`,
+      label: slug,
+      next: { ...filters, brands: filters.brands?.filter((b) => b !== slug) },
+    });
+  }
+  for (const size of filters.sizes ?? []) {
+    chips.push({
+      key: `size:${size}`,
+      label: size,
+      next: { ...filters, sizes: filters.sizes?.filter((s) => s !== size) },
+    });
+  }
+  for (const color of filters.colors ?? []) {
+    chips.push({
+      key: `color:${color}`,
+      label: color,
+      next: { ...filters, colors: filters.colors?.filter((c) => c !== color) },
+    });
+  }
+  if (filters.priceMin != null || filters.priceMax != null) {
+    chips.push({
+      key: "price",
+      label: locale === "ar" ? "السعر" : "Price",
+      next: { ...filters, priceMin: undefined, priceMax: undefined },
+    });
+  }
+  if (filters.inStockOnly) {
+    chips.push({
+      key: "stock",
+      label: locale === "ar" ? "المتاح بس" : "In stock",
+      next: { ...filters, inStockOnly: undefined },
+    });
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="lq-vp__row" style={{ paddingBlockEnd: "var(--space-3)" }}>
+      {chips.map((chip) => (
+        <button
+          key={chip.key}
+          type="button"
+          className="lq-chip"
+          data-removable="true"
+          onClick={() => onRemove(chip.next)}
+        >
+          <span data-bidi>{chip.label}</span>
+          <span aria-hidden="true">×</span>
+          <span className="lq-vh">
+            {locale === "ar" ? "شيل الفلتر" : "Remove filter"}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * A result card.
+ *
+ * These are cards now rather than a plain list, because the row finally
+ * carries what a card needs to be honest: `inStock` for the sold-out state and
+ * `priceFrom` for the figure. It still has NO `coverUrl` — that would be a
+ * presigned URL per row, a second pass over every match — so the garment
+ * drawing stands in, exactly as it does everywhere else there is no photo.
+ */
+function SearchCard({
+  item,
+  locale,
+  delayMs,
+}: {
+  item: SearchResult;
+  locale: Locale;
+  delayMs: number;
+}) {
+  const name = item.name?.[locale] ?? item.name?.ar ?? item.name?.en ?? "";
+  const price = item.priceFrom ?? item.basePrice;
+
+  /**
+   * Only from a validated pair. The API refuses a compareAtPrice at or below
+   * the price with a 409, so a percentage here cannot be negative — but an
+   * unparseable value must not produce "NaN%" on a card either.
+   */
+  const now = Number(item.priceFrom);
+  const was = Number(item.compareAtPrice);
+  const off =
+    item.priceFrom && item.compareAtPrice && Number.isFinite(now) && Number.isFinite(was) && was > now
+      ? Math.round((1 - now / was) * 100)
+      : null;
+
+  return (
+    <Link
+      href={`/shop/${item.brandSlug}/${item.slug}`}
+      className="lq-pcard lq-rv"
+      style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
+    >
+      <span className="lq-pcard__well">
+        <Garment className="lq-garment" kind={garmentFor(item.id)} />
+        {off != null ? (
+          <span className="lq-badge lq-badge--sale lq-pcard__tag" data-num>
+            −{off}%
+          </span>
+        ) : null}
+        {!item.inStock ? (
+          <span className="lq-pcard__out">{locale === "ar" ? "خلص" : "Sold out"}</span>
+        ) : null}
+      </span>
+
+      <span className="lq-pcard__brand" data-bidi>
+        {item.brandName}
+      </span>
+      <span className="lq-pcard__name" data-bidi>
+        {name}
+      </span>
+
+      <span className="lq-sum__row">
+        <Money
+          className={off != null ? "lq-money lq-money--sale" : "lq-money"}
+          amount={price}
+          locale={locale}
+        />
+        {off != null ? <MoneyWas amount={item.compareAtPrice} locale={locale} /> : null}
+      </span>
+    </Link>
   );
 }

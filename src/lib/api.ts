@@ -71,7 +71,18 @@ export class ApiShapeError extends Error {
   }
 }
 
-export type QueryValue = string | number | boolean | null | undefined;
+/**
+ * An array becomes a repeated parameter — see the serialiser below. Nested
+ * arrays are deliberately not representable: a query string has no shape for
+ * them, and allowing one here would produce "[object Object]" at the wire.
+ */
+export type QueryValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | readonly (string | number)[];
 
 export type RequestOptions = {
   /** Undefined and null entries are dropped rather than sent as "undefined". */
@@ -141,6 +152,21 @@ const withQuery = (url: string, query: RequestOptions["query"]) => {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined || value === null) continue;
+    /**
+     * An array becomes a REPEATED parameter — `?sizes=L&sizes=M` — which is
+     * what the API's DTOs normalise. Falling through to `String(value)` would
+     * also "work", because that yields "L,M" and the DTO happens to split on
+     * commas, but only by accident: a value containing a comma would then
+     * silently become two filters. An empty array contributes nothing rather
+     * than an empty parameter, which is a cleared filter, not a filter for "".
+     */
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (entry === undefined || entry === null || entry === "") continue;
+        search.append(key, String(entry));
+      }
+      continue;
+    }
     search.set(key, String(value));
   }
   const qs = search.toString();

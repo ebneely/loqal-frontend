@@ -551,6 +551,31 @@
    has to say something the layout has no room to show. */
 .lq-vh{position:absolute;inline-size:1px;block-size:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 
+/* ── Price range ──────────────────────────────────────────────────────────── */
+/* Two native range inputs stacked over one drawn track. Native, because a
+   div-and-pointer-events reimplementation loses the keyboard: a real range
+   input is arrow-key steppable, Home/End addressable and announced with its
+   value, all of which a hand-rolled one has to rebuild and usually does not.
+
+   The inputs are transparent and only their thumbs are drawn, so the two
+   overlap without either hiding the other. pointer-events are disabled on the
+   input body and re-enabled on the thumbs, or the upper input would swallow
+   every click meant for the lower one. */
+.lq-range{display:flex;flex-direction:column;gap:var(--space-2)}
+.lq-range__track{position:relative;block-size:var(--tap-min);display:grid;align-items:center}
+.lq-range__track::before{content:"";position:absolute;inset-inline:0;block-size:1px;background:var(--line-strong)}
+.lq-range__track input[type="range"]{grid-area:1/1;inline-size:100%;margin:0;background:transparent;appearance:none;-webkit-appearance:none;pointer-events:none}
+.lq-range__track input[type="range"]:focus-visible{outline:var(--focus-width) solid var(--ring);outline-offset:var(--focus-offset)}
+.lq-range__track input[type="range"]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;pointer-events:auto;inline-size:18px;block-size:18px;border-radius:var(--radius-full);background:var(--paper);border:2px solid var(--green);cursor:grab}
+.lq-range__track input[type="range"]::-moz-range-thumb{pointer-events:auto;inline-size:18px;block-size:18px;border-radius:var(--radius-full);background:var(--paper);border:2px solid var(--green);cursor:grab}
+.lq-range__track input[type="range"]::-webkit-slider-runnable-track{background:transparent}
+.lq-range__track input[type="range"]::-moz-range-track{background:transparent}
+
+/* A chip that removes its own filter. The × is decorative — the accessible
+   name carries "remove filter", because a lone × announces as nothing useful. */
+.lq-chip[data-removable="true"]{gap:var(--space-2);padding-inline-end:var(--space-2)}
+.lq-chip[data-removable="true"]:hover{border-color:var(--line-strong);background:var(--raise)}
+
 /* ── A hairline rail ──────────────────────────────────────────────────────── */
 /* Cells SHARE their borders: a 1px gap over a --line background, with one
    border around the outside. Bordering each cell instead double-draws every

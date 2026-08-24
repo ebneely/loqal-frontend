@@ -5,6 +5,7 @@ import {
   publicProductPageSchema,
   searchResultPageSchema,
   type ListPublicProductsQuery,
+  type SearchSort,
 } from "@loqal/contracts/storefront.contract";
 
 import { api } from "./api";
@@ -48,7 +49,15 @@ export const queryKeys = {
     ["brand-products", slug, query] as const,
   product: (brandSlug: string, productSlug: string) =>
     ["product", brandSlug, productSlug] as const,
-  search: (q: string, page: number) => ["search", q, page] as const,
+  /**
+   * The filters are PART OF THE KEY. Without them a shopper who ticks a shop
+   * gets the unfiltered results served straight from cache under the same key,
+   * and the rail looks broken rather than slow. `filters` is passed as an
+   * object and TanStack hashes it deterministically, so key order does not
+   * matter and two equivalent filter sets share a cache entry.
+   */
+  search: (q: string, page: number, filters?: SearchFilters) =>
+    ["search", q, page, filters ?? {}] as const,
 };
 
 export function fetchCategories() {
@@ -86,11 +95,42 @@ export function fetchProduct(brandSlug: string, productSlug: string) {
  * entries nobody reads twice. It is also the one read where freshness is the
  * point: somebody searching "هودي" wants what is sellable now.
  */
-export function searchProducts(query: string, page = 1, perPage = 20) {
+/**
+ * The filters a search can carry. Everything is optional — an unfiltered
+ * search is the same call with none of them set.
+ */
+export type SearchFilters = {
+  brands?: string[];
+  sizes?: string[];
+  colors?: string[];
+  priceMin?: number;
+  priceMax?: number;
+  inStockOnly?: boolean;
+  sort?: SearchSort;
+};
+
+export function searchProducts(
+  query: string,
+  page = 1,
+  perPage = 20,
+  filters: SearchFilters = {}
+) {
   return api.get(searchResultPageSchema, "/v1/search/products", {
     // `query`, not `q` — the API's DTO is .strict(), so the wrong name is a
-    // 400 rather than an ignored parameter.
-    query: { query, page, perPage },
+    // 400 rather than an ignored parameter. The same strictness is why every
+    // filter below is omitted rather than sent empty when it is not set.
+    query: {
+      query,
+      page,
+      perPage,
+      brands: filters.brands?.length ? filters.brands : undefined,
+      sizes: filters.sizes?.length ? filters.sizes : undefined,
+      colors: filters.colors?.length ? filters.colors : undefined,
+      priceMin: filters.priceMin,
+      priceMax: filters.priceMax,
+      inStockOnly: filters.inStockOnly ? true : undefined,
+      sort: filters.sort && filters.sort !== "relevance" ? filters.sort : undefined,
+    },
     cache: "no-store",
   });
 }

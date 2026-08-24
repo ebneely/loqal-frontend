@@ -178,33 +178,64 @@ export const publicCategoryListSchema = z.array(publicCategorySchema);
  * The parameter is `query`, not `q` — and the DTO is `.strict()`, so sending
  * `q` is a 400 rather than an ignored key. `perPage` caps at 50 here, not 60.
  */
+/**
+ * The four orders search can answer.
+ *
+ * `relevance` is the default and the only one the trigram rank means anything
+ * for. There is no "الأقرب لي" — that needs a shop location, and no schema in
+ * this repo carries one.
+ */
+export const searchSortSchema = z.enum([
+  "relevance",
+  "priceAsc",
+  "priceDesc",
+  "newest",
+]);
+export type SearchSort = z.infer<typeof searchSortSchema>;
+
 export const searchProductsQuerySchema = z
   .object({
     query: z.string().trim().min(1).max(200),
     page: z.coerce.number().int().min(1).default(1),
     perPage: z.coerce.number().int().min(1).max(50).default(20),
+
+    /** Brand SLUGS, from the facets this endpoint returns. */
+    brands: z.array(z.string()).max(20).optional(),
+    /**
+     * Matched against the variant's own `attributes` — free text a shop typed,
+     * with no size or colour taxonomy anywhere in the schema to validate
+     * against. The API compares case-insensitively for the same reason.
+     */
+    sizes: z.array(z.string()).max(20).optional(),
+    colors: z.array(z.string()).max(20).optional(),
+    /** Inclusive, and read against the VARIANT price — `basePrice` is display
+     *  only, and a size XL can cost more than an S. */
+    priceMin: z.number().min(0).optional(),
+    priceMax: z.number().min(0).optional(),
+    inStockOnly: z.boolean().optional(),
+    sort: searchSortSchema.optional(),
   })
   .strict();
 export type SearchProductsQuery = z.infer<typeof searchProductsQuerySchema>;
 
 /**
- * SEARCH ANSWERS A DIFFERENT SHAPE, and this is not a tidiness problem.
+ * SEARCH STILL ANSWERS A DIFFERENT SHAPE, and this is not a tidiness problem.
  *
  * `/v1/search/products` is a raw trigram similarity query over Product joined
- * to Brand. It selects id, slug, name, basePrice and the brand — and nothing
- * else. There is no `coverUrl`, no `priceFrom`, no `inStock` and no `total`,
- * because none of those are in the query and computing them would mean a
- * second pass over every match.
+ * to Brand, and it now left-joins the variants so it can filter and price. It
+ * carries `priceFrom`, `compareAtPrice` and `inStock`.
  *
- * So a search result CANNOT be rendered by `ProductCard`, which needs the
- * cover and the stock flag. Reusing `publicProductPageSchema` here — which is
- * what this app did at first — fails to parse every response, and `.strict()`
+ * IT STILL HAS NO `coverUrl` AND NO `total`. The cover needs a presigned media
+ * URL per row, which is a second pass over every match; the count is not a
+ * meaningful number over a similarity search and costs another query. So a
+ * search result is STILL not a `PublicProduct` and still cannot be rendered by
+ * anything that assumes one — reusing `publicProductPageSchema` here, which is
+ * what this app did at first, fails to parse every response, and `.strict()`
  * is what turns that into an error at the boundary rather than an undefined
  * price three components away.
  *
- * `hasMore` rather than `total`: an exact count over a similarity search is not
- * a meaningful number and costs a second query, so the API fetches one extra
- * row instead. A screen can offer "more" and cannot offer "page 7 of 12".
+ * `hasMore` rather than `total`: the API fetches one extra row instead. A
+ * screen can offer "more" and cannot offer "page 7 of 12".
  */
 export const searchResultSchema = z
   .object({
@@ -218,9 +249,55 @@ export const searchResultSchema = z
     brandSlug: z.string(),
     /** Trigram similarity, 0..1. Ordering only — never shown to a shopper. */
     rank: z.number(),
+
+    /**
+     * The cheapest variant that SURVIVED THE FILTERS, and its "was" price.
+     *
+     * Filter-dependent on purpose: narrowing to black on a shirt whose beige
+     * is cheaper must re-price the card to the black one, or it advertises a
+     * price the shopper has just excluded themselves from.
+     *
+     * Null when the product has no live variant at all — a real state, not a
+     * defect, and why `basePrice` is still here as the display fallback.
+     */
+    priceFrom: moneySchema.nullable(),
+    compareAtPrice: moneySchema.nullable(),
+
+    /**
+     * Whether any surviving variant is sellable, from AVAILABILITY — on-hand
+     * minus live holds — never on-hand alone.
+     */
+    inStock: z.boolean(),
   })
   .strict();
 export type SearchResult = z.infer<typeof searchResultSchema>;
+
+/**
+ * What the rail draws itself from.
+ *
+ * Counts come from the API and never from the loaded page: a count derived in
+ * the browser describes the rows already fetched and silently lies about the
+ * ones behind "show more". Each facet excludes its OWN filter and applies
+ * every other one, so a shopper can always widen a filter they narrowed.
+ */
+export const searchBrandFacetSchema = z
+  .object({ slug: z.string(), name: z.string(), count: z.number().int() })
+  .strict();
+
+export const searchFacetValueSchema = z
+  .object({ value: z.string(), count: z.number().int() })
+  .strict();
+
+export const searchFacetsSchema = z
+  .object({
+    brands: z.array(searchBrandFacetSchema),
+    sizes: z.array(searchFacetValueSchema),
+    colors: z.array(searchFacetValueSchema),
+    /** Null when nothing matched carries a variant price to bound a slider. */
+    price: z.object({ min: moneySchema, max: moneySchema }).strict().nullable(),
+  })
+  .strict();
+export type SearchFacets = z.infer<typeof searchFacetsSchema>;
 
 export const searchResultPageSchema = z
   .object({
@@ -228,6 +305,7 @@ export const searchResultPageSchema = z
     page: z.number().int().min(1),
     perPage: z.number().int().min(1),
     hasMore: z.boolean(),
+    facets: searchFacetsSchema,
   })
   .strict();
 export type SearchResultPage = z.infer<typeof searchResultPageSchema>;
