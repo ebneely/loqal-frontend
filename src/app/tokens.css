@@ -1,240 +1,332 @@
 /* ==========================================================================
-   Loqal storefront design system — tokens + component layer, VERBATIM.
+   Loqal storefront — the token layer.
 
-   Copied byte-for-byte from
-     Talabat-style storefront UI mockups/_ds/loqal-storefront-.../
-   which is the same file the .dc.html reference screens link. Do not
-   hand-tune a value in here: re-copy the section from the design system
-   instead, so the app and the reference render identical CSS.
+   THE NAMES ARE THE .dc SYSTEM'S. THE VALUES ARE design/'s.
 
-   Wrapped in @layer components so Tailwind utilities (layer: utilities)
-   still win when a call site passes an override.
+   This file used to be a byte-for-byte copy of the .dc design system, with a
+   header telling you not to hand-tune it. That header is gone on purpose:
+   DESIGN.md now decides the register, and it decided against the .dc surface.
+   design/ is canon for ground, structure and chrome; the .dc system is canon
+   for --primary, the six state tones, the Fluent masks and Latin figures.
+
+   Every token NAME below is the one the .dc system used, because
+   globals.css maps them into Tailwind through `@theme inline` and
+   components.css resolves them by name. Renaming them would mean rewriting
+   three files to change one palette. So the register flips by value, and the
+   vocabulary stays put.
+
+   Colours are HEX, not OKLCH, and that is deliberate. They are inherited
+   verbatim from two shipped surfaces — join-loqaaal.vercel.app and
+   loqal-dashboard — and converting them would silently move them.
+
+   Wrapped in no layer: these are custom properties, they cascade by name and
+   carry no specificity.
    ========================================================================== */
 
-/* ---- tokens/colors.css ---- */
-/* Lifted verbatim from apps/loqal-dashboard/src/app/globals.css — same brand
-   emerald, same neutral ramp, same six state tones, same signed-money pair. A
-   storefront and a back office that disagree about what "delivered" is coloured
-   would be two products.
+:root {
+  /* ── The stone ground ───────────────────────────────────────────────────
+     Not white, and not the warm-neutral reflex either: it is lifted from the
+     live recruitment page, and it is doing structural work. The whole system
+     is built from a 1px --line, and #CFCBC0 on white is a smudge. It needs a
+     ground to sit on. */
+  --paper: #edebe5; /* body */
+  --raise: #f5f4f0; /* a band that lifts off the ground: strips, sign panels */
+  --field: #f7f6f3; /* input interior */
+  --line-hair: #cfcbc0; /* THE 1px. Every structural edge in the product */
+  --line-ink: #b3aea1; /* the same edge, one step up, for a focused field */
 
-   Storefront-only additions are marked ADDED and are aliases, not new hues. */
-:root{
-  /* Base surfaces + ink */
-  --background:oklch(1 0 0);
-  --foreground:oklch(0.145 0 0);
-  --card:oklch(1 0 0);
-  --card-foreground:oklch(0.145 0 0);
-  --popover:oklch(1 0 0);
-  --popover-foreground:oklch(0.145 0 0);
-  --muted:oklch(0.97 0 0);
-  --muted-foreground:oklch(0.556 0 0);
-  --accent:oklch(0.97 0 0);
-  --accent-foreground:oklch(0.205 0 0);
-  --secondary:oklch(0.97 0 0);
-  --secondary-foreground:oklch(0.205 0 0);
-  --border:oklch(0.922 0 0);
-  --input:oklch(0.922 0 0);
+  /* ── Ink ────────────────────────────────────────────────────────────────
+     Three named steps, and the reason there are three is a bug this file is
+     fixing. design/ set secondary text with `opacity:.55` on ink over stone,
+     which composites to #757470 — 3.75:1, a failure at body size. Opacity is
+     a blend, not a colour, so nothing could check it and nothing did.
 
-  /* The one brand colour. Dark enough to hold white text on a mid-range Android
-     in Egyptian daylight, saturated enough to survive a low-gamut panel. */
-  --primary:oklch(0.505 0.122 163);
-  --primary-foreground:oklch(0.985 0 0);
-  --ring:oklch(0.505 0.122 163);
-  --destructive:oklch(0.505 0.19 26.5);
-  --destructive-foreground:oklch(0.985 0 0);
+     TEXT COLOUR IS NEVER SET WITH OPACITY IN THIS SYSTEM. Opacity is for
+     non-text only. Contrast ratios below are against --paper. */
+  --ink: #14130f; /* 15.1:1 — titles, prices, body */
+  --ink-2: #605f5a; /* 5.13:1 — secondary text, meta, captions */
+  --ink-3: #757470; /* 3.75:1 — LARGE (>=18px) OR NON-ESSENTIAL ONLY */
+  --ink-band: #141310; /* the footer band, and only the footer band */
 
-  /* Six state tones cover every order enum. fg/bg/border triplets so a pill needs
-     no opacity arithmetic. good == the brand emerald on purpose; live is blue so
-     nothing green ever means "still happening". */
-  --state-neutral-fg:oklch(0.44 0 0);
-  --state-neutral-bg:oklch(0.968 0 0);
-  --state-neutral-border:oklch(0.9 0 0);
-  --state-wait-fg:oklch(0.45 0.115 72);
-  --state-wait-bg:oklch(0.968 0.032 84);
-  --state-wait-border:oklch(0.89 0.06 84);
-  --state-act-fg:oklch(0.44 0.155 30);
-  --state-act-bg:oklch(0.962 0.035 40);
-  --state-act-border:oklch(0.88 0.07 40);
-  --state-live-fg:oklch(0.45 0.115 251);
-  --state-live-bg:oklch(0.962 0.028 251);
-  --state-live-border:oklch(0.885 0.055 251);
-  --state-good-fg:oklch(0.47 0.112 163);
-  --state-good-bg:oklch(0.958 0.035 163);
-  --state-good-border:oklch(0.872 0.066 163);
-  --state-bad-fg:oklch(0.46 0.17 26.5);
-  --state-bad-bg:oklch(0.962 0.03 22);
-  --state-bad-border:oklch(0.88 0.065 22);
+  /* ── The one brand colour ───────────────────────────────────────────────
+     #007950 is oklch(0.505 0.122 163) — the .dc system's emerald, which
+     loqal-dashboard also uses. It does not move: a storefront and a back
+     office that disagree about the colour of "delivered" are two products.
 
-  /* Signed money. Credit = owed to you. Debit = owed by you. A debit is not a
-     failure, which is why it is not --state-bad. */
-  --money-credit:oklch(0.47 0.112 163);
-  --money-debit:oklch(0.46 0.17 26.5);
-  --money-zero:oklch(0.556 0 0);
+     4.55:1 on stone. Dark enough to hold white text on a mid-range Android in
+     Egyptian daylight, saturated enough to survive a low-gamut panel. */
+  --green: #007950;
+  --green-soft: #ddebe3;
+  --green-line: #a8c9b8;
 
-  --overlay:oklch(0 0 0 / 0.45);
+  /* Red is not a palette colour. It is a signal with exactly two meanings:
+     a price that dropped, and something that failed. Nothing else. Red on a
+     focus ring or a status dot reads as alarm — that is the bug this rule
+     exists to prevent, and it is why --ring below is green. */
+  --signal: #c8102e; /* 4.70:1 */
+  --signal-soft: #f7e3e5;
+  --signal-ink: #a5122a; /* 6.2:1 — red as TEXT, where 4.70 is too tight */
 
-  /* ── Semantic aliases (ADDED for the storefront) ─────────────────────────── */
-  --surface-page:var(--background);
-  --surface-card:var(--card);
-  --surface-sunken:oklch(0.97 0 0);      /* photo well, image placeholder tile */
-  --surface-ink:oklch(0.145 0 0);        /* inverted band: marquee, footer */
-  --text-title:var(--foreground);
-  --text-body:oklch(0.28 0 0);
-  --text-muted:var(--muted-foreground);
-  --text-on-brand:var(--primary-foreground);
-  --text-on-ink:oklch(0.985 0 0);
-  --line:var(--border);
-  --line-strong:oklch(0.86 0 0);
-  --brand:var(--primary);
-  --brand-tint:var(--state-good-bg);     /* 3% emerald wash behind a brand note */
-  --brand-hover:color-mix(in oklab,var(--primary) 88%,black);
-  --price:var(--foreground);
-  --price-strike:var(--muted-foreground);
-  --sold-out:var(--muted-foreground);
+  /* ══ The .dc vocabulary, re-grounded ════════════════════════════════════
+     Everything below is a name the .dc system defined and the rest of the app
+     already resolves. Values are the stone register's. */
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  /* A card is --raise, NOT --paper. On the .dc system card and background were
+     both white and the border did all the work; here the two-value split is
+     what lets a strip read as lifted without a shadow. */
+  --card: var(--raise);
+  --card-foreground: var(--ink);
+  --popover: var(--raise);
+  --popover-foreground: var(--ink);
+  --muted: #e6e4dd;
+  --muted-foreground: var(--ink-2);
+  /* --accent is the PRESS and HOVER wash, not a colour in its own right.
+     A pressed card lands on --raise; it does not move and it does not scale. */
+  --accent: var(--raise);
+  --accent-foreground: var(--ink);
+  --secondary: var(--raise);
+  --secondary-foreground: var(--ink);
+  --border: var(--line-hair);
+  --input: var(--line-hair);
+
+  --primary: var(--green);
+  --primary-foreground: #f7f6f3;
+  --ring: var(--green);
+  --destructive: var(--signal);
+  --destructive-foreground: #f7f6f3;
+
+  /* ── Six state tones, one per order enum ────────────────────────────────
+     fg / bg / border triplets so a pill needs no opacity arithmetic. The .dc
+     hues, re-mixed against stone rather than white — dropping the white-ground
+     values straight onto #EDEBE5 leaves every pill bg lighter than the page it
+     sits on, which inverts the figure and the ground.
+
+     `good` IS the brand green, on purpose. `live` is blue, so nothing green
+     ever means "still happening". Every pill also carries a word: colour is
+     never the only carrier of state. */
+  --state-neutral-fg: #4a4945;
+  --state-neutral-bg: #e6e4dd;
+  --state-neutral-border: #cfcbc0;
+  --state-wait-fg: #6b5310;
+  --state-wait-bg: #f2ebd8;
+  --state-wait-border: #dccc9e;
+  --state-act-fg: #8a3413;
+  --state-act-bg: #f6e6dc;
+  --state-act-border: #e0bfa8;
+  --state-live-fg: #1f4f8f;
+  --state-live-bg: #dfe8f4;
+  --state-live-border: #a9c2e0;
+  --state-good-fg: #007950;
+  --state-good-bg: #ddebe3;
+  --state-good-border: #a8c9b8;
+  --state-bad-fg: #a5122a;
+  --state-bad-bg: #f7e3e5;
+  --state-bad-border: #e2b4bb;
+
+  /* Signed money. Credit = owed to you, debit = owed by you. A debit is not a
+     failure, which is why it is not the `bad` tone. */
+  --money-credit: #007950;
+  --money-debit: #a5122a;
+  --money-zero: var(--ink-2);
+
+  --overlay: rgb(20 19 15 / 0.45);
+
+  /* ── Semantic aliases ───────────────────────────────────────────────────*/
+  --surface-page: var(--paper);
+  --surface-card: var(--raise);
+  --surface-sunken: var(--raise); /* the 3:4 garment well */
+  --surface-ink: var(--ink-band); /* the footer band */
+  --text-title: var(--ink);
+  --text-body: var(--ink);
+  --text-muted: var(--ink-2);
+  --text-faint: var(--ink-3);
+  --text-on-brand: #f7f6f3;
+  --text-on-ink: #edebe5;
+  --line: var(--line-hair);
+  --line-strong: var(--line-ink);
+  --brand: var(--green);
+  --brand-tint: var(--green-soft);
+  /* Filled surfaces darken toward black on hover. Never lighten, never an
+     opacity change — a button that fades on hover reads as disabled. */
+  --brand-hover: color-mix(in srgb, var(--green) 88%, black);
+  --price: var(--ink);
+  --price-strike: var(--ink-2);
+  --sold-out: var(--ink-2);
 }
 
-/* ---- tokens/typography.css ---- */
-/* The back office is a dense tool at 14px. The storefront is not: a shopper reads
-   sentences, prices and a garment description on a phone held at arm's length in
-   sunlight, so body is 16px and the scale runs further up for the marketing
-   register. Names match the back-office scale; values are deliberately larger.
-   Nothing interactive below 14px, nothing at all below 11px. */
-:root{
-  --text-2xs:0.6875rem;  /* 11px - uppercase micro label, 0.06em tracking only */
-  --text-xs:0.75rem;     /* 12px - meta, stock note, timestamp */
-  --text-sm:0.875rem;    /* 14px - secondary line, brand name on a card */
-  --text-base:1rem;      /* 16px - body default */
-  --text-lg:1.125rem;    /* 18px - product title, cart line */
-  --text-xl:1.375rem;    /* 22px - screen title, price on a product page */
-  --text-2xl:1.75rem;    /* 28px - section heading */
-  --text-3xl:2.25rem;    /* 36px - landing section heading */
-  --text-4xl:3rem;       /* 48px - landing hero, phone */
-  --text-5xl:4.5rem;     /* 72px - wordmark / hero at lg */
+/* ==========================================================================
+   Type
 
-  --leading-tight:1.2;
-  --leading-snug:1.35;
-  --leading-normal:1.55;   /* prose, and Arabic needs the room */
-  --leading-loose:1.7;     /* bilingual paragraph blocks */
+   Fixed rem, not fluid. This is product UI read at a consistent DPI, and a
+   clamp()ed heading that shrinks inside a narrow column looks worse, not
+   better. Body is 16px because a shopper reads sentences and prices at arm's
+   length in sunlight; the back office is 14 because it scans dense tables.
 
-  --weight-regular:400;
-  --weight-medium:500;
-  --weight-semibold:600;
-  --weight-bold:700;
-  --weight-figure:800;   /* money, and only money */
+   Nothing interactive below 14px. Nothing at all below 11px.
+   ========================================================================== */
+:root {
+  --text-2xs: 0.6875rem; /* 11px — micro label. LATIN ONLY, see --tracking-caps */
+  --text-xs: 0.8125rem; /* 13px — caption, timestamp, shelf note */
+  --text-sm: 0.875rem; /* 14px — secondary line, shop name on a card */
+  --text-base: 1rem; /* 16px — body */
+  --text-lg: 1.125rem; /* 18px — product title, cart line */
+  --text-xl: 1.25rem; /* 20px — section title */
+  --text-2xl: 1.625rem; /* 26px — page title */
+  --text-3xl: 2.125rem; /* 34px — the shop sign, the wordmark at rest */
+  --text-4xl: 2.75rem; /* 44px — the one display size the storefront uses */
+  --text-5xl: 3.5rem; /* 56px — reserved; nothing in the app reaches it yet */
 
-  --tracking-tight:-0.015em;
-  --tracking-display:-0.03em;  /* wordmark and hero only */
-  --tracking-normal:0;
-  --tracking-caps:0.06em;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6; /* prose — and Arabic needs the room */
+  --leading-loose: 1.75;
 
-  --numeric:"tnum" 1,"lnum" 1; /* @kind other */
+  --weight-thin: 200;
+  --weight-light: 300; /* the register's resting weight for secondary prose */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-figure: 600; /* money. 800 was the .dc value and it shouts on stone */
+
+  --tracking-tight: -0.022em;
+  --tracking-display: -0.03em;
+  --tracking-normal: 0;
+  /* THE ONLY TRACKED, UPPERCASED TEXT IN THE SYSTEM — and it is Latin-only.
+     Uppercase is a no-op on Arabic and letter-spacing pulls a cursive script
+     apart at the joins. Any rule using this token must also set a Latin font
+     stack and must never receive Arabic content. */
+  --tracking-caps: 0.13em;
+
+  --numeric: "tnum" 1, "lnum" 1;
 }
 
-/* ---- tokens/spacing.css ---- */
-/* 4px base. Phone gutter is 16px and never smaller. Designed at 390px first. */
-:root{
-  --space-0:0px;
-  --space-1:4px;
-  --space-2:8px;
-  --space-3:12px;
-  --space-4:16px;
-  --space-5:20px;
-  --space-6:24px;
-  --space-8:32px;
-  --space-10:40px;
-  --space-12:48px;
-  --space-16:64px;
-  --space-20:80px;   /* ADDED - landing section rhythm */
-  --space-24:96px;   /* ADDED - landing section rhythm at md+ */
+/* ==========================================================================
+   Space
+   ========================================================================== */
+:root {
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
 
-  --gutter-phone:16px;
-  --gutter-md:24px;
-  --gutter-lg:32px;
+  /* One gutter token, fluid, used by --pad in the base layer. design/ drives
+     every horizontal inset off this single clamp and so does the app. */
+  --pad: clamp(1rem, 3.5vw, 3rem);
+  --gutter-phone: 16px;
+  --gutter-md: 24px;
+  --gutter-lg: 32px;
 
-  --tap-min:44px;        /* absolute floor for anything tappable */
-  --tap-primary:52px;    /* add to cart / checkout row */
-  --row-density:52px;    /* list row on phone */
-  --bar-height:56px;     /* top app bar */
-  --tabbar-height:60px;  /* ADDED - storefront bottom tab bar with labels */
-  --content-max:1200px;  /* ADDED - the storefront IS centred; a tool is not */
-  --prose-max:62ch;      /* ADDED - landing paragraph measure */
+  --tap-min: 44px; /* floor for anything tappable */
+  --tap-primary: 52px; /* the one action of a screen */
+  --row-density: 52px;
+  --bar-height: 56px; /* phone top bar */
+  --tabbar-height: 60px; /* phone tab bar, labels always visible */
+  --utilbar-height: 34px; /* desktop utility strip */
+  --content-max: 1200px;
+  --prose-max: 62ch;
 
-  --radius:0.75rem;
-  --radius-sm:calc(var(--radius) - 4px);   /* 8  - checkbox, chip */
-  --radius-md:calc(var(--radius) - 2px);   /* 10 - input, button */
-  --radius-lg:var(--radius);               /* 12 - card, photo tile */
-  --radius-xl:calc(var(--radius) + 4px);   /* 16 - sheet top corners */
-  --radius-full:9999px;
+  /* ── Radius: zero ───────────────────────────────────────────────────────
+     Everywhere, no exceptions. This is the single largest divergence from the
+     .dc system, which specifies 8–16px. Depth here is the 1px line and the
+     --raise value; there is nothing for a corner to soften.
 
-  --ratio-garment:3/4; /* @kind other */   /* ADDED - every product photo well, no exceptions */
+     The derived steps are written as literal 0 rather than
+     calc(var(--radius) - 4px): that expression evaluates to -4px, a negative
+     radius is invalid CSS, and the declaration would be dropped silently. */
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  /* Kept, and the only rounding in the product: status dots, the cart count,
+     colour swatches, avatars. Things that are round because they are round,
+     not because a corner was softened. */
+  --radius-full: 9999px;
 
-  --bp-md:768px;
-  --bp-lg:1024px;
+  --ratio-garment: 3 / 4; /* every garment well, no exceptions */
+
+  /* Chrome switches here. 720 rather than the .dc system's 768 because that is
+     where design/ puts it and where the utility strip stops fitting. */
+  --bp-chrome: 720px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
 }
 
-/* ---- tokens/elevation.css ---- */
-/* Elevation, redesigned.
+/* ==========================================================================
+   Elevation — there isn't any
 
-   The old system was blurred grey shadows. On the device this product actually runs
-   on — a mid-range Android at full brightness in Egyptian daylight — a 4px blur at
-   8% black is invisible: the panel crushes it and the card looks like it is drawn
-   flat on the page. So elevation here is **hard offset**: no blur, a solid step of
-   colour cast one or two pixels off the corner, like a printed sticker or a riso
-   overprint. It survives sunlight, it costs nothing to composite on a cheap GPU,
-   and it gives a press somewhere to go.
+   The .dc system built a whole hard-offset language here: a solid step of
+   tinted colour cast off the corner, direction flipped by --elev-dir under
+   RTL, press landing the element in its own shadow. It was a good answer to a
+   real problem (a blurred grey shadow is invisible on a mid-range Android in
+   daylight) and this register does not need it, because it never lifts
+   anything off the page in the first place.
 
-   Three ideas make it a system rather than a trick:
+   The tokens survive as `none` rather than being deleted, because
+   components.css resolves them by name in a dozen places. A rule that asks
+   for --shadow-sm gets nothing, which is the correct answer here, instead of
+   an unresolved variable and a dropped declaration.
 
-   1. **The offset has a direction, and the direction is logical.** --elev-dir is 1
-      in LTR and -1 in RTL (set in tokens/base.css), so the step always falls away
-      from the reading edge. Nothing is mirrored by hand.
-   2. **Press pushes the element into its own shadow.** An interactive surface
-      translates by exactly its offset and drops the shadow to none, so the pixel
-      that moves is the pixel the finger is on. This replaces the old
-      scale(0.985) — a shrink is a hint; landing on the page is an event.
-   3. **The step is tinted, never black.** Neutral surfaces cast --elev-ink (the
-      foreground at 10%); the brand button casts its own colour darkened, so an
-      emerald button reads as one solid object with a shadow of itself.
+   Blur survives in exactly one place — the sticky header — and it is in
+   components.css, not here.
+   ========================================================================== */
+:root {
+  --elev-dir: 1;
+  --shadow-none: none;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-key: none;
+  --shadow-key-lift: none;
+  --shadow-sheet: none;
+  --shadow-bar: none;
 
-   Blur is now reserved for exactly one thing: the translucent overlay behind a
-   sheet. If something is blurred, it is a scrim. */
-:root{
-  --elev-dir:1; /* @kind other */  /* flipped to -1 under [dir="rtl"] */
-  --elev-ink:oklch(0.145 0 0 / 0.10);
-  --elev-ink-soft:oklch(0.145 0 0 / 0.06);
-  --elev-brand:color-mix(in oklab,var(--primary) 55%,oklch(0.145 0 0));
+  --border-width: 1px;
+  --focus-width: 2px;
+  --focus-offset: 3px;
 
-  --shadow-none:none;
-  /* seam — the thing sits on the page. Cards, inputs, list rows. */
-  --shadow-xs:calc(1px * var(--elev-dir)) 1px 0 0 var(--elev-ink-soft);
-  /* step — pressable. Buttons, chips, payment rows. */
-  --shadow-sm:calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-ink);
-  /* lift — hover on something pressable, and popovers. */
-  --shadow-md:calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-ink);
-  /* the brand-tinted step a primary button casts. */
-  --shadow-key:calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-brand);
-  --shadow-key-lift:calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-brand);
-  /* upward steps for the two sticky surfaces. */
-  --shadow-sheet:0 -3px 0 0 var(--elev-ink);
-  --shadow-bar:0 -1px 0 0 var(--border),0 -4px 0 0 var(--elev-ink-soft);
+  /* ── Motion ─────────────────────────────────────────────────────────────
+     Long ease-out only. Nothing bounces, nothing springs, nothing overshoots,
+     and there are no page transitions.
 
-  --border-width:1px;
-  --focus-width:2px;
-  --focus-offset:2px;
+     --ease is design/'s house curve: it covers most of its distance early and
+     coasts almost to a standstill, so the eye has seen where a thing landed
+     long before it stops moving. Durations are therefore longer than they
+     look — 420ms still reads as instant.
 
-  /* ── Motion ──────────────────────────────────────────────────────────────
-     Everything leaves briskly and arrives slowly. The house curve takes a short
-     moment to gather — the first frames accelerate rather than jumping — then
-     covers roughly 80% of its distance by the halfway point and coasts almost to
-     a standstill. That tiny wind-up is what separates a thrown object from a
-     teleported one; without it the motion reads as a jump cut. Because the tail
-     is long, durations are longer than they look: a 420ms entrance still reads as
-     instant, because the eye saw where it landed around 200ms. */
-  --ease-out:cubic-bezier(0.22,0.72,0.12,1); /* @kind other */  /* the house curve: a beat of wind-up, then dead slow into the stop */
-  --ease-in:cubic-bezier(0.4,0,1,1); /* @kind other */          /* exits only — accelerate away, never coast out */
-  --ease-in-out:cubic-bezier(0.4,0,0.2,1); /* @kind other */     /* a value changing in place: colour, opacity, width */
-  --dur-fast:140ms; /* @kind other */    /* press, hover, colour */
-  --dur-base:260ms; /* @kind other */    /* sheet, disclosure, toggle */
-  --dur-slow:420ms; /* @kind other */    /* entrances, and anything crossing the screen */
-  --dur-settle:560ms; /* @kind other */  /* the long coast: a status pill landing, a total recalculating */
+     The .dc names (--ease-out, --dur-base) are kept as aliases because
+     components.css already calls them. */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --slow: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: var(--ease);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1); /* exits only — accelerate away */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1); /* a value changing in place */
+
+  --dur-fast: 140ms; /* press, hover, colour */
+  --dur-base: 260ms; /* sheet, disclosure, the mega panel */
+  --dur-slow: 420ms; /* entrances, anything crossing the screen */
+  --dur-settle: 560ms; /* the long coast: a total recalculating */
+  --stagger: 70ms; /* between siblings in one revealed group */
+
+  /* ── z ──────────────────────────────────────────────────────────────────
+     Named, ordered, and never an arbitrary 9999. */
+  --z-rail: 10;
+  --z-sticky: 20;
+  --z-header: 40;
+  --z-tabbar: 45;
+  --z-scrim: 50;
+  --z-sheet: 60;
+  --z-grain: 100; /* the paper grain sits over everything, pointer-events:none */
 }
