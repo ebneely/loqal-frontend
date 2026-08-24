@@ -6,22 +6,35 @@ import type { ReactNode } from "react";
 
 import { useBagCount } from "@/lib/cart";
 import { useLocale } from "@/lib/locale-context";
+import { BrandsMenu } from "@/components/brands-menu";
+import { SiteFooter } from "@/components/site-footer";
 
 /**
  * The storefront chrome.
  *
- * ONE COMPONENT, TWO LAYOUTS, decided by a CONTAINER query in globals.css —
- * `.lq-shell` sets `container-type: inline-size`, and the storefront rule is
- * that a 430px phone frame embedded in a desktop page still lays out like a
- * phone. Nothing here reads the viewport, and nothing branches on width in JS.
+ * TWO CHROMES, ONE SET OF DESTINATIONS, decided by a CONTAINER query in
+ * components.css — `.lq-shell` sets `container-type: inline-size`, and the
+ * storefront rule is that a 430px phone frame embedded in a desktop page still
+ * lays out like a phone. Nothing here reads the viewport and nothing branches
+ * on width in JS.
  *
- *   Phone   56px bar with the mark, and the five-slot tab bar at the bottom.
- *   Desktop 72px bar carrying the same five destinations as inline links, and
- *           NO tab bar — five buttons pinned to the bottom of a 1080px window
- *           with nothing near them is what "mobile on desktop" looks like.
+ *   Phone    56px bar with the mark and a search affordance, and the five-slot
+ *            tab bar at the bottom. No footer: a dark 400px block above a fixed
+ *            tab bar is a dead end, and `/account` carries those links.
+ *   Desktop  the utility strip, a sticky header with the mark, a live search
+ *            field and the tools, the brands mega-menu, and the footer. No tab
+ *            bar — five buttons pinned to the bottom of a 1080px window with
+ *            nothing near them is what "mobile on desktop" looks like.
  *
- * The destinations are declared once and rendered twice, so the two chromes
- * cannot drift into offering different navigation.
+ * Both chromes are in the markup at all times and one is hidden by the
+ * container query. That is deliberate: branching in JS would need the width,
+ * which the server does not have, and would flash the wrong chrome on hydration.
+ *
+ * WHY THE TWO NAVIGATIONS DIFFER, and why they still agree: the phone tab bar
+ * is the five destinations, and the desktop header is the same five plus the
+ * brands mega-menu. `design/`'s header carried only الأقسام, المحلات and السلة,
+ * which leaves a signed-in shopper no way to reach their own orders above
+ * 720px. Every destination is reachable at every width.
  */
 
 const TABS = [
@@ -30,6 +43,19 @@ const TABS = [
   { href: "/bag", icon: "shopping-bag", ar: "السلة", en: "Bag" },
   { href: "/orders", icon: "package", ar: "أوردراتي", en: "Orders" },
   { href: "/account", icon: "user", ar: "حسابي", en: "Account" },
+] as const;
+
+/**
+ * The three claims in the utility strip. Facts a shopper weighs before they
+ * start, which is why they sit above the header rather than inside a page.
+ *
+ * NO tracking and NO uppercase on this strip — see `.lq-util` in
+ * components.css. It carries Arabic.
+ */
+const CLAIMS = [
+  { ar: "توصيل في نفس اليوم — القاهرة والجيزة", en: "Same-day delivery — Cairo & Giza" },
+  { ar: "الدفع عند الاستلام", en: "Cash on delivery" },
+  { ar: "استبدال خلال 14 يوم", en: "14-day returns" },
 ] as const;
 
 /**
@@ -50,10 +76,56 @@ export function Shell({
   const locale = useLocale();
   const pathname = usePathname();
   const bagCount = useBagCount();
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
   const label = (tab: (typeof TABS)[number]) => (locale === "ar" ? tab.ar : tab.en);
 
   return (
     <div className="lq-shell">
+      {/* ── Desktop ─────────────────────────────────────────────────────── */}
+      <div className="lq-util">
+        {CLAIMS.map((claim) => (
+          <span key={claim.en}>{t(claim.ar, claim.en)}</span>
+        ))}
+      </div>
+
+      <header className="lq-head">
+        <div className="lq-head__bar">
+          <Link href="/" className="lq-mark" aria-label="Loqal">
+            {t("لوكال", "Loqal")}
+          </Link>
+
+          {/* A real link, not a live field. Search is a route with its own
+              query state; a second input in the chrome would be a second
+              source of truth for the same term. */}
+          <Link className="lq-head__search lq-search" href="/search">
+            <span className="lq-icon" data-icon="search" aria-hidden="true" />
+            <span className="lq-search__fake">
+              {t("دوّر على قطعة أو محل…", "Search for a piece or a shop…")}
+            </span>
+          </Link>
+
+          <nav className="lq-tools" aria-label={t("التنقل", "Navigation")}>
+            <Link href="/categories" aria-current={isActive(pathname, "/categories") ? "page" : undefined}>
+              {t("الأقسام", "Categories")}
+            </Link>
+
+            <BrandsMenu />
+
+            <Link href="/orders" aria-current={isActive(pathname, "/orders") ? "page" : undefined}>
+              {t("أوردراتي", "Orders")}
+            </Link>
+            <Link href="/account" aria-current={isActive(pathname, "/account") ? "page" : undefined}>
+              {t("حسابي", "Account")}
+            </Link>
+            <Link href="/bag" aria-current={isActive(pathname, "/bag") ? "page" : undefined}>
+              {t("السلة", "Bag")}
+              {bagCount > 0 ? <span className="lq-cartn" data-num>{bagCount}</span> : null}
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* ── Phone ───────────────────────────────────────────────────────── */}
       <header className="lq-topbar">
         {title ? (
           <span className="lq-topbar__title">{title}</span>
@@ -62,36 +134,23 @@ export function Shell({
              Wherever a mark would go, the word is set in Readex Pro 700 at
              −0.03em — which is what `.lq-topbar__mark` is. */
           <Link href="/" className="lq-topbar__mark" aria-label="Loqal">
-            {locale === "ar" ? "لوكال" : "Loqal"}
+            {t("لوكال", "Loqal")}
           </Link>
         )}
-
-        {/* Desktop only. Hidden by default and revealed by the container
-            query, so the phone never pays for markup it does not show. */}
-        <nav
-          className="lq-topbar__nav"
-          aria-label={locale === "ar" ? "التنقل" : "Navigation"}
+        <Link
+          className="lq-iconbtn lq-topbar__end"
+          href="/search"
+          aria-label={t("بحث", "Search")}
         >
-          {TABS.map((tab) => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-current={isActive(pathname, tab.href) ? "page" : undefined}
-            >
-              {label(tab)}
-              {tab.href === "/bag" && bagCount > 0 ? ` · ${bagCount}` : ""}
-            </Link>
-          ))}
-        </nav>
+          <span className="lq-icon" data-icon="search" aria-hidden="true" />
+        </Link>
       </header>
 
       <main style={{ flex: 1 }}>{children}</main>
 
-      {/* Phone only — the container query hides this at 1024. */}
-      <nav
-        className="lq-tabbar"
-        aria-label={locale === "ar" ? "التنقل" : "Navigation"}
-      >
+      <SiteFooter />
+
+      <nav className="lq-tabbar" aria-label={t("التنقل", "Navigation")}>
         {TABS.map((tab) => {
           const active = isActive(pathname, tab.href);
           return (
@@ -99,17 +158,18 @@ export function Shell({
               key={tab.href}
               href={tab.href}
               className="lq-tab"
-              data-active={active}
               aria-current={active ? "page" : undefined}
             >
-              <span className="lq-topbar__slot">
+              <span className="lq-tab__wrap">
                 <span className="lq-icon" data-icon={tab.icon} aria-hidden="true" />
                 {tab.href === "/bag" && bagCount > 0 ? (
-                  <span className="lq-badge lq-badge--count">{bagCount}</span>
+                  <span className="lq-cartn lq-tab__badge" data-num>
+                    {bagCount}
+                  </span>
                 ) : null}
               </span>
-              {/* Labels are ALWAYS visible — the design system pins the tab bar
-                  at 60px for exactly that reason. An icon alone is a guess. */}
+              {/* Labels are ALWAYS visible — the tab bar is 60px for exactly
+                  that reason. An icon alone is a guess. */}
               <span>{label(tab)}</span>
             </Link>
           );
