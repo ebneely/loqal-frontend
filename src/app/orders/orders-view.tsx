@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useId, useState, useTransition } from "react";
+import { useId, useState } from "react";
 
 import type { BrandOrderStatus } from "@loqal/contracts/enums";
 import { useLocale } from "@/lib/locale-context";
@@ -79,16 +78,13 @@ const JOURNEY: ReadonlyArray<{ status: BrandOrderStatus; ar: string; en: string 
 
 export function OrdersView() {
   const locale = useLocale();
-  const router = useRouter();
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
-  const [error, setError] = useState<"number" | "phone" | null>(null);
   /**
-   * The navigation is the slow part, and a shopper on Egyptian mobile data
-   * feels it. `useTransition` is the only thing that knows the push is still
-   * in flight — there is no fetch here to hang a loading flag on.
+   * `unavailable` is not a validation failure — the input was fine and the
+   * feature is not there. See the note on `submit`.
    */
-  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<"number" | "phone" | "unavailable" | null>(null);
 
   const numberId = useId();
   const phoneId = useId();
@@ -112,7 +108,6 @@ export function OrdersView() {
         : "It is in your confirmation message, shaped like LQ-4821-7730",
     phone: locale === "ar" ? "رقم الموبايل" : "Phone number",
     find: locale === "ar" ? "افتح الأوردر" : "Open the order",
-    finding: locale === "ar" ? "بنفتح الأوردر" : "Opening the order",
     numberError:
       locale === "ar"
         ? "اكتب رقم الأوردر زي ما هو في رسالة التأكيد."
@@ -121,6 +116,12 @@ export function OrdersView() {
       locale === "ar"
         ? "اكتب رقم الموبايل اللي طلبت بيه — 11 رقم."
         : "Enter the phone you ordered with — 11 digits.",
+    /* Says what is absent and what to do instead — the shop confirmed the
+       order over the phone, so the shop can still answer for it. */
+    unavailable:
+      locale === "ar"
+        ? "فتح الأوردر بالرقم لسه مش شغال. لحد ما يشتغل، كلّم المحل اللي طلبت منه — عنده الأوردر برقمه."
+        : "Opening an order by number is not live yet. Until it is, message the shop you ordered from — it has the order under the same number.",
     /* The empty state teaches. It never mentions the emptiness. */
     coming: locale === "ar" ? "اللي هيظهر لما تفتح أوردر" : "What you see when you open an order",
     comingLead:
@@ -148,8 +149,6 @@ export function OrdersView() {
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    /* `aria-disabled` kills the pointer but not the Enter key. */
-    if (isPending) return;
 
     const trimmedNumber = orderNumber.trim();
     if (!trimmedNumber) {
@@ -163,15 +162,28 @@ export function OrdersView() {
       setError("phone");
       return;
     }
-    setError(null);
-
-    startTransition(() => {
-      // A navigation rather than a fetch: the order screen owns the read, so
-      // the result gets its own URL a shopper can reopen or send to somebody.
-      router.push(
-        `/orders/${encodeURIComponent(trimmedNumber)}?phone=${encodeURIComponent(phone.trim())}`
-      );
-    });
+    /**
+     * THE LOOKUP IS NOT WIRED, AND THIS SAYS SO INSTEAD OF NAVIGATING.
+     *
+     * This used to `router.push('/orders/{number}?phone=')`, which is the right
+     * shape — the order screen should own the read so the result gets a URL a
+     * shopper can reopen or send to somebody. But that route does not exist,
+     * so a correctly filled form landed on a 404: a form that fails when it
+     * succeeds, which is worse than one that fails when it fails.
+     *
+     * Two things are missing and neither is a screen. There is no shopper-side
+     * order schema anywhere in `storefront.contract.ts`, and no lookup function
+     * in `lib/`. The only multi-brand order shape in the repo is
+     * `adminOrderDetailSchema.brandOrders`, whose own docstring says it is
+     * SUPER_ADMIN-only. Building the route first would mean inventing the
+     * contract, and a guessed schema for a screen that shows somebody their
+     * money is the wrong thing to guess.
+     *
+     * So the button reports the truth. When `GET /v1/orders/lookup/:orderNumber`
+     * lands with a storefront schema behind it, this becomes the push again and
+     * the `unavailable` branch goes.
+     */
+    setError("unavailable");
   };
 
   return (
@@ -254,58 +266,33 @@ export function OrdersView() {
                 the accessibility tree in between. It carries the specific
                 failure, never a generic "check your details". */}
             {error === null ? null : (
-              <p id={errorId} className="lq-hint lq-hint--error" role="alert">
-                {error === "number" ? t.numberError : t.phoneError}
+              <p
+                id={errorId}
+                /* `unavailable` is NOT an error the shopper made, so it is not
+                   red. Red here would blame them for a field we have not
+                   built. */
+                className={error === "unavailable" ? "lq-hint" : "lq-hint lq-hint--error"}
+                role="alert"
+              >
+                {error === "number"
+                  ? t.numberError
+                  : error === "phone"
+                    ? t.phoneError
+                    : t.unavailable}
               </p>
             )}
 
             <button
               type="submit"
               className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
-              aria-disabled={isPending}
             >
-              {isPending ? t.finding : t.find}
+              {t.find}
             </button>
           </form>
 
           <hr className="lq-rule" />
 
           {/* ── What appears, or the shape of it while it arrives ───────── */}
-          {isPending ? (
-            /* A SKELETON IN THE SHAPE OF THE ROW THAT IS COMING, not a spinner
-               dropped into the middle of the page: order number, date, two
-               shop statuses, a total. It sits exactly where the result lands.
-               GAP: there is no `.lq-rows`/`.lq-row` hairline stack class, so
-               the shared-border grid is inline here — see the report. */
-            <div
-              aria-hidden
-              className="lq-cells"
-              style={{ gridTemplateColumns: "1fr" }}
-            >
-              {[0, 1].map((row) => (
-                <div
-                  key={row}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "var(--space-3)",
-                    padding: "var(--space-4)",
-                  }}
-                >
-                  <div style={{ display: "flex", gap: "var(--space-3)" }}>
-                    <span className="lq-skel" style={{ inlineSize: "9rem", blockSize: "1rem" }} />
-                    <span className="lq-skel" style={{ inlineSize: "5rem", blockSize: "1rem" }} />
-                  </div>
-                  <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-                    <span className="lq-skel" style={{ inlineSize: "8rem", blockSize: "1.5rem" }} />
-                    <span className="lq-skel" style={{ inlineSize: "6rem", blockSize: "1.5rem" }} />
-                  </div>
-                  <span className="lq-skel" style={{ inlineSize: "6rem", blockSize: "1.25rem" }} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
               <div className="lq-sec__head">
                 <h2 className="lq-sec__title">{t.coming}</h2>
               </div>
@@ -355,8 +342,6 @@ export function OrdersView() {
 
               <p className="lq-hint">{t.perShop}</p>
               <p className="lq-hint">{t.noHistory}</p>
-            </>
-          )}
         </section>
       </div>
     </Shell>
