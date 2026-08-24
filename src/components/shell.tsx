@@ -79,6 +79,8 @@ export function Shell({
   const bagCount = useBagCount();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
   const label = (tab: (typeof TABS)[number]) => (locale === "ar" ? tab.ar : tab.en);
+  /** The search route owns a real input; the chrome must not add a second. */
+  const onSearch = pathname.startsWith("/search");
 
   return (
     <div className="lq-shell">
@@ -102,13 +104,23 @@ export function Shell({
 
           {/* A real link, not a live field. Search is a route with its own
               query state; a second input in the chrome would be a second
-              source of truth for the same term. */}
-          <Link className="lq-head__search lq-search" href="/search">
-            <span className="lq-icon" data-icon="search" aria-hidden="true" />
-            <span className="lq-search__fake">
-              {t("دوّر على قطعة أو محل…", "Search for a piece or a shop…")}
-            </span>
-          </Link>
+              source of truth for the same term.
+
+              AND IT IS NOT RENDERED ON /search AT ALL. There the page owns a
+              real input, and shipping both put two search boxes on top of each
+              other — one live, one a link back to the page you are already on.
+              The grid column stays empty rather than collapsing, so the mark
+              and the tools do not jump when you navigate into search. */}
+          {onSearch ? (
+            <span aria-hidden="true" />
+          ) : (
+            <Link className="lq-head__search lq-search" href="/search">
+              <span className="lq-icon" data-icon="search" aria-hidden="true" />
+              <span className="lq-search__fake">
+                {t("دوّر على قطعة أو محل…", "Search for a piece or a shop…")}
+              </span>
+            </Link>
+          )}
 
           <nav className="lq-tools" aria-label={t("التنقل", "Navigation")}>
             <Link href="/categories" aria-current={isActive(pathname, "/categories") ? "page" : undefined}>
@@ -143,13 +155,17 @@ export function Shell({
             {t("لوكال", "Loqal")}
           </Link>
         )}
-        <Link
-          className="lq-iconbtn lq-topbar__end"
-          href="/search"
-          aria-label={t("بحث", "Search")}
-        >
-          <span className="lq-icon" data-icon="search" aria-hidden="true" />
-        </Link>
+        {/* Same rule as the desktop header: not on /search, where it would
+            link to the page it is already on. */}
+        {onSearch ? null : (
+          <Link
+            className="lq-iconbtn lq-topbar__end"
+            href="/search"
+            aria-label={t("بحث", "Search")}
+          >
+            <span className="lq-icon" data-icon="search" aria-hidden="true" />
+          </Link>
+        )}
       </header>
 
       <main style={{ flex: 1 }}>{children}</main>

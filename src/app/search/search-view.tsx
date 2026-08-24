@@ -131,6 +131,22 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
   /** Facets describe the whole match set, so the first page is authoritative. */
   const facets: SearchFacets | undefined = pages[0]?.facets;
 
+  /**
+   * Whether there is anything to draw a rail from.
+   *
+   * An API build without the variant join parses fine — `facets` is defaulted
+   * rather than required, so search still works — but every list comes back
+   * empty. Headings with nothing under them read as a broken rail, so the
+   * absence gets said out loud instead.
+   */
+  const hasFacets = Boolean(
+    facets &&
+      (facets.brands.length > 0 ||
+        facets.sizes.length > 0 ||
+        facets.colors.length > 0 ||
+        facets.price)
+  );
+
   const activeCount =
     (filters.brands?.length ?? 0) +
     (filters.sizes?.length ?? 0) +
@@ -162,12 +178,47 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
         </form>
 
         {submitted.length === 0 ? (
-          <p className="lq-prose">
-            {t(
-              "اكتب اسم قطعة أو محل. البحث بيقارن الكلام، فمش لازم تكتبه بالظبط.",
-              "Type the name of a piece or a shop. Search compares words, so it does not have to be exact."
-            )}
-          </p>
+          /* The blank state has to carry the page on its own — before a query
+             there are no results, no rail and no facets, and a single sentence
+             left the whole screen a thin strip above the footer. It says how
+             search behaves, then hands over the two routes that browse without
+             one. */
+          <section className="lq-sec">
+            <p className="lq-prose">
+              {t(
+                "اكتب اسم قطعة أو محل. البحث بيقارن الكلام، فمش لازم تكتبه بالظبط.",
+                "Type the name of a piece or a shop. Search compares words, so it does not have to be exact."
+              )}
+            </p>
+            <p className="lq-prose">
+              {t(
+                "أول ما تدوّر، هتلاقي على الشمال فلاتر بالمحل والمقاس واللون والسعر.",
+                "Once you search, filters for shop, size, colour and price appear beside the results."
+              )}
+            </p>
+            <div className="lq-rows">
+              <Link className="lq-row" href="/categories">
+                <span className="lq-icon lq-row__lead" data-icon="grid" aria-hidden="true" />
+                <span className="lq-row__body">
+                  <span>{t("اتفرّج على الأقسام", "Browse the categories")}</span>
+                  <span className="lq-hint">
+                    {t("كل قطعة على رف في محل", "Every piece is on a shelf in a shop")}
+                  </span>
+                </span>
+                <span className="lq-icon lq-row__end" data-icon="chevron-right" aria-hidden="true" />
+              </Link>
+              <Link className="lq-row" href="/shops">
+                <span className="lq-icon lq-row__lead" data-icon="store" aria-hidden="true" />
+                <span className="lq-row__body">
+                  <span>{t("اتفرّج على المحلات", "Browse the shops")}</span>
+                  <span className="lq-hint">
+                    {t("محلات ليها عناوين حقيقية", "Shops with real addresses")}
+                  </span>
+                </span>
+                <span className="lq-icon lq-row__end" data-icon="chevron-right" aria-hidden="true" />
+              </Link>
+            </div>
+          </section>
         ) : (
           <div className="lq-body">
             {/* ── The rail ────────────────────────────────────────────────── */}
@@ -188,7 +239,19 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
                 ) : null}
               </div>
 
-              {facets ? (
+              {results.isPending ? (
+                <p className="lq-hint">{t("بنجيب الفلاتر…", "Loading filters…")}</p>
+              ) : !hasFacets ? (
+                /* The API answered but sent no facets — a build without the
+                   variant join. Say so rather than showing headings with
+                   nothing under them, which reads as a broken rail. */
+                <p className="lq-hint">
+                  {t(
+                    "الفلاتر مش متاحة من السيرفر ده لسه.",
+                    "This server build does not send filters yet."
+                  )}
+                </p>
+              ) : (
                 <>
                   <FacetGroup title={t("المحل", "Shop")}>
                     {facets.brands.map((brand) => (
@@ -288,45 +351,31 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
                     />
                   </FacetGroup>
                 </>
-              ) : results.isPending ? (
-                <p className="lq-hint">{t("بنجيب الفلاتر…", "Loading filters…")}</p>
-              ) : null}
+              )}
             </aside>
 
             {/* ── Results ─────────────────────────────────────────────────── */}
             <section className="lq-body__main">
               <div className="lq-sum__row">
+                {/* No count while the search is failing — "0 نتيجة" beside an
+                    error reads as "there is nothing", which is a different and
+                    much worse claim than "we could not look". */}
                 <p className="lq-hint" aria-live="polite">
                   {results.isPending
                     ? t("بندوّر…", "Searching…")
-                    : t(
-                        `${items.length} نتيجة لـ «${submitted}»`,
-                        `${items.length} results for “${submitted}”`
-                      )}
+                    : results.isError
+                      ? ""
+                      : t(
+                          `${items.length} نتيجة لـ «${submitted}»`,
+                          `${items.length} results for “${submitted}”`
+                        )}
                 </p>
 
-                <label className="lq-sum__row" style={{ gap: "var(--space-2)" }}>
-                  <span className="lq-hint">{t("ترتيب", "Sort")}</span>
-                  {/*
-                    The design system forbids a native <select> — the OS wheel
-                    cannot be styled and cannot carry a second line of Arabic.
-                    These are four chips, which is also fewer taps than opening
-                    a menu to choose between four things.
-                  */}
-                  <span className="lq-vp__row">
-                    {SORTS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        className="lq-chip"
-                        aria-pressed={(filters.sort ?? "relevance") === option.value}
-                        onClick={() => patch({ sort: option.value })}
-                      >
-                        {t(option.ar, option.en)}
-                      </button>
-                    ))}
-                  </span>
-                </label>
+                <SortSelect
+                  value={filters.sort ?? "relevance"}
+                  locale={locale}
+                  onChange={(sort) => patch({ sort })}
+                />
               </div>
 
               <ActiveChips
@@ -386,6 +435,83 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
         )}
       </div>
     </Shell>
+  );
+}
+
+/**
+ * Sort — a trigger showing the CURRENT value, and a popover listbox.
+ *
+ * The `.dc` desktop twin puts one control here reading "ترتيب · الأحدث", not a
+ * row of every option: four chips laid across the results header compete with
+ * the result count for the same line and push the grid down on a phone.
+ *
+ * There is no native `<select>` in this system — the OS wheel cannot be
+ * styled, cannot carry a second line of Arabic, and looks like a different
+ * product on every Android skin — so this is the vocabulary's own trigger and
+ * panel, which already carry the rotating chevron and the tick.
+ */
+function SortSelect({
+  value,
+  locale,
+  onChange,
+}: {
+  value: SearchSort;
+  locale: Locale;
+  onChange: (sort: SearchSort) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = SORTS.find((option) => option.value === value) ?? SORTS[0];
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+
+  return (
+    <div className="lq-selwrap">
+      <button
+        type="button"
+        className="lq-seltrigger"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        onClick={() => setOpen((previous) => !previous)}
+      >
+        <span className="lq-hint">{t("ترتيب", "Sort")}</span>
+        <span className="lq-seltrigger__val">{t(current.ar, current.en)}</span>
+        <span className="lq-icon lq-chev" data-icon="chevron-down" aria-hidden="true" />
+      </button>
+
+      {open ? (
+        <>
+          {/* Click-away. A fixed, transparent layer rather than a document
+              listener, so closing cannot race the trigger's own toggle and
+              reopen it on the same click. */}
+          <span
+            style={{ position: "fixed", inset: 0, zIndex: "var(--z-scrim)" }}
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="lq-selpanel" role="listbox">
+            {SORTS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                className="lq-selitem"
+                aria-selected={option.value === value}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                {t(option.ar, option.en)}
+                <span
+                  className="lq-icon lq-selitem__tick"
+                  data-icon="check"
+                  aria-hidden="true"
+                />
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }
 
@@ -617,7 +743,10 @@ function SearchCard({
             −{off}%
           </span>
         ) : null}
-        {!item.inStock ? (
+        {/* `=== false`, never `!item.inStock`. Undefined means the API did not
+            say — an older build with no variant join — and treating "nobody
+            said" as "sold out" stamps خلص across a healthy catalogue. */}
+        {item.inStock === false ? (
           <span className="lq-pcard__out">{locale === "ar" ? "خلص" : "Sold out"}</span>
         ) : null}
       </span>

@@ -260,14 +260,23 @@ export const searchResultSchema = z
      * Null when the product has no live variant at all — a real state, not a
      * defect, and why `basePrice` is still here as the display fallback.
      */
-    priceFrom: moneySchema.nullable(),
-    compareAtPrice: moneySchema.nullable(),
+    priceFrom: moneySchema.nullable().optional().default(null),
+    compareAtPrice: moneySchema.nullable().optional().default(null),
 
     /**
      * Whether any surviving variant is sellable, from AVAILABILITY — on-hand
      * minus live holds — never on-hand alone.
+     *
+     * OPTIONAL, AND DELIBERATELY NOT DEFAULTED TO false. An API that has not
+     * shipped the variant join yet sends no such key, and `false` would print
+     * "خلص" across an entire healthy catalogue — the worst possible direction
+     * to be wrong in, because a shopper acts on it and does not buy.
+     *
+     * `undefined` means NOBODY SAID. The card renders the sold-out overlay
+     * only when this is explicitly false, so an old API shows no claim at all
+     * rather than a false one.
      */
-    inStock: z.boolean(),
+    inStock: z.boolean().optional(),
   })
   .strict();
 export type SearchResult = z.infer<typeof searchResultSchema>;
@@ -299,13 +308,34 @@ export const searchFacetsSchema = z
   .strict();
 export type SearchFacets = z.infer<typeof searchFacetsSchema>;
 
+/** An API that has not shipped facets yet sends none. */
+const EMPTY_FACETS: SearchFacets = {
+  brands: [],
+  sizes: [],
+  colors: [],
+  price: null,
+};
+
 export const searchResultPageSchema = z
   .object({
     items: z.array(searchResultSchema),
     page: z.number().int().min(1),
     perPage: z.number().int().min(1),
     hasMore: z.boolean(),
-    facets: searchFacetsSchema,
+    /**
+     * OPTIONAL, AND THAT IS THE WHOLE POINT.
+     *
+     * Required, this field breaks every search against an API that has not
+     * deployed the facet query yet: the schema is `.strict()`, the key is
+     * absent, parsing fails, and the screen shows "we cannot search right now"
+     * against a perfectly healthy backend. That is the identical failure
+     * `publicBrandSchema` had — a contract describing something other than the
+     * wire is not stricter, it is wrong — and a frontend that ships before its
+     * backend must degrade to no rail rather than to no search.
+     *
+     * Defaulted rather than left undefined so no call site has to guard it.
+     */
+    facets: searchFacetsSchema.optional().default(EMPTY_FACETS),
   })
   .strict();
 export type SearchResultPage = z.infer<typeof searchResultPageSchema>;
