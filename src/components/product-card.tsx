@@ -18,9 +18,13 @@ import { Garment, garmentFor } from "@/components/garment";
  * WITH NO PHOTO IT DRAWS THE GARMENT rather than showing an image glyph. The
  * previous version put a single Lucide `image` placeholder in the well, which
  * is a picture of a missing picture: correct, and it makes a grid of a
- * pre-launch catalogue look broken rather than drawn. The line art is the
- * register's answer, and the drawing is chosen by hashing the product slug so
- * the same product keeps the same drawing everywhere and across reloads.
+ * pre-launch catalogue look broken rather than drawn.
+ *
+ * THE DRAWING IS SEEDED FROM `product.id`, NOT THE SLUG, and that is not
+ * arbitrary. `cartLineSchema` carries `productId` and no slug, so a bag line
+ * cannot seed from a slug it never receives — seeding the grid from one and the
+ * bag from the other gives the same garment two different drawings on two
+ * screens in the same session. The id is the only key both sides hold.
  *
  * Sold-out is an OVERLAY on the well, not a line under the price. A shopper
  * scanning a grid decides on the picture; a note below it is read after they
@@ -64,7 +68,7 @@ export function ProductCard({
             priority={priority}
           />
         ) : (
-          <Garment className="lq-garment" kind={garmentFor(product.slug)} />
+          <Garment className="lq-garment" kind={garmentFor(product.id)} />
         )}
 
         {!product.inStock ? (

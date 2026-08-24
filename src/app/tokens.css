@@ -326,6 +326,12 @@
   --z-sticky: 20;
   --z-header: 40;
   --z-tabbar: 45;
+  /* ABOVE the tab bar, and it has to be. Both are stuck to the block end on a
+     phone, and the action bar carries the one action of the screen — add to
+     cart, checkout. At --z-sticky it was drawn OVER by the tab bar, which is
+     the one element guaranteed to be in the same place. It also sits offset by
+     the tab bar's height rather than on top of it, so neither is covered. */
+  --z-actionbar: 46;
   --z-scrim: 50;
   --z-sheet: 60;
   --z-grain: 100; /* the paper grain sits over everything, pointer-events:none */

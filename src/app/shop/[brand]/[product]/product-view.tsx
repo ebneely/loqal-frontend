@@ -368,7 +368,7 @@ export function ProductView({
           ) : (
             <>
               <div className="lq-pcard__well lq-rv">
-                <Garment className="lq-garment" kind={garmentFor(product.slug)} />
+                <Garment className="lq-garment" kind={garmentFor(product.id)} />
               </div>
               {/* Say what is absent and why. A missing thing explained is a
                   feature; a blank frame is a bug report. */}

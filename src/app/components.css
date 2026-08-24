@@ -32,7 +32,11 @@
 .lq-btn--ghost:hover{background:var(--accent)}
 .lq-btn--destructive{background:var(--destructive);color:var(--destructive-foreground);}
 .lq-btn--destructive:hover{background:color-mix(in oklab,var(--destructive) 88%,black)}
-.lq-btn--sm{min-block-size:36px;padding-inline:var(--space-3);font-size:var(--text-sm)}
+/* --tap-min, not 36px. DESIGN.md sets 44px as the floor for anything tappable
+   and calls it a functional requirement rather than taste — this is read on a
+   mid-range Android held at arm's length. A "small" button is small in its
+   padding and its type, never in its target. */
+.lq-btn--sm{min-block-size:var(--tap-min);padding-inline:var(--space-3);font-size:var(--text-sm)}
 .lq-btn--lg{min-block-size:var(--tap-primary);padding-inline:var(--space-6);font-size:var(--text-lg)}
 .lq-btn--block{display:flex;inline-size:100%}
 .lq-ripple{position:absolute;border-radius:50%;background:currentColor;pointer-events:none;opacity:0.32;animation:lq-ripple 520ms var(--ease-out) forwards}
@@ -110,9 +114,13 @@
 .lq-card{border:var(--border-width) solid var(--line);border-radius:var(--radius-lg);background:var(--surface-card);box-shadow:var(--shadow-xs)}
 .lq-card--pad{padding:var(--space-4)}
 .lq-card--flat{box-shadow:none}
-.lq-card--link{display:block;color:inherit;text-decoration:none;transition:border-color var(--dur-fast),background var(--dur-fast),box-shadow var(--dur-fast) var(--ease-out),translate var(--dur-fast) var(--ease-out)}
+.lq-card--link{display:block;color:inherit;text-decoration:none;transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
 .lq-card--link:hover{border-color:color-mix(in oklab,var(--foreground) 22%,var(--line));background:color-mix(in oklab,var(--foreground) 3%,var(--surface-card));box-shadow:var(--shadow-md);text-decoration:none}
-.lq-card--link:active{box-shadow:none;translate:calc(4px * var(--elev-dir)) 4px;background:var(--accent)}
+/* Press changes the BACKGROUND. Nothing moves — the translate here was the .dc
+   register landing a card in its own hard-offset shadow, and there are no
+   shadows now. Inside a shared-hairline grid it was actively broken: the
+   pressed cell slid off its own border and exposed a 4px strip of --line. */
+.lq-card--link:active{background:var(--raise)}
 
 /* ── Skeleton ─────────────────────────────────────────────────────────────── */
 .lq-skel{border-radius:var(--radius-sm);background:linear-gradient(90deg,var(--muted) 0%,color-mix(in oklab,var(--muted) 60%,white) 50%,var(--muted) 100%);background-size:200% 100%;animation:lq-shimmer var(--dur-slow) linear infinite}
@@ -200,10 +208,16 @@
 
 /* ── CartLine ─────────────────────────────────────────────────────────────── */
 .lq-line{display:grid;grid-template-columns:72px 1fr auto;gap:var(--space-3);align-items:start}
-.lq-line__well{aspect-ratio:var(--ratio-garment);border-radius:var(--radius-sm);overflow:hidden;background:var(--surface-sunken);display:grid;place-items:center;color:var(--text-muted)}
+/* A hairline, like every other well in the system. Without it a cart line's
+   garment floated on a bare --raise rectangle while the same drawing on a
+   product card sat inside a frame. */
+.lq-line__well{aspect-ratio:var(--ratio-garment);overflow:hidden;background:var(--raise);border:var(--border-width) solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
 .lq-line__well img{inline-size:100%;block-size:100%;object-fit:cover}
-.lq-line__name{font-size:var(--text-base);font-weight:var(--weight-medium);color:var(--text-title);line-height:var(--leading-snug)}
-.lq-line__meta{font-size:var(--text-xs);color:var(--text-muted)}
+/* The name and the meta line are separate rows, not two inline spans that
+   collide. Every screen using .lq-line was inlining this grid. */
+.lq-line__body{display:grid;gap:var(--space-1);min-inline-size:0}
+.lq-line__name{font-size:var(--text-base);font-weight:var(--weight-regular);color:var(--ink);line-height:var(--leading-snug)}
+.lq-line__meta{font-size:var(--text-xs);color:var(--ink-2)}
 .lq-line__foot{display:flex;align-items:center;gap:var(--space-3);margin-block-start:var(--space-2)}
 .lq-line__end{display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-2)}
 
@@ -248,7 +262,10 @@
 .lq-search input{inline-size:100%;min-block-size:var(--tap-min);padding-inline:calc(var(--space-3) * 2 + 18px) var(--space-4);border:var(--border-width) solid var(--input);background:var(--field);color:var(--ink);font-size:var(--text-base);transition:border-color var(--dur-base) var(--ease)}
 .lq-search input::placeholder{color:var(--ink-2)}
 .lq-search input:focus{outline:none;background:var(--raise);border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
-.lq-search__clear{position:absolute;inset-inline-end:var(--space-1);inline-size:36px;block-size:36px}
+.lq-search__clear{position:absolute;inset-inline-end:var(--space-1);inline-size:var(--tap-min);block-size:var(--tap-min)}
+/* Room for the clear button, and ONLY when one is present. Without this the
+   button sits on top of the value the shopper is trying to read. */
+.lq-search:has(.lq-search__clear) input{padding-inline-end:var(--space-12)}
 
 /* ── CategoryTabs ─────────────────────────────────────────────────────────── */
 .lq-cats{display:flex;gap:var(--space-2);overflow-x:auto;scrollbar-width:none;padding-block:var(--space-1)}
@@ -268,7 +285,10 @@
 .lq-sheet__body{padding:0 var(--space-4) var(--space-4);overflow-y:auto}
 
 /* ── ActionBar ────────────────────────────────────────────────────────────── */
-.lq-actionbar{position:sticky;inset-block-end:0;z-index:var(--z-sticky);display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--gutter-phone);padding-block-end:calc(var(--space-3) + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-block-start:var(--border-width) solid var(--line)}
+/* Offset by the tab bar's height so the two stack instead of overlapping, and
+   above it so it wins if they ever meet. The offset is dropped at 720 where the
+   tab bar does not exist. */
+.lq-actionbar{position:sticky;inset-block-end:var(--tabbar-height);z-index:var(--z-actionbar);display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--gutter-phone);padding-block-end:calc(var(--space-3) + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-block-start:var(--border-width) solid var(--line)}
 .lq-actionbar__info{display:flex;flex-direction:column;gap:2px;min-inline-size:0}
 .lq-actionbar__label{font-size:var(--text-xs);color:var(--text-muted)}
 
@@ -455,6 +475,82 @@
 .lq-shopcard__place{font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2)}
 .lq-shopcard__foot{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-block-start:var(--space-2);font-size:var(--text-xs);color:var(--ink-2)}
 
+/* ── List row ─────────────────────────────────────────────────────────────── */
+/* A destination in a hairline list: an /account setting, a way out of the 404,
+   an order. 52px because on those screens every row IS the primary action.
+   Four screens had inlined their own version of this before it existed here. */
+.lq-row{display:flex;align-items:center;gap:var(--space-3);inline-size:100%;min-block-size:var(--tap-primary);padding:var(--space-3) var(--space-4);border:0;background:none;color:var(--ink);font-size:var(--text-base);font-weight:var(--weight-light);text-align:start;cursor:pointer;transition:background var(--dur-fast) var(--ease)}
+.lq-row:hover,.lq-row[data-active="true"]{background:var(--raise)}
+.lq-row__body{display:grid;gap:2px;min-inline-size:0}
+.lq-row__lead{flex:none;font-size:16px;color:var(--ink-2)}
+/* Pushed to the inline end, logical, so it is the left in Arabic with no
+   mirrored rule. The chevron itself flips via the base layer. */
+.lq-row__end{margin-inline-start:auto;flex:none;font-size:16px;color:var(--ink-3)}
+
+/* A ONE-COLUMN hairline stack. .lq-cells is the same structure but steps to
+   2-up at 520 and 3-up at 720, which is right for tiles and destroys a settings
+   list or a sequence. Declared after those queries so it wins. */
+.lq-rows{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:var(--border-width) solid var(--line)}
+.lq-rows>*{background:var(--paper)}
+
+/* ── Two-column page body ─────────────────────────────────────────────────── */
+/* A filter rail beside a results column. flex-wrap rather than a container
+   query so the two stack the moment the stems no longer fit, at whatever width
+   that happens to be. */
+.lq-body{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--space-6)}
+.lq-body__rail{flex:1 1 240px;min-inline-size:0}
+.lq-body__main{flex:999 1 420px;min-inline-size:0}
+/* Sticks under the phone bar. The desktop header is taller, but this only ever
+   sticks on a screen wide enough that the header is not the top edge. */
+.lq-body__sticky{position:sticky;inset-block-start:calc(var(--bar-height) + 1px);align-content:start}
+
+/* ── Hairline product grid ────────────────────────────────────────────────── */
+/* .lq-grid2 is a GAPPED grid — right where cards float, wrong where they share
+   borders. Each cell carries its own padding so .lq-pcard's well hairline does
+   not touch the grid rule and read as one 2px line. */
+.lq-pgrid{display:grid;gap:1px;background:var(--line);border-block:var(--border-width) solid var(--line);grid-template-columns:repeat(2,1fr)}
+.lq-pgrid>*{background:var(--paper);padding:var(--space-3)}
+@container (min-width:768px){.lq-pgrid{grid-template-columns:repeat(3,1fr)}}
+@container (min-width:1024px){.lq-pgrid{grid-template-columns:repeat(4,1fr)}}
+
+/* ── Disclosure ───────────────────────────────────────────────────────────── */
+/* Material, care, delivery, returns. A + that becomes a − , because a chevron
+   here would be the fourth different meaning of the same glyph on one screen. */
+.lq-disc{border-block-start:var(--border-width) solid var(--line)}
+.lq-disc>summary{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);min-block-size:var(--tap-min);padding-block:var(--space-3);font-size:var(--text-base);font-weight:var(--weight-light);cursor:pointer;list-style:none}
+.lq-disc>summary::-webkit-details-marker{display:none}
+.lq-disc>summary::after{content:"+";font-family:var(--font-mono);font-size:var(--text-lg);color:var(--ink-2);flex:none}
+.lq-disc[open]>summary::after{content:"−"}
+.lq-disc__body{padding-block-end:var(--space-4);max-inline-size:var(--prose-max);font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2)}
+
+/* ── Breadcrumb ───────────────────────────────────────────────────────────── */
+/* The way back out. A shopper who arrived on a shop from a search result has no
+   other route up to the shop index. */
+.lq-crumb{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);padding-block:var(--space-3);border-block-end:var(--border-width) solid var(--line);font-size:var(--text-xs);color:var(--ink-2)}
+.lq-crumb a:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+/* ── Page head, prose, summary row ────────────────────────────────────────── */
+.lq-phead__title{font-size:var(--text-2xl);font-weight:var(--weight-regular);letter-spacing:var(--tracking-display)}
+/* Body copy, as opposed to .lq-hint, which is a 13px caption. Capped at the
+   prose measure — 62ch — because this is the one place the storefront writes
+   sentences rather than labels. */
+.lq-prose{max-inline-size:var(--prose-max);font-size:var(--text-sm);font-weight:var(--weight-light);line-height:var(--leading-normal);color:var(--ink-2)}
+/* A label and a figure on one line: a subtotal, a delivery fee, a total. Five
+   money rows in the bag were borrowing .lq-sec__head for this. */
+.lq-sum__row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3)}
+.lq-sum__row--total{padding-block-start:var(--space-3);border-block-start:var(--border-width) solid var(--line);font-size:var(--text-lg)}
+/* The "see all" link beside a section title. */
+.lq-sec__more{flex:none;align-self:center;display:inline-flex;align-items:center;min-block-size:var(--tap-min);font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2);transition:color var(--dur-fast) var(--ease)}
+.lq-sec__more:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+/* Red on the live figure when a price dropped — one of exactly two things red
+   is allowed to mean. .lq-money hard-sets its colour, so this must follow it. */
+.lq-money--sale{color:var(--signal)}
+
+/* Screen-reader-only. Needed wherever an icon-only control or a new-tab link
+   has to say something the layout has no room to show. */
+.lq-vh{position:absolute;inline-size:1px;block-size:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+
 /* ── A hairline rail ──────────────────────────────────────────────────────── */
 /* Cells SHARE their borders: a 1px gap over a --line background, with one
    border around the outside. Bordering each cell instead double-draws every
@@ -462,6 +558,12 @@
 .lq-rail{display:flex;gap:1px;background:var(--line);border:var(--border-width) solid var(--line);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .lq-rail::-webkit-scrollbar{display:none}
 .lq-rail>*{flex:none;scroll-snap-align:start;background:var(--paper)}
+/* Rail cells need an EXPLICIT width. `flex:none` with no basis sizes each cell
+   to its content, so a two-word category and a five-word one come out different
+   widths in the same hairline row and the rhythm falls apart. display:grid so a
+   short card still fills its cell rather than leaving bare paper in the frame. */
+.lq-rail__cell{display:grid;inline-size:clamp(224px,22vw,272px)}
+.lq-rail__cell--tile{inline-size:clamp(104px,12vw,140px)}
 .lq-arrows{display:flex;gap:0;flex:none}
 .lq-arrows button{display:grid;place-items:center;inline-size:36px;block-size:36px;border:var(--border-width) solid var(--line);background:transparent;color:var(--ink);cursor:pointer;transition:background var(--dur-fast) var(--ease)}
 .lq-arrows button+button{margin-inline-start:-1px}
