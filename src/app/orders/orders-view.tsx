@@ -1,10 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState, useTransition } from "react";
 
+import type { BrandOrderStatus } from "@loqal/contracts/enums";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
+import { StatusPill } from "@/components/status-pill";
 
 /**
  * Finding an order.
@@ -21,22 +23,118 @@ import { Shell } from "@/components/shell";
  * route. So the screen offers the thing that works, and says plainly that the
  * history does not exist rather than rendering an empty list that looks like
  * "you have never ordered".
+ *
+ * ── Why there is no fabricated list ─────────────────────────────────────────
+ *
+ * The register wants a hairline list of orders — number, date, a status PER
+ * SHOP, total. There is no endpoint behind that list, and a screen that draws
+ * one anyway is drawing fiction. So the second section is the empty state
+ * doing the job DESIGN.md gives it: TEACHING THE INTERFACE. It shows the real
+ * `StatusPill`, keyed by the real `BrandOrderStatus` enum, and says that each
+ * shop's half carries one of these on its own. It describes what will appear.
+ * It never says "no orders".
+ *
+ * ONE STATUS PER SHOP is the thing this screen has to communicate before a
+ * shopper has an order open. Brands fulfil independently — one shop can be
+ * DELIVERED while its basket-mate is still PENDING_BRAND — so there is no
+ * rolled-up order status anywhere in this file, and the closing line says so
+ * in words rather than leaving it to be discovered.
  */
+
+/**
+ * The main path, in order, and the two states that are not on it.
+ *
+ * `BrandOrderStatus` values, not invented strings, so the wording and the tone
+ * come from `StatusPill`'s single map. Nothing here maps a status to a colour
+ * or a label; the second line is the CONSEQUENCE — what the shopper can expect
+ * next — which the pill deliberately does not carry.
+ */
+const JOURNEY: ReadonlyArray<{ status: BrandOrderStatus; ar: string; en: string }> = [
+  {
+    status: "PENDING_BRAND",
+    ar: "المحل بيراجع الرف قبل ما يأكد الأوردر.",
+    en: "The shop checks the shelf before it confirms the order.",
+  },
+  {
+    status: "CONFIRMED",
+    ar: "القطعة موجودة، والمحل بدأ يجهّزها.",
+    en: "The piece is there and the shop has started preparing it.",
+  },
+  {
+    status: "PACKED",
+    ar: "الأوردر متظبط ومستني المندوب يعدّي عليه.",
+    en: "Packed, waiting for the rider to collect it.",
+  },
+  {
+    status: "HANDED_OVER",
+    ar: "المندوب ماشي بيه دلوقتي.",
+    en: "The rider has it and is on the way.",
+  },
+  {
+    status: "DELIVERED",
+    ar: "وصل من المحل ده. باقي المحلات لسه على حالتها.",
+    en: "This shop's half arrived. The other shops keep their own status.",
+  },
+];
+
 export function OrdersView() {
   const locale = useLocale();
   const router = useRouter();
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
+  const [error, setError] = useState<"number" | "phone" | null>(null);
+  /**
+   * The navigation is the slow part, and a shopper on Egyptian mobile data
+   * feels it. `useTransition` is the only thing that knows the push is still
+   * in flight — there is no fetch here to hang a loading flag on.
+   */
+  const [isPending, startTransition] = useTransition();
+
+  const numberId = useId();
+  const phoneId = useId();
+  const errorId = useId();
 
   const t = {
     title: locale === "ar" ? "أوردراتي" : "My orders",
     lead:
       locale === "ar"
-        ? "اكتب رقم الأوردر ورقم الموبايل اللي طلبت بيه."
-        : "Enter the order number and the phone you ordered with.",
+        ? "كل محل بيجهّز نصّه لوحده، وكل نص ليه حالته."
+        : "Each shop prepares its own half, and each half has its own status.",
+    lookup: locale === "ar" ? "افتح أوردر" : "Open an order",
+    lookupHint:
+      locale === "ar"
+        ? "برقم الأوردر ورقم الموبايل اللي طلبت بيه. من غير حساب."
+        : "By order number and the phone you ordered with. No account.",
     number: locale === "ar" ? "رقم الأوردر" : "Order number",
+    numberHint:
+      locale === "ar"
+        ? "مكتوب في رسالة التأكيد، بالشكل ده: LQ-4821-7730"
+        : "It is in your confirmation message, shaped like LQ-4821-7730",
     phone: locale === "ar" ? "رقم الموبايل" : "Phone number",
-    find: locale === "ar" ? "دوّر على الأوردر" : "Find the order",
+    find: locale === "ar" ? "افتح الأوردر" : "Open the order",
+    finding: locale === "ar" ? "بنفتح الأوردر" : "Opening the order",
+    numberError:
+      locale === "ar"
+        ? "اكتب رقم الأوردر زي ما هو في رسالة التأكيد."
+        : "Enter the order number exactly as it is in your confirmation message.",
+    phoneError:
+      locale === "ar"
+        ? "اكتب رقم الموبايل اللي طلبت بيه — 11 رقم."
+        : "Enter the phone you ordered with — 11 digits.",
+    /* The empty state teaches. It never mentions the emptiness. */
+    coming: locale === "ar" ? "اللي هيظهر لما تفتح أوردر" : "What you see when you open an order",
+    comingLead:
+      locale === "ar"
+        ? "رقم الأوردر وتاريخه فوق، وتحته كل محل لوحده: حالته والمبلغ اللي عليه."
+        : "The order number and date on top, and under it each shop on its own: its status and its own total.",
+    journeyLead:
+      locale === "ar"
+        ? "الحالات اللي كل محل بيعدّي بيها:"
+        : "The statuses each shop moves through:",
+    perShop:
+      locale === "ar"
+        ? "لو محل اتأخر أو التوصيل فشل، ده بيبان على المحل ده لوحده — مفيش حالة واحدة بتتكلم عن الأوردر كله."
+        : "If one shop is late or a delivery fails, that shows on that shop alone — no single status speaks for the whole order.",
     /*
       Said out loud rather than left as an empty list. A history screen that
       renders nothing tells a returning shopper they never ordered, which is
@@ -44,66 +142,221 @@ export function OrdersView() {
     */
     noHistory:
       locale === "ar"
-        ? "لسه مفيش سجل أوردرات — الأوردر بيتفتح برقمه ورقم الموبايل."
-        : "There is no order history yet — an order is opened by its number and phone.",
+        ? "لسه مفيش سجل بكل أوردراتك. الأوردر بيتفتح برقمه ورقم الموبايل، وده اللي بيخلي الضيف يتابع من غير ما يعمل حساب."
+        : "There is no full order history yet. An order is opened by its number and phone, which is what lets a guest follow it without an account.",
+  };
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    /* `aria-disabled` kills the pointer but not the Enter key. */
+    if (isPending) return;
+
+    const trimmedNumber = orderNumber.trim();
+    if (!trimmedNumber) {
+      setError("number");
+      return;
+    }
+    /* Digits only for the check — a shopper types 0100 000 0000 or +2010… and
+       the space is not the mistake we are guarding against. */
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      setError("phone");
+      return;
+    }
+    setError(null);
+
+    startTransition(() => {
+      // A navigation rather than a fetch: the order screen owns the read, so
+      // the result gets its own URL a shopper can reopen or send to somebody.
+      router.push(
+        `/orders/${encodeURIComponent(trimmedNumber)}?phone=${encodeURIComponent(phone.trim())}`
+      );
+    });
   };
 
   return (
     <Shell title={t.title}>
       <div className="lq-wrap lq-pad">
         <section className="lq-sec">
-          <p className="lq-hint">{t.lead}</p>
+          <div className="lq-sec__head">
+            <div>
+              <h1 className="lq-sec__title">{t.title}</h1>
+              <p className="lq-eyebrow">{t.lead}</p>
+            </div>
+          </div>
+
+          <hr className="lq-rule" />
+
+          {/* ── The lookup ──────────────────────────────────────────────── */}
+          <div className="lq-sec__head">
+            <h2 className="lq-sec__title">{t.lookup}</h2>
+          </div>
+          <p className="lq-hint">{t.lookupHint}</p>
 
           <form
-            className="lq-sec"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const trimmed = orderNumber.trim();
-              if (!trimmed || !phone.trim()) return;
-              // A navigation rather than a fetch: the order screen owns the
-              // read, so the result gets its own URL a shopper can reopen or
-              // send to somebody. Soft, because nothing about the identity
-              // changed — only the address.
-              router.push(
-                `/orders/${encodeURIComponent(trimmed)}?phone=${encodeURIComponent(phone.trim())}`
-              );
-            }}
+            className="lq-vp lq-rv"
+            onSubmit={submit}
+            noValidate
+            aria-describedby={error ? errorId : undefined}
           >
-            <label className="lq-field">
-              <span className="lq-label">{t.number}</span>
+            <div className="lq-field">
+              <label className="lq-label" htmlFor={numberId}>
+                {t.number}
+              </label>
               <input
+                id={numberId}
                 className="lq-input"
+                /* Mono figure face: an order number is read out over the
+                   phone, so the digits are tabular and the zero is not an O. */
+                data-num
                 value={orderNumber}
-                onChange={(event) => setOrderNumber(event.target.value)}
+                onChange={(event) => {
+                  setOrderNumber(event.target.value);
+                  if (error === "number") setError(null);
+                }}
                 /* Readable over the phone — LQ-4821-7730 — so it is typed, not
                    scanned, and the keyboard should not autocorrect it. */
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}
+                autoComplete="off"
                 placeholder="LQ-0000-0000"
-                required
+                aria-invalid={error === "number"}
+                aria-describedby={error === "number" ? errorId : undefined}
               />
-            </label>
+              <p className="lq-hint">{t.numberHint}</p>
+            </div>
 
-            <label className="lq-field">
-              <span className="lq-label">{t.phone}</span>
+            <div className="lq-field">
+              <label className="lq-label" htmlFor={phoneId}>
+                {t.phone}
+              </label>
               <input
+                id={phoneId}
                 className="lq-input"
+                data-num
                 type="tel"
                 inputMode="tel"
+                autoComplete="tel"
                 value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                onChange={(event) => {
+                  setPhone(event.target.value);
+                  if (error === "phone") setError(null);
+                }}
                 placeholder="01000000000"
-                required
+                aria-invalid={error === "phone"}
+                aria-describedby={error === "phone" ? errorId : undefined}
               />
-            </label>
+            </div>
 
-            <button type="submit" className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block">
-              {t.find}
+            {/* Inserted rather than hidden-then-shown: `role="alert"` on a node
+                that ARRIVES is announced, and a `hidden` alert is dropped from
+                the accessibility tree in between. It carries the specific
+                failure, never a generic "check your details". */}
+            {error === null ? null : (
+              <p id={errorId} className="lq-hint lq-hint--error" role="alert">
+                {error === "number" ? t.numberError : t.phoneError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+              aria-disabled={isPending}
+            >
+              {isPending ? t.finding : t.find}
             </button>
           </form>
 
-          <p className="lq-hint">{t.noHistory}</p>
+          <hr className="lq-rule" />
+
+          {/* ── What appears, or the shape of it while it arrives ───────── */}
+          {isPending ? (
+            /* A SKELETON IN THE SHAPE OF THE ROW THAT IS COMING, not a spinner
+               dropped into the middle of the page: order number, date, two
+               shop statuses, a total. It sits exactly where the result lands.
+               GAP: there is no `.lq-rows`/`.lq-row` hairline stack class, so
+               the shared-border grid is inline here — see the report. */
+            <div
+              aria-hidden
+              className="lq-cells"
+              style={{ gridTemplateColumns: "1fr" }}
+            >
+              {[0, 1].map((row) => (
+                <div
+                  key={row}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "var(--space-3)",
+                    padding: "var(--space-4)",
+                  }}
+                >
+                  <div style={{ display: "flex", gap: "var(--space-3)" }}>
+                    <span className="lq-skel" style={{ inlineSize: "9rem", blockSize: "1rem" }} />
+                    <span className="lq-skel" style={{ inlineSize: "5rem", blockSize: "1rem" }} />
+                  </div>
+                  <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                    <span className="lq-skel" style={{ inlineSize: "8rem", blockSize: "1.5rem" }} />
+                    <span className="lq-skel" style={{ inlineSize: "6rem", blockSize: "1.5rem" }} />
+                  </div>
+                  <span className="lq-skel" style={{ inlineSize: "6rem", blockSize: "1.25rem" }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="lq-sec__head">
+                <h2 className="lq-sec__title">{t.coming}</h2>
+              </div>
+              <p className="lq-hint">{t.comingLead}</p>
+              <p className="lq-hint">{t.journeyLead}</p>
+
+              {/* The hairline stack: cells share their borders. Forced to one
+                  column because this is a SEQUENCE — the container query would
+                  otherwise wrap it into three across at 720 and the order of
+                  the steps would stop being the order of the reading. */}
+              <ol
+                className="lq-cells"
+                style={{
+                  gridTemplateColumns: "1fr",
+                  listStyle: "none",
+                  margin: 0,
+                  padding: 0,
+                }}
+              >
+                {JOURNEY.map((step, index) => (
+                  <li
+                    key={step.status}
+                    className="lq-rv"
+                    style={
+                      {
+                        "--lq-d": `${index * 70}ms`,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "var(--space-3)",
+                        flexWrap: "wrap",
+                        padding: "var(--space-4)",
+                      } as React.CSSProperties
+                    }
+                  >
+                    {/* The ONE map. No screen invents its own wording or tone. */}
+                    <StatusPill status={step.status} locale={locale} />
+                    <span
+                      className="lq-hint"
+                      data-bidi
+                      style={{ flex: "1 1 16rem", minInlineSize: 0 }}
+                    >
+                      {locale === "ar" ? step.ar : step.en}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+
+              <p className="lq-hint">{t.perShop}</p>
+              <p className="lq-hint">{t.noHistory}</p>
+            </>
+          )}
         </section>
       </div>
     </Shell>

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api";
 import { fetchProduct } from "@/lib/catalog";
-import { defaultLocale, formatPrice } from "@/lib/locale";
+import { defaultLocale } from "@/lib/locale";
+import { Shell } from "@/components/shell";
 
 import { ProductView } from "./product-view";
 
@@ -162,12 +163,16 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         // The payload is built from parsed API data, never from user input.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductView
-        product={product}
-        brandSlug={resolved.brand}
-        locale={locale}
-        priceLabel={product.priceFrom ? formatPrice(product.priceFrom, locale) : "—"}
-      />
+      {/*
+        The chrome. This route was rendering WITHOUT it: a product page had no
+        header, no tab bar and no way back to the shop — the one screen a shopper
+        lands on straight from a search result was the one screen with no
+        navigation on it. `Shell` is a client component that takes children, so
+        the view below still server-renders inside it.
+      */}
+      <Shell title={name}>
+        <ProductView product={product} brandSlug={resolved.brand} locale={locale} />
+      </Shell>
     </>
   );
 }
