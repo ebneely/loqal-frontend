@@ -109,9 +109,83 @@ Both exist in `design/` and the mega menu, home rail and footer already link at
 them. Gives every shop card a real destination instead of one shared index.
 Neighbourhood filter renders only if the API gap above is closed first.
 
-## Phase 6 — The flows (separate plan)
+## Status — phases 1-5 are DONE
 
-Checkout with the rider step, order placed, per-shop tracking, chat, returns,
-addresses, favourites, offers. Each needs endpoints wired, not CSS. Audit
-`cart.contract.ts`, `order.contract.ts` and `return.contract.ts` for what exists
-before planning; write it as its own plan file.
+Branch `design/stone-register`. Phases 1 through 5 are built, verified and
+committed. What follows is what is left, rewritten against what the parallel
+build actually found in the contracts.
+
+### Outstanding cleanup (small, not blocked)
+
+- **Route files still carry the inline workarounds** they shipped with, from
+  when the stylesheet was locked during the parallel build. The primitives they
+  needed now exist (`.lq-row`, `.lq-rows`, `.lq-body`, `.lq-pgrid`, `.lq-disc`,
+  `.lq-crumb`, `.lq-prose`, `.lq-sum__row`). Swapping eleven files over is a
+  reviewable refactor and belongs in its own commit.
+- **Rail arrow buttons.** `.lq-arrows` exists and nothing uses it: `scrollBy`
+  needs a ref, and the home rails are server components. Wants a small client
+  `<RailArrows railId>` rather than downgrading a page.
+- **`/orders/[orderNumber]` DOES NOT EXIST and the guest lookup form navigates
+  to it on success.** A form that fails on success. Pre-existing, and the
+  fourth 404 in a repo with two commits already about exactly this.
+
+## Phase 6 — The flows
+
+**This phase is mostly BACKEND WORK, not CSS.** The parallel build read every
+contract; here is what is actually missing, so nobody re-plans this from the
+mockups.
+
+### The blocker: there is no shopper-facing order contract
+
+`storefront.contract.ts` contains **no order schema at all**. Per-brand
+sub-orders exist only on `adminOrderDetailSchema.brandOrders`, whose own
+docstring says it is SUPER_ADMIN-only and "the single place in the system where
+a multi-brand order is visible entire". The brand-side schemas are one shop's
+slice with **no parent and no siblings**, and `order.contract.ts` states that
+adding one is *a security change rather than a feature* (US-BRAND-011).
+
+So order detail, per-shop tracking, chat and returns all sit behind **one new
+storefront order contract plus its endpoint**. Design that first; the screens
+are cheap once it exists. There is also no order-lookup function in
+`lib/api.ts` or `lib/catalog.ts`, so `GET /v1/orders/lookup/:orderNumber?phone=`
+has no typed caller and no response schema.
+
+### What the cart contract can and cannot answer
+
+- **Can:** `cartBrandSchema.impliedFare` is the per-shop delivery fee, nullable
+  until a method is chosen. `supportedDelivery`, `deliveryMethod`,
+  `availableDeliveryMethods`, `estimatedDeliveryTotal`, `grandTotalEstimate`.
+- **Cannot:** there is **no ETA field anywhere** — not per shop, not combined.
+  The only temporal field is `expiresAt`, the cart's own expiry. Do not draw
+  the mockup's arrival pill until a field exists.
+- **Cannot:** `cartLineSchema` carries no image URL and no product slug.
+- **Cannot:** `cartBrandSchema` carries no neighbourhood, street or open hours.
+
+### What search needs before its filter rail is real
+
+`searchProductsQuerySchema` is `.strict()` and accepts only `query`, `page`,
+`perPage`. Every control in `design/search.html` needs new API surface:
+
+| control | needs |
+|---|---|
+| shop checkboxes with counts | filter param **and** a facet response; counts cannot come from a loaded page without lying about unfetched ones |
+| size pills | search never joins Variant, and `attributes` is a free-form `Record` with no size taxonomy |
+| colour swatches | same, plus swatches need a hex the schema has no field for |
+| price range | `priceMin`/`priceMax`, **and** `priceFrom` on the search row — `basePrice` is nullable and is not what a card prints |
+| sort | `ORDER BY` is trigram rank only; "الأقرب لي" additionally needs shop geo, which exists nowhere |
+| result count | the contract argues against it on purpose; probably stays unbuilt |
+| making results `ProductCard`s | `inStock` + `coverUrl` on `searchResultSchema` |
+
+### The premise gap, still open
+
+`publicBrandSchema` has no neighbourhood, street, hours or open/closed flag —
+the fields `PRODUCT.md` calls the product's premise. `ShopCard` already takes
+all four as optional props and renders each only if it arrives, so closing this
+is a backend change and **zero** frontend change. `/shops` gets its filter chips
+back the same day.
+
+### Screens still unbuilt
+
+Splash, area picker, phone sign-in, OTP, guest path, offers, favourites,
+try-on (queued + ready), checkout with the rider step, order placed, tracking,
+chat, return request, rating, addresses, notifications, help.
