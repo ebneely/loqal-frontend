@@ -4,24 +4,21 @@
 @import "./components.css";
 
 /* ==========================================================================
-   Theme wiring — Tailwind v4 @theme.
+   Loqal storefront — the base layer.
 
-   Every key points at a token with `var(--x)` indirection rather than a
-   literal, so the design system's own files stay the single source of truth
-   and a token change lands everywhere without touching this block. `inline`
-   means Tailwind resolves the reference at build time instead of chaining a
-   second variable through every generated utility.
+   tokens.css holds the values. This file registers them with Tailwind, sets
+   the element defaults, and owns the two things that belong to the page
+   itself rather than to any component: the paper grain and the reveal.
 
-   The token files themselves are copied VERBATIM from the design system and
-   must not be edited here — see the header in tokens.css.
+   Register is decided in DESIGN.md. Stone ground, 1px hairline structure,
+   radius 0, shadow none.
    ========================================================================== */
+
 @theme inline {
   --font-sans: var(--font-readex-pro), "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-source-code-pro), "SF Mono", ui-monospace, monospace;
   --font-display: var(--font-readex-pro), "Segoe UI", system-ui, sans-serif;
 
-  /* Surfaces. A screen carries at most two background values, plus a sunken
-     well for a photo and the ink band for the footer. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface-page: var(--surface-page);
@@ -41,6 +38,23 @@
   --color-border: var(--border);
   --color-input: var(--input);
 
+  /* The stone register's own names, registered so a call site can reach for
+     bg-paper or text-ink-2 without going through a .dc alias. */
+  --color-paper: var(--paper);
+  --color-raise: var(--raise);
+  --color-field: var(--field);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
+  --color-green-line: var(--green-line);
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-signal-ink: var(--signal-ink);
+
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-primary: var(--primary);
@@ -52,9 +66,10 @@
   --color-text-title: var(--text-title);
   --color-text-body: var(--text-body);
   --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-text-on-brand: var(--text-on-brand);
+  --color-text-on-ink: var(--text-on-ink);
 
-  /* Six tones cover every order enum, each an fg/bg/border triplet so a pill
-     needs no opacity arithmetic. */
   --color-state-neutral-fg: var(--state-neutral-fg);
   --color-state-neutral-bg: var(--state-neutral-bg);
   --color-state-neutral-border: var(--state-neutral-border);
@@ -79,49 +94,50 @@
   --color-money-zero: var(--money-zero);
   --color-overlay: var(--overlay);
 
-  /* Type. Body is 16px here, not the back office's 14: a shopper reads
-     sentences and prices at arm's length in sunlight. */
   --text-2xs: 0.6875rem;
-  --text-xs: 0.75rem;
+  --text-xs: 0.8125rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.75rem;
-  --text-3xl: 2.25rem;
-  --text-4xl: 3rem;
-  --text-5xl: 4.5rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.625rem;
+  --text-3xl: 2.125rem;
+  --text-4xl: 2.75rem;
+  --text-5xl: 3.5rem;
 
   --leading-tight: 1.2;
   --leading-snug: 1.35;
-  --leading-normal: 1.55;
-  --leading-loose: 1.7;
+  --leading-normal: 1.6;
+  --leading-loose: 1.75;
 
+  --font-weight-thin: 200;
+  --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  /* Money, and only money. A price is the one number a shopper decides on. */
-  --font-weight-figure: 800;
+  --font-weight-figure: 600;
 
-  --tracking-tight: -0.015em;
+  --tracking-tight: -0.022em;
   --tracking-display: -0.03em;
   --tracking-normal: 0em;
-  --tracking-caps: 0.06em;
+  --tracking-caps: 0.13em;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Literal zeros, NOT calc(var(--radius) - 4px). That expression evaluates
+     to -4px, a negative radius is invalid, and the declaration is dropped
+     without a warning. --radius-full survives for the handful of things that
+     are round because they are round: a status dot, the cart count, a colour
+     swatch, an avatar. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
   --radius-full: 9999px;
 
-  /* NOT registered here, deliberately: the shadow and easing tokens live in
-     tokens.css and the shadows are built from --elev-dir, which flips under
-     [dir="rtl"] so the offset always falls away from the reading edge.
-     Repeating the same NAME in @theme is self-referential, and inlining the
-     value would freeze the direction to LTR. Call sites use Tailwind v4's
-     variable shorthand instead — shadow-(--shadow-sm), ease-(--ease-out) —
-     which resolves to the live token. */
+  /* Shadow and easing tokens are NOT registered here. Repeating a name inside
+     @theme is self-referential, and the shadows are all `none` in this
+     register anyway. Call sites use Tailwind v4's variable shorthand —
+     ease-(--ease), duration-(--dur-base) — which resolves the live token. */
 
   --spacing-gutter-phone: 16px;
   --spacing-gutter-md: 24px;
@@ -131,35 +147,35 @@
   --spacing-row-density: 52px;
   --spacing-bar-height: 56px;
   --spacing-tabbar-height: 60px;
+  --spacing-utilbar-height: 34px;
   --spacing-content-max: 1200px;
   --spacing-prose-max: 62ch;
 }
 
 /* ==========================================================================
-   Element defaults, from the design system's tokens/base.css.
-
-   Copied rather than imported so the font stack can point at next/font's CSS
-   variables — see the note in layout.tsx. Everything else is verbatim.
+   Element defaults
    ========================================================================== */
 @layer base {
   :root {
     color-scheme: light;
-    /* The design system's tokens/fonts.css is deliberately NOT copied: it
-       @imports Google Fonts at runtime, and next/font self-hosts the same two
-       families with no render-blocking request and no layout shift. This is
-       the one token the rest of the file still needs from it. */
     --font-arabic: var(--font-readex-pro), "Noto Sans Arabic", Tahoma, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
   }
 
   html {
     font-family: var(--font-sans);
     -webkit-text-size-adjust: 100%;
+    /* The grain is fixed to the viewport, so the page must not bounce it. */
+    overflow-x: hidden;
   }
 
   body {
     margin: 0;
-    background: var(--surface-page);
-    color: var(--text-body);
+    background: var(--paper);
+    color: var(--ink);
     font-size: var(--text-base);
     line-height: var(--leading-normal);
     -webkit-font-smoothing: antialiased;
@@ -168,6 +184,25 @@
 
   :where(html[dir="rtl"]) body {
     font-family: var(--font-arabic);
+  }
+
+  /* ── The paper grain ─────────────────────────────────────────────────────
+     A fractal-noise SVG at 3%, fixed over the whole viewport. It is the reason
+     the ground reads as paper rather than as a flat hex value, and on a
+     low-gamut Android panel it is most of what separates #EDEBE5 from "beige".
+
+     Inline data URI, not a file: it is under 300 bytes and a separate request
+     for a texture that must be present on first paint is a request too many.
+     pointer-events:none so it never eats a tap, and it sits above everything
+     including the sheet — grain is a property of the paper, not of a layer. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-grain);
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   h1,
@@ -185,21 +220,23 @@
   h2,
   h3,
   h4 {
-    color: var(--text-title);
-    font-weight: var(--weight-semibold);
+    color: var(--ink);
+    /* The register's headings are LIGHT, not bold. Weight is carried by size
+       and by the hairline around a block, which is why 200–300 reads as
+       deliberate here and would read as unfinished on a white card. */
+    font-weight: var(--weight-regular);
     line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    text-wrap: balance;
+  }
+
+  p {
     text-wrap: pretty;
   }
 
   a {
-    color: var(--brand);
+    color: inherit;
     text-decoration: none;
-  }
-
-  a:hover {
-    color: var(--brand-hover);
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 
   button,
@@ -212,28 +249,35 @@
 
   img {
     display: block;
-    max-width: 100%;
+    max-inline-size: 100%;
   }
 
+  /* Green, never red. A red focus ring reads as an error on the one control
+     the keyboard user is actually operating. */
   :focus-visible {
     outline: var(--focus-width) solid var(--ring);
     outline-offset: var(--focus-offset);
   }
 
   ::selection {
-    background: var(--state-live-bg);
+    background: var(--green-soft);
+    color: var(--ink);
   }
 
-  /* Every figure a shopper compares vertically. */
+  /* Every figure a shopper compares vertically: price, total, order number,
+     phone, piece count, date. Source Code Pro, tabular and lining, so a total
+     lines up under a subtotal. Latin digits in both languages. */
   [data-num],
   .num {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums lining-nums;
+    font-weight: var(--weight-figure);
     letter-spacing: -0.01em;
   }
 
-  /* Prose and titles keep their own punctuation when an English shop name sits
-     inside an Arabic screen. */
+  /* A Latin shop name inside an Arabic row keeps its own punctuation and
+     leading digits. This is the whole RTL mixed-content strategy — there is no
+     translation step and no per-name override. */
   [data-bidi],
   h1,
   h2,
@@ -242,17 +286,48 @@
     unicode-bidi: plaintext;
   }
 
-  /* Sign for the side-in keyframes: -1 from the left (LTR), 1 from the right
-     (RTL). --elev-dir does the same job for the hard-offset elevation step, so
-     a shadow always falls away from the reading edge with no mirrored rule. */
+  /* Sign for the side-in keyframes: 1 from the inline end under RTL. The
+     elevation system that also used --elev-dir is gone with the shadows; this
+     is the only remaining consumer. */
   [dir="rtl"] {
     --side-from: 1;
     --elev-dir: -1;
   }
+
+  /* Chevrons and directional arrows mirror by transform, never by swapping
+     glyph — one rule, no per-icon RTL variants. */
+  [dir="rtl"] [data-icon="chevron-right"],
+  [dir="rtl"] [data-icon="chevron-left"],
+  [dir="rtl"] [data-icon="arrow-right"],
+  [dir="rtl"] [data-icon="arrow-left"] {
+    transform: scale(-1, 1);
+  }
 }
 
 /* ==========================================================================
-   Keyframes, verbatim from tokens/base.css.
+   The reveal
+
+   CONTENT IS VISIBLE BY DEFAULT AND THIS ONLY PLAYS AN ENTRANCE.
+
+   The obvious implementation — opacity:0 until an IntersectionObserver adds a
+   class — ships a blank page any time the observer does not fire: a background
+   tab (transitions and observers are throttled), a headless renderer, a
+   crawler, a JS error one component away. design/ guards that with a `.js`
+   class on <html>, which handles JS-disabled and none of the rest.
+
+   So the element is never hidden. `.in` starts an animation on something
+   already painted, and if it never arrives the section is simply there.
+   --lq-d staggers siblings; the group sets it per index.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  .lq-rv.in {
+    animation: lq-rise var(--dur-slow) var(--slow) both;
+    animation-delay: var(--lq-d, 0ms);
+  }
+}
+
+/* ==========================================================================
+   Keyframes
    ========================================================================== */
 @keyframes lq-sheet-in {
   from { transform: translateY(100%); }
@@ -271,7 +346,7 @@
   to { opacity: 0; }
 }
 @keyframes lq-rise {
-  from { opacity: 0; transform: translateY(7px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: none; }
 }
 /* A figure that changed rolls in from the direction it moved: up when it grew,
@@ -293,17 +368,13 @@
   to { transform: translateY(100%); opacity: 0; }
 }
 @keyframes lq-pop-in {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: none; }
 }
 @keyframes lq-pop {
   0% { scale: 0.86; }
   62% { scale: 1.05; }
   100% { scale: 1; }
-}
-@keyframes lq-ripple {
-  from { transform: scale(0); opacity: 0.32; }
-  to { transform: scale(1); opacity: 0; }
 }
 @keyframes lq-pulse {
   0%, 100% { opacity: 1; }
@@ -314,6 +385,8 @@
   to { background-position: -100% 0; }
 }
 
+/* Not optional, and it covers the reveal above by suppressing the whole
+   @media (no-preference) block it lives in. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -321,76 +394,6 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* ==========================================================================
-   Desktop chrome.
-
-   NOT in the design system's components.css — the system ships the storefront
-   as two kits, `index.html` (phone) and `desktop.html`, and expresses the
-   difference with inline styles per screen rather than as classes. These are
-   those inline styles, lifted into rules so one component can serve both.
-
-   Kept here rather than hand-edited into the verbatim copy, so that file can
-   still be re-copied when the system moves.
-
-   CONTAINER queries, not media queries. `.lq-shell` sets
-   `container-type: inline-size`, and the storefront rule is that a 430px phone
-   frame embedded in a desktop page still lays out like a phone — so this reads
-   the SHELL's width, never the window's.
-   ========================================================================== */
-@layer components {
-  /* Phone: the tab bar is the navigation and the desktop links do not exist. */
-  .lq-topbar__nav {
-    display: none;
-  }
-
-  @container (min-width: 1024px) {
-    /*
-      The bottom tab bar is a phone affordance. On a desktop it is a row of
-      five buttons stuck to the bottom of a 1080px window with nothing near
-      them — which is what it looked like, and why it read as "mobile on
-      desktop".
-    */
-    .lq-tabbar {
-      display: none;
-    }
-
-    .lq-topbar {
-      min-block-size: 72px;
-      padding-inline: var(--gutter-lg);
-      gap: var(--space-6);
-    }
-
-    .lq-topbar__mark {
-      font-size: var(--text-2xl);
-    }
-
-    .lq-topbar__nav {
-      display: flex;
-      align-items: center;
-      gap: var(--space-5);
-      /* Pushed to the inline END — the far edge from the mark. Logical, so it
-         is the left in Arabic and the right in English with no mirrored rule. */
-      margin-inline-start: auto;
-    }
-
-    .lq-topbar__nav a {
-      font-size: var(--text-sm);
-      color: var(--text-body);
-      white-space: nowrap;
-      text-decoration: none;
-    }
-
-    .lq-topbar__nav a:hover {
-      color: var(--text-title);
-      text-decoration: none;
-    }
-
-    .lq-topbar__nav a[aria-current="page"] {
-      color: var(--brand);
-      font-weight: var(--weight-medium);
-    }
+    scroll-behavior: auto !important;
   }
 }
