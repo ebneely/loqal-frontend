@@ -119,6 +119,35 @@ export const publicBrandSchema = z
     logoUrl: z.string().url().nullable(),
     coverUrl: z.string().url().nullable(),
     description: bilingualSchema.nullable(),
+
+    // -- The rest of what the public plane actually sends ---------------------
+    //
+    // These were missing, and their absence was not harmless: the schema is
+    // strict, so eight unexpected keys made the whole page fail to parse and
+    // the storefront rendered "we cannot reach the shops" against a healthy
+    // API. A contract that describes less than the wire is not stricter, it
+    // is broken.
+    //
+    // The ids are kept beside the URLs rather than replaced by them. The URL
+    // is presigned and expires; the id is what a client uses to ask for a
+    // fresh one, and it is what the dashboard plane speaks in.
+    logoMediaId: z.string().uuid().nullable(),
+    coverMediaId: z.string().uuid().nullable(),
+    deliveryFee: moneySchema.nullable(),
+    minimumOrderValue: moneySchema.nullable(),
+    returnWindowDays: z.number().int(),
+
+    /**
+     * Loose on purpose. A new delivery route is a value this list gains before
+     * any storefront ships that knows the name, and an enum here would turn
+     * that release into a blank shop list — the exact failure this block was
+     * written to fix.
+     */
+    supportedDelivery: z.array(z.string()),
+
+    // Placement we sold has to be labelled wherever it renders.
+    isPromoted: z.boolean(),
+    featuredUntil: z.string().nullable(),
   })
   .strict();
 export type PublicBrand = z.infer<typeof publicBrandSchema>;
