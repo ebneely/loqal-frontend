@@ -506,6 +506,12 @@
 /* A category: the drawing IS the content, so it gets the cell. */
 .lq-tile{display:flex;flex-direction:column;align-items:center;gap:10px;padding:var(--space-5) var(--space-2);transition:background var(--dur-fast) var(--ease)}
 .lq-tile:hover{background:var(--raise)}
+/* The drawing LIFTS on hover — design/'s `.item:hover svg`. This is the one
+   hover in the register that moves something, and what it moves is art rather
+   than a control, so it does not contradict the press rule. Sits at .8 at rest
+   so there is somewhere for it to arrive. */
+.lq-tile .lq-garment{opacity:0.8;transition:translate var(--dur-settle) var(--slow),opacity var(--dur-slow) var(--ease)}
+.lq-tile:hover .lq-garment{translate:0 -6px;opacity:1}
 .lq-tile:active{background:var(--raise)}
 .lq-tile__art{inline-size:clamp(56px,7vw,96px);aspect-ratio:1}
 .lq-tile__name{font-size:var(--text-sm);font-weight:var(--weight-light);text-align:center}
@@ -523,13 +529,27 @@
 .lq-shopcard:hover .lq-shopcard__sign{background:var(--paper)}
 /* aria-hidden in the markup: the accessible name is the real one below, and a
    screen reader should not read the shop twice. */
-.lq-shopcard__word{position:absolute;inset-block-end:-2px;inset-inline-start:var(--space-3);font-family:var(--font-display);font-size:var(--text-3xl);font-weight:var(--weight-bold);letter-spacing:var(--tracking-display);line-height:1;color:var(--ink);opacity:0.12;white-space:nowrap;pointer-events:none}
+.lq-shopcard__word{position:absolute;inset-block-end:-2px;inset-inline-start:var(--space-3);font-family:var(--font-display);font-size:var(--text-3xl);font-weight:var(--weight-bold);letter-spacing:var(--tracking-display);line-height:1;color:var(--ink);opacity:0.12;white-space:nowrap;pointer-events:none;transition:scale var(--dur-settle) var(--slow),opacity var(--dur-slow) var(--ease)}
+/* The sign grows very slightly as the card is entered — design/'s
+   `.shopcard:hover .sign .nm`. It scales from the edge it is anchored to, or it
+   would drift away from the corner it is pinned in.
+
+   THE ONE MIRRORED PAIR IN THE STYLESHEET, and only because there is no logical
+   `transform-origin`: `inset-inline-start` puts the word on the right in Arabic
+   and the left in English, and the origin has to follow it. Everything else in
+   this file mirrors itself through logical properties. */
+.lq-shopcard__word{transform-origin:left bottom}
+[dir="rtl"] .lq-shopcard__word{transform-origin:right bottom}
+.lq-shopcard:hover .lq-shopcard__word{scale:1.05;opacity:0.18}
 /* The open/closed flag. Its own box rather than .lq-pill: it sits ON the sign,
    so it needs the paper ground and the hairline to stay readable over the
    wordmark behind it. */
 .lq-shopcard__state{position:absolute;inset-block-start:var(--space-2);inset-inline-start:var(--space-2);display:inline-flex;align-items:center;gap:0.35rem;padding:0.2rem 0.45rem;background:var(--paper);border:var(--border-width) solid var(--line);border-radius:var(--radius-sm);font-size:var(--text-2xs);line-height:1.4;color:var(--ink)}
 .lq-shopcard__state[data-open="false"]{color:var(--ink-2)}
-.lq-shopcard__dot{inline-size:6px;block-size:6px;border-radius:var(--radius-full);background:var(--green);flex:none}
+/* Pulses, so "open" reads as a live fact rather than a printed one. Stops
+   under prefers-reduced-motion with everything else, via the blanket rule in
+   globals.css. */
+.lq-shopcard__dot{inline-size:6px;block-size:6px;border-radius:var(--radius-full);background:var(--green);flex:none;animation:lq-pulse 2.6s var(--ease) infinite}
 .lq-shopcard__body{display:flex;flex-direction:column;gap:var(--space-1);padding:var(--space-4)}
 .lq-shopcard__name{font-size:var(--text-base);font-weight:var(--weight-regular)}
 .lq-shopcard__place{font-size:var(--text-sm);font-weight:var(--weight-light);line-height:var(--leading-normal);color:var(--ink-2)}
