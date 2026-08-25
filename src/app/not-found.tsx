@@ -39,8 +39,8 @@ export default function NotFound() {
         <section className="lq-sec">
           {/* No logo file exists anywhere in the repo and none has been drawn.
               Wherever a mark would go, the word is set in Readex Pro 700. */}
-          <Link href="/" className="lq-mark" aria-label="Loqal">
-            لوكال
+          <Link href="/" className="lq-mark" aria-label="loqaaal">
+            loqaaal
           </Link>
 
           <div style={{ display: "grid", gap: "var(--space-2)" }}>

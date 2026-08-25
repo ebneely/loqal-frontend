@@ -73,7 +73,7 @@ export async function generateMetadata({
   const description =
     product.description?.ar ??
     product.description?.en ??
-    `${nameAr} — اشتريه من محل ${resolved.brand} على لوكال.`;
+    `${nameAr} — اشتريه من محل ${resolved.brand} على loqaaal.`;
 
   const canonical = `/shop/${resolved.brand}/${resolved.product}`;
 

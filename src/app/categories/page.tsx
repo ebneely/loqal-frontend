@@ -21,7 +21,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "الأقسام",
-  description: "كل أقسام لوكال — تيشيرتات، قمصان، تريكو، بناطيل، جواكت وأكتر، من محلات القاهرة والجيزة.",
+  description: "كل أقسام loqaaal — تيشيرتات، قمصان، تريكو، بناطيل، جواكت وأكتر، من محلات القاهرة والجيزة.",
   alternates: {
     canonical: "/categories",
     languages: { ar: "/categories", en: "/categories?lang=en" },

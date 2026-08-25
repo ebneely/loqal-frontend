@@ -40,7 +40,7 @@ export async function generateMetadata({
   const canonical = `/shop/${brand}`;
   return {
     title: brand,
-    description: `تسوّق من ${brand} على لوكال — توصيل في نفس اليوم من محلات القاهرة والجيزة.`,
+    description: `تسوّق من ${brand} على loqaaal — توصيل في نفس اليوم من محلات القاهرة والجيزة.`,
     alternates: {
       canonical,
       languages: { ar: canonical, en: `${canonical}?lang=en` },

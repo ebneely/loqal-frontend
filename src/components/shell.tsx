@@ -98,8 +98,8 @@ export function Shell({
 
       <header className="lq-head">
         <div className="lq-head__bar">
-          <Link href="/" className="lq-mark" aria-label="Loqal">
-            {t("لوكال", "Loqal")}
+          <Link href="/" className="lq-mark" aria-label="loqaaal">
+            loqaaal
           </Link>
 
           {/* A real link, not a live field. Search is a route with its own
@@ -151,8 +151,8 @@ export function Shell({
           /* No logo file exists anywhere in the repo and none has been drawn.
              Wherever a mark would go, the word is set in Readex Pro 700 at
              −0.03em — which is what `.lq-topbar__mark` is. */
-          <Link href="/" className="lq-topbar__mark" aria-label="Loqal">
-            {t("لوكال", "Loqal")}
+          <Link href="/" className="lq-topbar__mark" aria-label="loqaaal">
+            loqaaal
           </Link>
         )}
         {/* Same rule as the desktop header: not on /search, where it would

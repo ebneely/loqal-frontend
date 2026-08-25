@@ -151,8 +151,8 @@ export function AccountView() {
   const t = {
     title: ar ? "حسابي" : "Account",
     lede: ar
-      ? "اللغة، وكل حاجة تخص لوكال والأوردرات."
-      : "Language, and everything about Loqal and your orders.",
+      ? "اللغة، وكل حاجة تخص loqaaal والأوردرات."
+      : "Language, and everything about loqaaal and your orders.",
     guest: ar ? "إنت بتتصفح كضيف" : "You are browsing as a guest",
     guestBody: ar
       ? "تقدر تشتري من غير حساب. الأوردر بيتفتح برقمه ورقم الموبايل."
@@ -163,9 +163,9 @@ export function AccountView() {
     language: ar ? "اللغة" : "Language",
     arabic: "العربية",
     english: "English",
-    loqal: ar ? "لوكال" : "Loqal",
+    loqal: "loqaaal",
     help: ar ? "المساعدة" : "Help",
-    about: ar ? "عن لوكال" : "About Loqal",
+    about: ar ? "عن loqaaal" : "About loqaaal",
     join: ar ? "انضم كمحل" : "Join as a shop",
     shipping: ar ? "الشحن والتوصيل" : "Shipping and delivery",
     returns: ar ? "الاستبدال والاسترجاع" : "Exchanges and returns",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوكال — شاشات المتجر (الحجر والخط الشعرة)</title>
+<title>loqaaal — شاشات المتجر (الحجر والخط الشعرة)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
@@ -170,6 +170,20 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
 .pays span{display:inline-flex;align-items:center;gap:8px}
 .pays svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.2}
 .fbot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;max-width:1200px;margin:0 auto;padding:20px 32px;border-top:1px solid rgba(237,235,229,.16);font-size:13px;opacity:.7}
+
+/* ── The language switch ──────────────────────────────────────────────────
+   ONE LANGUAGE AT A TIME, never both at once — that is the system's rule, and
+   it is why this is a toggle rather than two boards side by side. The point of
+   the English pass is to check the mirroring: dir flips on every frame, and
+   because the whole register is built on logical properties, nothing else in
+   the layout is allowed to move. Anything that jumps is a bug this catches. */
+.langbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:flex-end;gap:0;
+  margin:-48px -32px 32px;padding:12px 32px;background:rgba(220,216,208,.92);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line2)}
+.langbar button{min-height:36px;padding:0 16px;border:1px solid var(--line2);background:transparent;
+  font-family:var(--sans);font-size:14px;font-weight:300;color:var(--ink);cursor:pointer}
+.langbar button+button{margin-inline-start:-1px}
+.langbar button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--field)}
 </style>
 </head>
 <body>
@@ -216,7 +230,7 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
     <span>استبدال خلال <span class="num">14</span> يوم</span>
   </div>
   <div class="dhead"><div class="dbar">
-    <span class="mark" style="font-size:26px">لوكال</span>
+    <span class="mark" style="font-size:26px">loqaaal</span>
     <span class="field slot-search" style="max-width:520px;margin:0 auto;width:100%">
       <svg width="18" height="18" stroke="#605F5A" fill="none" stroke-width="1.5"><use href="#i-search"/></svg>
       <span class="lede">دوّر على قطعة أو محل…</span>
@@ -242,9 +256,9 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
         </div>
       </div>
       <div>
-        <h4>لوكال</h4>
+        <h4>loqaaal</h4>
         <div class="flinks">
-          <span class="l">عن لوكال</span><span class="l">انضم كمحل</span>
+          <span class="l">عن loqaaal</span><span class="l">انضم كمحل</span>
           <span class="l">الشحن والتوصيل</span><span class="l">الاستبدال والاسترجاع</span>
           <span class="l">الأسئلة الشائعة</span><span class="l">تواصل معنا</span>
         </div>
@@ -264,7 +278,7 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
       </div>
     </div>
     <div class="fbot">
-      <span class="mark">لوكال</span>
+      <span class="mark">loqaaal</span>
       <span>تسوّق من محلات بلدك — القاهرة والجيزة</span>
       <span class="num">© 2026</span>
     </div>
@@ -273,8 +287,13 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
 
 <div class="wrap">
 
+<div class="langbar">
+  <button type="button" data-lang="ar" aria-pressed="true">العربية</button>
+  <button type="button" data-lang="en" aria-pressed="false">English</button>
+</div>
+
 <header class="head">
-  <h1>لوكال — شاشات المتجر</h1>
+  <h1>loqaaal — شاشات المتجر</h1>
   <p>كل شاشة الشوبر بيلمسها، بالتصميم الجديد: أرضية حجرية، خط شعرة واحد بيبني كل حاجة،
      أخضر واحد، وصفر تدوير وصفر ظل. الموبايل الأول عند 390، وبعده نسخة الديسكتوب.</p>
 
@@ -312,7 +331,7 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
   <div class="fig">
     <div class="cap"><b>الرئيسية</b><i>/</i></div>
     <div class="ph">
-      <div class="bar"><span class="mark">لوكال</span>
+      <div class="bar"><span class="mark">loqaaal</span>
         <span class="ico" style="margin-inline-start:auto"><svg width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg></span>
       </div>
       <div class="body">
@@ -706,7 +725,7 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
       <div class="body">
         <div class="pad">
           <h3 class="title">حسابي</h3>
-          <p class="lede">اللغة، وكل حاجة تخص لوكال والأوردرات.</p>
+          <p class="lede">اللغة، وكل حاجة تخص loqaaal والأوردرات.</p>
         </div>
         <div class="pad" style="padding-top:0">
           <div style="border:1px solid var(--line);background:var(--raise);padding:16px;display:grid;gap:8px">
@@ -720,7 +739,7 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
           <div class="lrow"><span>العربية</span><span class="end" style="color:var(--green)"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><use href="#i-check"/></svg></span></div>
           <div class="lrow"><span>English</span></div>
         </div>
-        <div class="pad"><div class="lbl">لوكال</div></div>
+        <div class="pad"><div class="lbl">loqaaal</div></div>
         <div class="grid g1">
           <div class="lrow"><span class="lede"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-store"/></svg></span><span style="display:grid"><span>انضم كمحل</span><span class="lede" style="font-size:13px">join-loqaaal.vercel.app</span></span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-chev"/></svg></span></div>
           <div class="lrow"><span>الشحن والتوصيل</span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-down"/></svg></span></div>
@@ -777,7 +796,7 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
     <div class="cap"><b>العنوان مش موجود</b><i>404 — من غير كروم</i></div>
     <div class="ph">
       <div class="body" style="display:flex;flex-direction:column;justify-content:center;padding:32px 16px">
-        <span class="mark" style="font-size:26px;margin-bottom:24px">لوكال</span>
+        <span class="mark" style="font-size:26px;margin-bottom:24px">loqaaal</span>
         <h3 class="title" style="margin-bottom:12px">العنوان ده مش موجود</h3>
         <p class="prose" style="margin-bottom:6px">يمكن اللينك اتغيّر، أو القطعة نزلت من على الرف.</p>
         <p class="prose" style="margin-bottom:24px" dir="ltr">This address does not exist. The link may have changed, or the piece came off the shelf.</p>
@@ -1100,7 +1119,7 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
 
             <div>
               <h4 style="font-size:20px;font-weight:400;margin-bottom:4px"><span class="num">2</span> · المندوب — إنت اللي بتطلبه</h4>
-              <p class="prose" style="margin-bottom:12px">المحل بيجهّز، وإنت بتحدّد مين يجيبه. لوكال مش بتطلب المندوب عنك.</p>
+              <p class="prose" style="margin-bottom:12px">المحل بيجهّز، وإنت بتحدّد مين يجيبه. loqaaal مش بتطلب المندوب عنك.</p>
               <div class="grid g1">
                 <div style="padding:16px;display:flex;gap:12px;align-items:flex-start">
                   <span class="box on" style="border-radius:9999px;justify-content:center;margin-top:2px"><span style="width:10px;height:10px;border-radius:9999px;background:var(--field)"></span></span>
@@ -1332,6 +1351,249 @@ body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:
     /* The grain sits above everything, so the footer goes before it. */
     var grain = page.querySelector('.grain');
     page.insertBefore(foot.content.cloneNode(true), grain);
+  });
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   The language switch.
+
+   ONE LANGUAGE AT A TIME. The storefront never shows both at once, so this
+   flips the whole board rather than printing pairs. The reason to look at the
+   English pass is the MIRRORING: `dir` is the only switch, every rule in the
+   register is a logical property, and nothing in any layout is allowed to
+   move when it flips. Anything that jumps is a real bug.
+
+   Text is swapped through a dictionary keyed on the Arabic, rather than by
+   putting two strings on every element: a board with ~500 text nodes would
+   otherwise need ~500 edits, and every one of them a chance to miss a node.
+   The original Arabic is stashed on the node the first time it is touched, so
+   flipping back is exact rather than a reverse lookup.
+
+   THE BRAND IS `loqaaal` IN BOTH LANGUAGES and is therefore not in the
+   dictionary at all — it is not a word that gets translated.
+
+   Numbers are never touched. They live in their own `.num` spans and are
+   Latin in both languages by design; only the currency mark moves, from
+   `450 ج.م` to `EGP 450`.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  var EN = {
+    /* board chrome */
+    'loqaaal — شاشات المتجر': 'loqaaal — storefront screens',
+    'كل شاشة الشوبر بيلمسها، بالتصميم الجديد: أرضية حجرية، خط شعرة واحد بيبني كل حاجة، أخضر واحد، وصفر تدوير وصفر ظل. الموبايل الأول عند 390، وبعده نسخة الديسكتوب.':
+      'Every screen a shopper touches, in the new register: a stone ground, one hairline carrying all the structure, one emerald, zero radius and zero shadow. Phone first at 390, then the web pages.',
+    'الخط الشعرة هو البناء': 'The hairline is the structure',
+    'الخلايا بتتشارك حدودها — فراغ ١px فوق أرضية بلون الخط، وبرواز واحد برّه. مفيش كارت بظل، ومفيش زاوية مدوّرة غير حاجة مدوّرة أصلاً.':
+      'Cells share their borders — a 1px gap over a line-coloured ground, one border outside. No shadowed cards, and no rounded corner on anything that is not round to begin with.',
+    'الأرقام لاتينية دايمًا': 'Latin digits, always',
+    'السعر والتوتال ورقم الأوردر بخط Source Code Pro. «ج.م» بعد الرقم في العربي، و«EGP» قبله في الإنجليزي.':
+      'Price, total and order number in Source Code Pro. The currency trails the figure in Arabic and leads it in English.',
+    'الأخضر يعني امشي': 'Green means go',
+    'متاح، مفتوح، اتأكد، ضيف للسلة، عدّاد السلة، حلقة الفوكس. الأحمر يعني سعر نزل أو حاجة فشلت — ومفيش استخدام تالت.':
+      'Available, open, confirmed, add to bag, the cart count, the focus ring. Red means a price dropped or something failed — there is no third use.',
+    'اللي مش موجود مكتوب': 'What is missing is written down',
+    'مفيش صور منتجات لسه، فالرسمة بتقف مكانها. ومفيش «المفتوح بس» ولا «فيه تجربة» — الداتا دي مش موجودة في السكيما أصلاً.':
+      'There is no product photography yet, so the drawing stands in. And there is no "open now" or "try-on" filter — neither field exists in the schema.',
+
+    '٠١ · التصفح': '01 · Browsing',
+    '٠٢ · القطعة': '02 · The garment',
+    '٠٣ · البحث والفلتر': '03 · Search and filters',
+    '٠٤ · الشراء': '04 · Buying',
+    '٠٥ · الحساب والحالات': '05 · Account and states',
+    '٠٦ · الويب': '06 · Web',
+    'الرئيسية، الأقسام، المحلات، صفحة المحل': 'home, categories, shops, shop page',
+    'المقاسات اللي خلصت بتفضل مكتوبة ومشطوبة، والعدد مش بيتقال': 'sold-out sizes stay on screen struck through, and no count is ever printed',
+    'على الموبايل الفلتر شيت — على الديسكتوب ريل (تحت)': 'a sheet on the phone, a rail on the web (below)',
+    'السلة متقسّمة بالمحل — كل محل بيشحن ويتحاسب لوحده': 'the bag splits by shop — each one ships and is charged on its own',
+    'حالة لكل محل — مفيش حالة واحدة بتتكلم عن الأوردر كله': 'one status per shop — no single status speaks for the whole order',
+    'دي صفحات ويب كاملة، مش شاشات موبايل مكبّرة — الصفحة بتنزل لحد الفوتر. فوق ٧٢٠px: شريط علوي، هيدر بميجا، فوتر — ومفيش شريط تابات':
+      'these are whole web pages, not widened phone screens — each runs to the footer. Above 720px: utility strip, header with the brands menu, footer — and no tab bar',
+
+    /* captions */
+    'الأقسام': 'Categories', 'المحلات': 'Shops', 'صفحة المحل': 'Shop page',
+    'صفحة القطعة': 'Product', 'نتايج البحث': 'Search results', 'الفلتر — شيت': 'Filters — sheet',
+    'السلة': 'Bag', 'أوردراتي': 'My orders', 'حسابي': 'Account', 'الدخول': 'Sign in',
+    'العنوان مش موجود': 'Not found', 'الرئيسية': 'Home', 'البحث': 'Search',
+    'الرئيسية — ويب': 'Home — web', 'البحث — ويب': 'Search — web', 'صفحة المحل — ويب': 'Shop — web',
+    'صفحة القطعة — ويب': 'Product — web', 'السلة — ويب': 'Bag — web', 'إتمام الأوردر — ويب': 'Checkout — web',
+    'متابعة الأوردر — ويب': 'Tracking — web', 'أوردراتي — ويب': 'Orders — web',
+    'الشات مع المحل — ويب': 'Chat — web', 'الدخول — ويب': 'Sign in — web',
+    '404 — من غير كروم': '404 — no chrome', 'عدّادات المحلات جاية من السيرفر': 'shop counts come from the server',
+    'الفلتر بيبقى ريل، مش شيت': 'filters become a rail, not a sheet',
+    'معرض بيتمرّر، وعمود معلومات لاصق': 'a scrolling gallery and a sticky info column',
+    'الحساب بيتحوّل لعمود، وشريط الأكشن مش محتاجينه': 'totals move into a column, the action bar is not needed',
+    'نيّة تصميم — مفيش كونتراكت لإنشاء أوردر لسه': 'design intent — no create-order contract exists yet',
+    'حالة لكل محل — نيّة تصميم، مفيش كونتراكت أوردر للمتجر': 'one status per shop — design intent, no storefront order contract',
+    'نيّة تصميم — الشات موجود في الباك إند ومش متوصّل': 'design intent — chat exists in the backend and is not wired',
+    '/account — بيشيل روابط الفوتر على الموبايل': '/account — carries the footer links on a phone',
+
+    /* chrome */
+    'توصيل في نفس اليوم — القاهرة والجيزة': 'Same-day delivery — Cairo & Giza',
+    'الدفع عند الاستلام': 'Cash on delivery',
+    'استبدال خلال': 'Returns within', 'يوم': 'days',
+    'دوّر على قطعة أو محل…': 'Search for a piece or a shop…',
+    'القاهرة والجيزة': 'Cairo & Giza',
+    'كل الأقسام': 'All categories', 'كل المحلات': 'All shops',
+    'كل قطعة على رف في محل — مش في مخزن.': 'Every piece is on a shelf in a shop, not in a warehouse.',
+    'محلات ليها عناوين حقيقية تقدر تعدّي عليها.': 'Shops with real addresses you could walk to.',
+
+    /* categories + garments */
+    'تيشيرتات': 'T-shirts', 'قمصان': 'Shirts', 'تريكو': 'Knitwear', 'بناطيل': 'Trousers',
+    'جواكت': 'Jackets', 'فساتين': 'Dresses', 'أحذية': 'Shoes', 'شنط': 'Bags',
+    'قميص كتان': 'Linen shirt', 'تيشيرت قطن': 'Cotton tee', 'تريكو صوف': 'Wool knit',
+    'بنطلون واسع': 'Wide trousers', 'جاكيت أوفرسايز': 'Oversized jacket', 'فستان كتان': 'Linen dress',
+    'سنيكرز جلد': 'Leather sneakers', 'شنطة كتف': 'Shoulder bag', 'قميص أوكسفورد': 'Oxford shirt',
+    'قميص دنيم': 'Denim shirt', 'قميص فانيلا': 'Flannel shirt', 'قميص كاروهات': 'Checked shirt',
+    'قميص شامبراي': 'Chambray shirt', 'قميص مقلّم': 'Striped shirt', 'قميص كتان أزرق': 'Blue linen shirt',
+    'قميص كتان — أوف وايت': 'Linen shirt — off white', 'تيشيرت أوفرسايز': 'Oversized tee',
+    'قطن مصري، تفصيل بسيط.': 'Egyptian cotton, plain cuts.', 'دنيم وقمصان.': 'Denim and shirts.',
+    'قطع أساسية.': 'Basics.', 'دنيم بس.': 'Denim only.',
+
+    /* search + filters */
+    'فلتر': 'Filters', 'مسح': 'Clear', 'المحل': 'Shop', 'المقاس': 'Size', 'اللون': 'Colour',
+    'السعر': 'Price', 'المتاح بس': 'In stock only', 'ترتيب': 'Sort', 'الأحدث': 'Newest',
+    'نتيجة لـ «قميص»': 'results for “shirt”', 'وريني': 'Show', 'نتيجة': 'results',
+    'أبيض': 'White', 'أسود': 'Black', 'زيتي': 'Olive', 'بيج': 'Beige', 'كحلي': 'Navy',
+    'أوف وايت': 'Off white', 'خلص': 'Sold out', 'اعرض المزيد': 'Show more', 'قميص': 'shirt',
+
+    /* product */
+    'المشطوب خلص من المحل.': 'The struck-through sizes are gone from the shop.',
+    'اللي مكتوب هنا هو آخر حاجة المحل قالها لنا. المحل بيراجع الرف قبل ما يأكد الأوردر، ولو القطعة مش موجودة بيتلغي الأوردر ومش بيتخصم منك حاجة.':
+      'What you see here is the last thing the shop told us. The shop checks the shelf before confirming, and if the piece is not there the order is cancelled and you are not charged.',
+    'ضيف للسلة': 'Add to bag', 'عن القطعة': 'About this piece', 'الخامة والعناية': 'Fabric and care',
+    'التوصيل والاستبدال': 'Delivery and returns', 'من نفس المحل': 'From the same shop',
+    'كتان مصري ١٠٠٪، قصّة واسعة شوية، وأزرار صدف.': '100% Egyptian linen, a slightly relaxed cut, shell buttons.',
+    'المحل ده بيجهّز ويبعت بنفسه. إنت بتطلب أونلاين، والقطعة بتيجي من الرف بتاعه.':
+      'This shop prepares and sends every order itself. You buy online and the piece comes off its own shelf.',
+    'بتشوف أول': 'Showing the first', 'قطعة من': 'pieces of', 'محل من': 'shops of', 'قطعة': 'pieces',
+
+    /* bag + checkout */
+    'قطع — من': 'items — from', 'محل': 'shops',
+    'كل محل بيجهّز ويبعت نصّه بنفسه، فبيوصلوك في وقتين مختلفين.':
+      'Each shop packs and sends its own half, so they arrive at different times.',
+    'مفتوح': 'Open', 'مجموع المحل': 'Shop subtotal', 'توصيل المحل': 'Shop delivery',
+    'طريقة التوصيل': 'Delivery method', 'مندوب من المحل': 'A rider from the shop',
+    'توصيل المحل بنفسه': 'The shop delivers itself', 'الإجمالي التقريبي': 'Estimated total',
+    'الإجمالي': 'Total', 'الحساب': 'Summary', 'القطع': 'Items', 'القطع (': 'Items (',
+    'التوصيل · محلين': 'Delivery · two shops', 'شيل': 'Remove',
+    'إتمام الأوردر': 'Checkout', 'اطلب': 'Place the order',
+    'مصاريف التوصيل لكل محل لوحده — الأوردر من محلين بيتحسب مرتين.':
+      'Delivery is charged per shop — an order from two shops is charged twice.',
+    'مصاريف التوصيل لكل محل لوحده — الأوردر من محلين بيتحسب مرتين، وكل شحنة بتوصل لوحدها.':
+      'Delivery is charged per shop — an order from two shops is charged twice, and each parcel arrives on its own.',
+    'كل محل بيراجع الرف قبل ما يأكد نصّه. لو قطعة خلصت، بنلغيها ومش بتتحاسب عليها — وباقي الأوردر بيكمّل عادي.':
+      'Each shop checks its shelf before confirming its half. If a piece is gone we drop it and you are not charged, and the rest of the order carries on.',
+    '· التوصيل لفين': '· Where it goes', '· المندوب — إنت اللي بتطلبه': '· The rider — you book it',
+    '· الدفع': '· Payment', '+ عنوان جديد': '+ New address',
+    'البيت · المهندسين': 'Home · Mohandessin',
+    'شارع البطل أحمد عبد العزيز، الدور': 'El Batal Ahmed Abdel Aziz St, floor',
+    'المحل بيجهّز، وإنت بتحدّد مين يجيبه. loqaaal مش بتطلب المندوب عنك.':
+      'The shop prepares it and you decide who collects it. loqaaal does not book the rider for you.',
+    'ج.م لكل محل': 'EGP per shop', 'مندوب بتاعك': 'Your own courier',
+    'تجيب حد يستلم من المحل · مفيش مصاريف توصيل': 'Send someone to collect from the shop · no delivery charge',
+    'كاش عند الاستلام': 'Cash on delivery', 'كارت': 'Card',
+    'محفظة أو إنستاباي': 'Wallet or InstaPay', 'فاليو — تقسيط': 'Valu — instalments',
+    'توصيل Versattire': 'Versattire delivery', 'توصيل Dryp': 'Dryp delivery',
+
+    /* orders + tracking + chat */
+    'كل محل بيجهّز نصّه لوحده، وكل نص ليه حالته.': 'Each shop prepares its own half, and each half has its own status.',
+    'افتح أوردر': 'Open an order', 'افتح الأوردر': 'Open the order',
+    'برقم الأوردر ورقم الموبايل اللي طلبت بيه. من غير حساب.':
+      'By order number and the phone you ordered with. No account.',
+    'رقم الأوردر': 'Order number', 'رقم الموبايل': 'Phone number',
+    'اللي هيظهر لما تفتح أوردر': 'What you see when you open an order',
+    'الحالات اللي كل محل بيعدّي بيها:': 'The statuses each shop moves through:',
+    'المحل بيراجع الرف': 'Checking the shelf', 'اتأكد': 'Confirmed', 'مع المندوب': 'With the rider',
+    'المحل بيراجع الرف قبل ما يأكد.': 'The shop checks the shelf before it confirms.',
+    'القطعة موجودة، والمحل بدأ يجهّزها.': 'The piece is there and the shop has started preparing it.',
+    'المندوب ماشي بيه دلوقتي.': 'The rider has it and is on the way.',
+    'الأوردر': 'Order', 'أغسطس · كاش عند الاستلام': 'August · cash on delivery',
+    'أغسطس · من': 'August · from',
+    'الأوردر ده من محلين. كل محل بيجهّز ويبعت نصّه لوحده، وكل نص ليه حالته — مفيش حالة واحدة بتتكلم عن الأوردر كله.':
+      'This order is from two shops. Each packs and sends its own half and carries its own status — no single status speaks for the whole order.',
+    'المندوب: أحمد ·': 'Rider: Ahmed ·',
+    'المحل بيراجع الرف قبل ما يأكد. لو قطعة خلصت، بتتلغي ومش بتتحاسب عليها.':
+      'The shop checks the shelf before confirming. If a piece is gone it is dropped and you are not charged.',
+    'Versattire · مع المندوب': 'Versattire · with the rider',
+    'Dryp · بيراجع الرف': 'Dryp · checking the shelf', 'Slack · اتسلّم': 'Slack · delivered',
+    'المحل راجع الرف وأكّد القطعة.': 'The shop checked the shelf and confirmed the piece.',
+    'أهلاً، القميص متاح مقاس M؟': 'Hi — is the shirt available in M?',
+    'أيوه موجود. هنجهّزه النهاردة والمندوب هيعدّي عليه.': 'Yes it is. We will pack it today and the rider will collect it.',
+    'تمام، شكرًا.': 'Great, thanks.', 'اكتب رسالة…': 'Write a message…', 'ابعت': 'Send',
+    'الشات بيروح للمحل نفسه. لو محدّش ردّ، بيتحوّل لواتساب.':
+      'Chat goes to the shop itself. If nobody answers it falls through to WhatsApp.',
+
+    /* account + sign in + 404 */
+    'اللغة، وكل حاجة تخص loqaaal والأوردرات.': 'Language, and everything about loqaaal and your orders.',
+    'إنت بتتصفح كضيف': 'You are browsing as a guest',
+    'تقدر تشتري من غير حساب. الأوردر بيتفتح برقمه ورقم الموبايل.':
+      'You can buy without an account. An order is opened by its number and phone.',
+    'ادخل على حسابك': 'Sign in', 'اللغة': 'Language', 'العربية': 'العربية',
+    'انضم كمحل': 'Join as a shop', 'الشحن والتوصيل': 'Shipping and delivery',
+    'الاستبدال والاسترجاع': 'Exchanges and returns', 'الأسئلة الشائعة': 'Common questions',
+    'تواصل معنا': 'Contact us', 'عن loqaaal': 'About loqaaal',
+    'الحساب بيخلّي عناوينك وأوردراتك محفوظة.': 'An account keeps your addresses and orders in one place.',
+    'الإيميل': 'Email', 'الباسورد': 'Password', 'ادخل': 'Sign in', 'كمّل كضيف': 'Continue as a guest',
+    'مش لازم حساب عشان تطلب. تقدر تشتري كضيف وتتابع الأوردر برقمه ورقم موبايلك.':
+      'You do not need an account to order. Buy as a guest and follow the order by its number and your phone.',
+    'الدخول برقم الموبايل وكود لسه مش شغال.': 'Signing in with a phone and a code is not live yet.',
+    'العنوان ده مش موجود': 'This address does not exist',
+    'يمكن اللينك اتغيّر، أو القطعة نزلت من على الرف.': 'The link may have changed, or the piece came off the shelf.',
+
+    /* footer */
+    'اعرف الجديد': 'Stay in touch', 'إيميلك': 'Your email', 'اشترك': 'Sign up',
+    'بطاقات': 'Cards', 'فاليو': 'Valu', 'إنستاباي': 'InstaPay',
+    'تسوّق من محلات بلدك — القاهرة والجيزة': 'Shop your own city — Cairo & Giza'
+  };
+
+  /* `450 ج.م` -> `EGP 450`. The figure never changes: Latin in both. */
+  var MONEY_AR = /^([\d.,]+)\s*ج\.م$/;
+
+  function translate(node, toEn) {
+    var raw = node.nodeValue;
+    var key = raw.trim();
+    if (!key) return;
+
+    if (toEn) {
+      if (node.__ar === undefined) node.__ar = raw;
+      var money = key.match(MONEY_AR);
+      var hit = money ? 'EGP ' + money[1] : EN[key];
+      if (hit === undefined) return;
+      /* Keep the surrounding whitespace: it is what separates a translated
+         run from the number span beside it. */
+      node.nodeValue = raw.replace(key, hit);
+    } else if (node.__ar !== undefined) {
+      node.nodeValue = node.__ar;
+    }
+  }
+
+  function walk(root, toEn) {
+    var it = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    var n;
+    while ((n = it.nextNode())) translate(n, toEn);
+  }
+
+  function setLang(lang) {
+    var toEn = lang === 'en';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = toEn ? 'ltr' : 'rtl';
+
+    /* Every frame flips too. dir is the ONLY switch — the register is built on
+       logical properties, so if a layout shifts here beyond mirroring, that is
+       a hard-coded left or right somewhere and a bug worth chasing. */
+    document.querySelectorAll('.ph,.dt').forEach(function (f) {
+      f.dir = toEn ? 'ltr' : 'rtl';
+    });
+
+    walk(document.querySelector('.wrap'), toEn);
+
+    document.querySelectorAll('.langbar button').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+    });
+  }
+
+  document.querySelectorAll('.langbar button').forEach(function (b) {
+    b.addEventListener('click', function () { setLang(b.dataset.lang); });
   });
 })();
 </script>

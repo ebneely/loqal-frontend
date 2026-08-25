@@ -30,7 +30,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "المحلات",
-  description: "كل المحلات على لوكال — محلات ليها عناوين حقيقية في القاهرة والجيزة، بتجهّز وتبعت بنفسها.",
+  description: "كل المحلات على loqaaal — محلات ليها عناوين حقيقية في القاهرة والجيزة، بتجهّز وتبعت بنفسها.",
   alternates: {
     canonical: "/shops",
     languages: { ar: "/shops", en: "/shops?lang=en" },

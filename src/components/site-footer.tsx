@@ -75,7 +75,7 @@ const PAYMENTS = [
 ];
 
 const LINKS = [
-  { ar: "عن لوكال", en: "About Loqal", href: "https://join-loqaaal.vercel.app/" },
+  { ar: "عن loqaaal", en: "About loqaaal", href: "https://join-loqaaal.vercel.app/" },
   { ar: "انضم كمحل", en: "Join as a shop", href: "https://join-loqaaal.vercel.app/" },
   { ar: "الشحن والتوصيل", en: "Shipping", href: "/account" },
   { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account" },
@@ -152,7 +152,7 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3>{t("لوكال", "Loqal")}</h3>
+          <h3>loqaaal</h3>
           <div className="lq-foot__links">
             {LINKS.map((link) => {
               const external = link.href.startsWith("http");
@@ -191,7 +191,7 @@ export function SiteFooter() {
       </div>
 
       <div className="lq-foot__bot">
-        <span className="lq-mark">{t("لوكال", "Loqal")}</span>
+        <span className="lq-mark">loqaaal</span>
         <span>{t("تسوّق من محلات بلدك — القاهرة والجيزة", "Shop your own city — Cairo & Giza")}</span>
         <span className="lq-foot__social">
           <a href="https://wa.me/201559959890" target="_blank" rel="noopener noreferrer" aria-label={t("واتساب", "WhatsApp")}>

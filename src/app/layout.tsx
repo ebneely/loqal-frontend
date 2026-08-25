@@ -47,13 +47,13 @@ export const metadata: Metadata = {
    */
   metadataBase: new URL(SITE),
   title: {
-    default: "لوكال — تسوّق من محلات مصر",
+    default: "loqaaal — تسوّق من محلات مصر",
     /** Product and shop pages supply their own name; this frames it. */
-    template: "%s · لوكال",
+    template: "%s · loqaaal",
   },
   description:
     "اشتري من محلات مصرية قريبة منك. توصيل في نفس اليوم، دفع كاش أو بالكارت، وكل محل بيجهّز طلبك بنفسه.",
-  applicationName: "Loqal",
+  applicationName: "loqaaal",
   referrer: "origin-when-cross-origin",
   formatDetection: { telephone: false, address: false, email: false },
   alternates: {
@@ -62,10 +62,10 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Loqal",
+    siteName: "loqaaal",
     locale: "ar_EG",
     alternateLocale: ["en_US"],
-    title: "لوكال — تسوّق من محلات مصر",
+    title: "loqaaal — تسوّق من محلات مصر",
     description:
       "اشتري من محلات مصرية قريبة منك. توصيل في نفس اليوم، وكل محل بيجهّز طلبك بنفسه.",
   },
