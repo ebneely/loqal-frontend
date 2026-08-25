@@ -275,7 +275,10 @@ export function AccountView() {
         </section>
 
         {/* ── Language ──────────────────────────────────────────────────── */}
-        {/* The ONLY place the language switches. One language per session. */}
+        {/* One language per session. Also in the desktop header — this row is
+            the PHONE's switch, where the 56px bar has no room for a segmented
+            control. Both call the same `setLocaleCookie`, so they cannot
+            disagree about what is selected. */}
         <section className="lq-sec lq-rv" style={{ "--lq-d": "70ms" } as CSSProperties}>
           <span className="lq-eyebrow">{t.language}</span>
           <div className="lq-rows">

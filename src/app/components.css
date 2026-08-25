@@ -394,6 +394,26 @@
    inline-flex row: an SVG with only width/height ATTRIBUTES is a flex item with
    nothing stopping it shrinking, so it collapsed to a 1px sliver beside the
    label and read as a stray glyph. */
+/* ── Language switch ──────────────────────────────────────────────────────── */
+/* The board's `.langbar`: two buttons sharing a seam, the active one filled
+   green. Green because this is a CHOICE THAT IS IN EFFECT, which is the same
+   "go" the colour rule already gives a checked filter. */
+.lq-lang{display:flex;flex:none}
+.lq-lang button{min-block-size:36px;padding-inline:var(--space-4);border:var(--border-width) solid var(--line-strong);background:transparent;color:var(--ink);font-family:inherit;font-size:var(--text-sm);font-weight:var(--weight-light);line-height:1;cursor:pointer;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease),translate var(--dur-fast) var(--ease-out)}
+/* The seam. Without this the two 1px borders meet and draw 2px down the middle
+   of a control that is 36px tall. */
+.lq-lang button+button{margin-inline-start:-1px}
+/* Only the OUTER corners round, so the pair reads as one object. Logical, so
+   the rounded end follows the reading direction with no mirrored rule. */
+.lq-lang button:first-child{border-start-start-radius:var(--radius-md);border-end-start-radius:var(--radius-md)}
+.lq-lang button:last-child{border-start-end-radius:var(--radius-md);border-end-end-radius:var(--radius-md)}
+.lq-lang button:hover{background:var(--raise)}
+.lq-lang button:active{translate:calc(1px * var(--elev-dir)) 1px}
+/* Raised above its neighbour so the filled edge is not cut by the sibling's
+   border sitting on top of it. */
+.lq-lang button[aria-pressed="true"]{position:relative;z-index:1;background:var(--green);border-color:var(--green);color:var(--text-on-brand);font-weight:var(--weight-regular)}
+.lq-lang button[aria-pressed="true"]:hover{background:var(--brand-hover)}
+
 .lq-chev{inline-size:0.62rem;block-size:0.62rem;flex:none;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;color:var(--ink-2);transition:rotate var(--dur-base) var(--ease)}
 [aria-expanded="true"]>.lq-chev{rotate:180deg}
 

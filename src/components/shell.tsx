@@ -8,6 +8,7 @@ import { useBagCount } from "@/lib/cart";
 import { useLocale } from "@/lib/locale-context";
 import { BrandsMenu } from "@/components/brands-menu";
 import { SiteFooter } from "@/components/site-footer";
+import { LocaleSwitch } from "@/components/locale-switch";
 import { Reveal } from "@/components/reveal";
 
 /**
@@ -139,6 +140,11 @@ export function Shell({
               {t("السلة", "Bag")}
               {bagCount > 0 ? <span className="lq-cartn" data-num>{bagCount}</span> : null}
             </Link>
+
+            {/* Last in the row: a preference, not a destination. Desktop only —
+                the phone bar has no room and `/account` carries the same
+                switch as a full row. */}
+            <LocaleSwitch />
           </nav>
         </div>
       </header>

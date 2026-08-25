@@ -360,7 +360,18 @@
      the one element guaranteed to be in the same place. It also sits offset by
      the tab bar's height rather than on top of it, so neither is covered. */
   --z-actionbar: 46;
-  --z-scrim: 50;
+  /* BELOW the header, and that is load-bearing rather than cosmetic.
+
+     The scrim is position:fixed inset:0 with pointer-events:auto while the
+     brands panel is open. At 50 it covered the header at 40 — including the
+     very link that opened the panel. The pointer was then over the scrim, not
+     the trigger, so mouseleave fired, the panel closed, the scrim went away,
+     mouseenter fired again, and the menu flickered open/closed forever with
+     the mouse completely still.
+
+     design/ has the same three layers in the same order for the same reason:
+     scrim 38, panel 39, header 40. A scrim must never cover its own trigger. */
+  --z-scrim: 35;
   --z-sheet: 60;
   --z-grain: 100; /* the paper grain sits over everything, pointer-events:none */
 }
