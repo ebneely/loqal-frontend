@@ -138,10 +138,33 @@ prose caps at 62ch.
 background, with a 1px outer border. Not `border` per cell, which double-draws
 every interior edge.
 
-**Radius: 0. Shadow: none.** Everywhere, no exceptions. Depth is carried by the
-1px line and by `--raise`. This is the single largest divergence from the `.dc`
-system, which specifies hard-offset elevation and 8-12px radii; `design/` wins
-per the table at the top of this file.
+**Radius: 0.** Everywhere, no exceptions.
+
+**Shadow: hard offset, and only on things you press.** This reverses an earlier
+decision in this file, which said shadow none everywhere and gave `design/` the
+tie. The reversal is deliberate: the flat rule read the disagreement as a
+question of taste, and the `.dc` elevation is answering a device question. A
+blurred grey shadow *is* invisible on a mid-range Android at full brightness in
+Egyptian daylight — the panel crushes it. A solid 2px step of tinted colour with
+no blur survives that light, costs nothing to composite, and gives a press
+somewhere to go. The tokens are `.dc`'s, unchanged, in `tokens.css`.
+
+```
+--shadow-xs  1px  seam  — a card, an input, a list row sitting on the page
+--shadow-sm  2px  step  — pressable: buttons, chips, payment rows
+--shadow-md  4px  lift  — hover on something pressable, and popovers
+--shadow-key 2px  the brand-tinted step a primary button casts
+```
+
+`--elev-dir` is 1 in LTR and −1 in RTL, so the step always falls away from the
+reading edge; nothing is mirrored by hand.
+
+**Structure is still the 1px line, and elevation never touches it.** Nothing in
+a shared-hairline rail or grid — `.lq-rail`, `.lq-tiles`, `.lq-cells`,
+`.lq-rows`, `.lq-pgrid` — casts anything. Those cells share their borders with
+their neighbours, so an offset is thrown straight over the cell next door and
+reads as the grid tearing. The shop cards on the home rail, the category tiles
+and the product grid are flat, and that is not an oversight.
 
 No gradients. No glassmorphism. The one translucent surface is the sticky
 header, `color-mix(in srgb, var(--paper) 90%, transparent)` + 14px blur, so
@@ -218,7 +241,11 @@ emptiness.
   green ring.
 - **Hover:** filled buttons darken 12% toward black — never lighten, never an
   opacity change. Linked cards shift border toward ink and tint 3%.
-- **Press:** background to `--raise`. Nothing scales, nothing moves.
+- **Press:** the element translates by exactly its own offset and drops its
+  shadow, landing in the step it was casting — so the pixel that moves is the
+  pixel under the finger. Nothing scales. A control with no shadow to fall into
+  (a ghost button, a tile in a hairline grid) takes `--raise` instead and does
+  not move.
 - **No native `<select>`** anywhere: the OS wheel cannot be styled, cannot carry
   a second line of Arabic, and looks like a different product on every Android
   skin. Same for every other control.

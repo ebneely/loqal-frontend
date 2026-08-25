@@ -68,13 +68,17 @@ export function ShopCard({
             means the API did not say, which is NOT the same as closed — and a
             card that shows "مقفول" because a field is missing turns a gap in
             the schema into a shop losing a sale. */}
+        {/* Its own box, not `.lq-pill`. This flag sits ON the sign well, so it
+            needs the paper ground and the hairline to stay readable over the
+            wordmark behind it; `.lq-pill` is a rounded tone chip built for a
+            row of text on flat paper. */}
         {openNow === true ? (
-          <span className="lq-pill" data-tone="good">
-            <i className="lq-pill__dot" />
+          <span className="lq-shopcard__state" data-open="true">
+            <i className="lq-shopcard__dot" />
             {locale === "ar" ? "مفتوح" : "Open"}
           </span>
         ) : openNow === false ? (
-          <span className="lq-pill" data-tone="neutral">
+          <span className="lq-shopcard__state" data-open="false">
             {locale === "ar" ? "مقفول" : "Closed"}
           </span>
         ) : null}

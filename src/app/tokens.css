@@ -265,33 +265,57 @@
 }
 
 /* ==========================================================================
-   Elevation — there isn't any
+   Elevation — hard offset, carried over from the .dc system
 
-   The .dc system built a whole hard-offset language here: a solid step of
-   tinted colour cast off the corner, direction flipped by --elev-dir under
-   RTL, press landing the element in its own shadow. It was a good answer to a
-   real problem (a blurred grey shadow is invisible on a mid-range Android in
-   daylight) and this register does not need it, because it never lifts
-   anything off the page in the first place.
+   Sourced verbatim from `Talabat-style storefront UI mockups/_ds/.../tokens/
+   elevation.css`. It was deleted once in favour of a flat register and is back
+   because the register is not the whole argument: the problem it solves is a
+   device problem, not a taste one. A 4px blur at 8% black is invisible on a
+   mid-range Android at full brightness in Egyptian daylight — the panel
+   crushes it and the control looks drawn flat on the page. A solid step of
+   colour cast off the corner survives that light, costs nothing to composite,
+   and gives a press somewhere to go.
 
-   The tokens survive as `none` rather than being deleted, because
-   components.css resolves them by name in a dozen places. A rule that asks
-   for --shadow-sm gets nothing, which is the correct answer here, instead of
-   an unresolved variable and a dropped declaration.
+   Three ideas make it a system rather than a trick:
 
-   Blur survives in exactly one place — the sticky header — and it is in
-   components.css, not here.
+   1. THE OFFSET HAS A DIRECTION AND THE DIRECTION IS LOGICAL. --elev-dir is 1
+      in LTR and -1 in RTL (set on [dir="rtl"] in globals.css), so the step
+      always falls away from the reading edge. Nothing is mirrored by hand.
+   2. PRESS PUSHES THE ELEMENT INTO ITS OWN SHADOW. An interactive surface
+      translates by exactly its offset and drops the shadow to none, so the
+      pixel that moves is the pixel the finger is on. A shrink is a hint;
+      landing on the page is an event.
+   3. THE STEP IS TINTED, NEVER BLACK. Neutral surfaces cast --elev-ink (the
+      foreground at 10%); the brand button casts its own colour darkened, so an
+      emerald button reads as one solid object with a shadow of itself.
+
+   WHERE IT DOES NOT GO: a cell inside a shared-hairline grid — .lq-rail,
+   .lq-tiles, .lq-cells, .lq-rows, .lq-pgrid. Those cells share their borders
+   with the neighbours, and an offset cast into a 1px seam draws over the cell
+   next door. The rails and grids stay flat; everything pressable does not.
+
+   Blur is reserved for two things: the sticky header and the scrim behind a
+   sheet. If something is blurred, it is chrome or it is a scrim.
    ========================================================================== */
 :root {
-  --elev-dir: 1;
+  --elev-dir: 1; /* flipped to -1 under [dir="rtl"] */
+  --elev-ink: oklch(0.145 0 0 / 0.1);
+  --elev-ink-soft: oklch(0.145 0 0 / 0.06);
+  --elev-brand: color-mix(in oklab, var(--primary) 55%, oklch(0.145 0 0));
+
   --shadow-none: none;
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-key: none;
-  --shadow-key-lift: none;
-  --shadow-sheet: none;
-  --shadow-bar: none;
+  /* seam — the thing sits on the page. Cards, inputs, list rows. */
+  --shadow-xs: calc(1px * var(--elev-dir)) 1px 0 0 var(--elev-ink-soft);
+  /* step — pressable. Buttons, chips, arrows, payment rows. */
+  --shadow-sm: calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-ink);
+  /* lift — hover on something pressable, and popovers. */
+  --shadow-md: calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-ink);
+  /* the brand-tinted step a primary button casts. */
+  --shadow-key: calc(2px * var(--elev-dir)) 2px 0 0 var(--elev-brand);
+  --shadow-key-lift: calc(4px * var(--elev-dir)) 4px 0 0 var(--elev-brand);
+  /* upward steps for the two sticky surfaces. */
+  --shadow-sheet: 0 -3px 0 0 var(--elev-ink);
+  --shadow-bar: 0 -1px 0 0 var(--line), 0 -4px 0 0 var(--elev-ink-soft);
 
   --border-width: 1px;
   --focus-width: 2px;
