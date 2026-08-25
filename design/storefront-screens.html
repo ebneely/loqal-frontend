@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوكال — شاشات المتجر (الحجر والخط الشعرة)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   Loqal storefront — every screen, one board.
+
+   The stone/hairline register, as built: values lifted from the app's own
+   tokens.css rather than re-picked here. Ground #EDEBE5 at 3% grain, one
+   emerald #007950, structure carried entirely by a 1px #CFCBC0 line. Radius
+   is 0 everywhere except things that are round because they are round — a
+   status dot, a cart count, a colour swatch. No shadows at all.
+
+   Readex Pro across both scripts; Source Code Pro on every figure, Latin
+   digits in both languages. Nothing is tracked or uppercased near Arabic.
+   ========================================================================== */
+:root{
+  --paper:#EDEBE5; --raise:#F5F4F0; --field:#F7F6F3;
+  --line:#CFCBC0; --line2:#B3AEA1;
+  --ink:#14130F; --ink2:#605F5A; --ink3:#757470; --band:#141310;
+  --green:#007950; --gsoft:#DDEBE3; --gline:#A8C9B8;
+  --red:#C8102E; --rsoft:#F7E3E5; --rline:#E2B4BB; --rink:#A5122A;
+  --wait-fg:#6B5310; --wait-bg:#F2EBD8; --wait-bd:#DCCC9E;
+  --live-fg:#1F4F8F; --live-bg:#DFE8F4; --live-bd:#A9C2E0;
+  --board:#DCD8D0;
+  --sans:'Readex Pro',system-ui,sans-serif;
+  --mono:'Source Code Pro',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--board);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums lining-nums;font-weight:600}
+
+/* ── board chrome ─────────────────────────────────────────────────────── */
+.wrap{max-width:1560px;margin:0 auto;padding:48px 32px 96px}
+.head{max-width:940px;margin-bottom:48px}
+.head h1{font-size:34px;font-weight:300;letter-spacing:-.03em;line-height:1.15}
+.head p{margin-top:12px;font-size:16px;font-weight:300;color:#4A4945;max-width:62ch}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--line2);border:1px solid var(--line2);margin-top:28px}
+.notes>div{background:var(--paper);padding:16px 18px}
+.notes b{display:block;font-size:14px;font-weight:500;margin-bottom:4px}
+.notes span{font-size:13px;font-weight:300;color:var(--ink2);line-height:1.55}
+
+.sec{margin:64px 0 24px;display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line2);padding-bottom:10px}
+.sec h2{font-size:20px;font-weight:400;letter-spacing:-.022em;white-space:nowrap}
+.sec span{font-size:14px;font-weight:300;color:#4A4945}
+
+.row{display:flex;flex-wrap:wrap;gap:44px}
+.fig{display:flex;flex-direction:column;gap:10px}
+.cap{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:300;color:#3A3934}
+.cap b{font-weight:500;font-size:14px;color:var(--ink)}
+.cap i{font-style:normal;font-family:var(--mono);font-size:12px;color:#6A6862}
+
+/* A frame. overflow:hidden so a screen clips like a device, never bleeds. */
+.ph,.dt{position:relative;background:var(--paper);border:1px solid var(--line2);overflow:hidden;display:flex;flex-direction:column}
+/* A phone is a DEVICE: fixed 390×844, and what does not fit is off-screen. */
+.ph{width:390px;height:844px}
+/* A desktop screen is a WEB PAGE, not a device. No fixed height and no
+   clipped viewport — the frame grows to the whole document, footer included,
+   because that is what a browser shows when you scroll to the end. */
+.dt{width:1440px}
+.dt .body{flex:none;overflow:visible}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.03;z-index:5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── app chrome ───────────────────────────────────────────────────────── */
+.bar{display:flex;align-items:center;gap:8px;height:56px;padding:0 16px;background:rgba(237,235,229,.92);border-bottom:1px solid var(--line);flex:none}
+.mark{font-weight:700;font-size:20px;letter-spacing:-.03em;line-height:1}
+.bar .t{flex:1;text-align:center;font-size:18px}
+.ico{display:grid;place-items:center;width:44px;height:44px;flex:none}
+.body{flex:1;overflow:hidden}
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;min-height:60px;background:rgba(237,235,229,.92);border-top:1px solid var(--line);flex:none}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink2);font-size:11px}
+.tab.on{color:var(--green)}
+.badge{position:absolute;top:-6px;inset-inline-start:12px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;border-radius:9999px;background:var(--green);color:var(--field);font-size:11px;line-height:1}
+
+.util{display:flex;align-items:center;justify-content:center;gap:32px;height:34px;background:var(--band);color:var(--paper);font-size:13px;font-weight:300;flex:none}
+.dhead{border-bottom:1px solid var(--line);background:rgba(237,235,229,.9);flex:none}
+.dbar{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:40px;padding:12px 32px}
+.tools{display:flex;align-items:center;gap:24px;font-size:14px;font-weight:300}
+.cartn{min-width:20px;height:20px;padding:0 5px;display:grid;place-items:center;border-radius:9999px;background:var(--green);color:var(--field);font-size:11px;line-height:1}
+.dwrap{max-width:1200px;margin:0 auto;padding:24px 32px;width:100%}
+
+/* ── pieces ───────────────────────────────────────────────────────────── */
+.pad{padding:16px}
+.shead{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.shead h3{font-size:20px;font-weight:400;letter-spacing:-.022em}
+.lede{font-size:13px;font-weight:300;color:var(--ink2)}
+.more{font-size:14px;font-weight:300;color:var(--ink2);border-bottom:1px solid currentColor}
+.title{font-size:26px;font-weight:400;letter-spacing:-.03em}
+.lbl{font-size:13px;color:var(--ink2)}
+.prose{font-size:14px;font-weight:300;color:var(--ink2);line-height:1.6}
+.rule{height:1px;background:var(--line);border:0}
+
+/* Cells SHARE borders: 1px gap over a --line ground, one border outside. */
+.grid{display:grid;gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g1{grid-template-columns:1fr}
+.grid>*{background:var(--paper)}
+.rail{display:flex;gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden}
+.rail>*{flex:none;background:var(--paper)}
+
+.card{padding:12px;display:flex;flex-direction:column;gap:6px}
+.well{position:relative;aspect-ratio:3/4;background:var(--raise);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
+.art{width:70%;height:70%;fill:none;stroke:var(--ink);stroke-width:1;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.art .s{fill:rgba(20,19,15,.07)}
+.brand{font-size:13px;font-weight:300;color:var(--ink2)}
+.pname{font-size:14px;line-height:1.35}
+.price{font-size:16px}
+.was{font-size:13px;color:var(--ink2);text-decoration:line-through;font-weight:400}
+.sale{color:var(--red)}
+.out{position:absolute;inset:0;display:grid;place-items:center;background:rgba(237,235,229,.8);font-size:14px;font-weight:500;color:var(--ink2)}
+.tag{position:absolute;top:8px;inset-inline-start:8px;padding:3px 8px;font-size:11px;border:1px solid var(--rline);background:var(--rsoft);color:var(--rink)}
+
+.tile{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 8px}
+.tile .art{width:56px;height:56px}
+.tile span{font-size:14px;font-weight:300;text-align:center}
+
+.sign{position:relative;height:96px;background:var(--raise);border-bottom:1px solid var(--line);overflow:hidden}
+.sign b{position:absolute;bottom:-2px;inset-inline-start:12px;font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1;opacity:.12;white-space:nowrap}
+.sbody{padding:16px;display:flex;flex-direction:column;gap:4px}
+
+.chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--line);font-size:14px;font-weight:300}
+.pill{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:44px;padding:0 14px;border:1px solid var(--line);font-size:14px;font-weight:300}
+.pill.on{border-color:var(--green);background:var(--gsoft);color:var(--green)}
+.pill.gone{color:var(--ink3);text-decoration:line-through;border-style:dashed}
+.stat{display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:9999px;border:1px solid;font-size:13px;font-weight:600}
+.dot{width:6px;height:6px;border-radius:9999px;background:currentColor;flex:none}
+.good{background:var(--gsoft);border-color:var(--gline);color:var(--green)}
+.wait{background:var(--wait-bg);border-color:var(--wait-bd);color:var(--wait-fg)}
+.live{background:var(--live-bg);border-color:var(--live-bd);color:var(--live-fg)}
+
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border:1px solid var(--ink);font-size:18px;font-weight:600}
+.btn.pri{background:var(--green);border-color:var(--green);color:var(--field)}
+.btn.sm{min-height:44px;font-size:14px;font-weight:400;padding:0 16px}
+.field{display:flex;align-items:center;gap:12px;height:44px;padding:0 16px;border:1px solid var(--line);background:var(--field);font-size:16px}
+.box{width:20px;height:20px;border:1px solid var(--line2);flex:none;display:grid;place-items:center}
+.box.on{border-color:var(--green);background:var(--green)}
+.chk{display:flex;align-items:center;gap:12px;min-height:44px;font-size:16px;font-weight:300}
+.sw{width:36px;height:36px;border-radius:9999px;border:1px solid var(--line)}
+.sw.on{border:2px solid var(--green)}
+.swcol{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--ink2)}
+.lrow{display:flex;align-items:center;gap:12px;min-height:52px;padding:12px 16px;font-size:16px;font-weight:300}
+.lrow .end{margin-inline-start:auto;color:var(--ink3)}
+.sum{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:6px 0}
+.bar2{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(237,235,229,.9);border-top:1px solid var(--line);flex:none}
+.actions{margin-inline-start:auto}
+.sheet{position:absolute;inset-inline:0;bottom:0;background:var(--raise);border-top:1px solid var(--line);display:flex;flex-direction:column;z-index:4}
+.scrim{position:absolute;inset:0;background:rgba(20,19,15,.45);z-index:3}
+
+/* ── Footer. DESKTOP ONLY — under 720 a 400px dark block above a fixed tab
+   bar is a dead end, so /account carries these links on a phone instead. ── */
+.foot{background:var(--band);color:var(--paper);flex:none}
+.fcols{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:40px;max-width:1200px;margin:0 auto;padding:64px 32px 40px}
+.foot h4{font-size:13px;font-weight:400;opacity:.55;margin-bottom:16px}
+.foot a,.foot span.l{display:block;font-size:14px;font-weight:300;opacity:.82;color:var(--paper);text-decoration:none;padding:2px 0}
+.fshops{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:2px 16px}
+.flinks{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px}
+.fsub{display:flex;margin-bottom:24px}
+.fsub .i{flex:1;min-height:44px;border:1px solid rgba(237,235,229,.28);display:flex;align-items:center;padding:0 12px;font-size:14px;opacity:.5}
+.fsub .b{min-height:44px;padding:0 20px;background:var(--green);border:1px solid var(--green);color:var(--field);display:flex;align-items:center;font-size:14px}
+.pays{display:flex;flex-wrap:wrap;gap:16px;font-size:11px;opacity:.72}
+.pays span{display:inline-flex;align-items:center;gap:8px}
+.pays svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.2}
+.fbot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;max-width:1200px;margin:0 auto;padding:20px 32px;border-top:1px solid rgba(237,235,229,.16);font-size:13px;opacity:.7}
+</style>
+</head>
+<body>
+
+<!-- Garment line art, defined once and referenced. The stand-in for the
+     photography that does not exist yet: 1px stroke, a few paths filled at
+     7% so a grid of them reads as drawn rather than as a wireframe. -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="tee" viewBox="0 0 120 120"><path d="M40 26 L30 34 L22 52 L34 58 L38 50 L38 96 L82 96 L82 50 L86 58 L98 52 L90 34 L80 26 L70 26 Q60 38 50 26 Z"/></symbol>
+  <symbol id="shirt" viewBox="0 0 120 120"><path d="M42 24 L30 32 L22 52 L33 58 L37 50 L37 98 L83 98 L83 50 L87 58 L98 52 L90 32 L78 24 L60 34 Z"/><path d="M60 34 L60 98"/><rect class="s" x="66" y="50" width="12" height="14"/></symbol>
+  <symbol id="knit" viewBox="0 0 120 120"><path d="M44 26 L26 36 L18 60 L30 66 L36 54 L36 98 L84 98 L84 54 L90 66 L102 60 L94 36 L76 26 Q60 34 44 26 Z"/><path d="M44 26 Q60 20 76 26"/><path d="M36 90 L84 90"/></symbol>
+  <symbol id="pants" viewBox="0 0 120 120"><path class="s" d="M40 20 L80 20 L84 62 L78 104 L64 104 L60 60 L56 104 L42 104 L36 62 Z"/><path d="M40 20 L80 20 L84 62 L78 104 L64 104 L60 60 L56 104 L42 104 L36 62 Z"/><path d="M40 30 L80 30"/></symbol>
+  <symbol id="jacket" viewBox="0 0 120 120"><path d="M42 22 L28 30 L20 56 L32 62 L36 52 L36 102 L84 102 L84 52 L88 62 L100 56 L92 30 L78 22 Z"/><path d="M60 22 L60 102"/><rect x="40" y="62" width="14" height="16"/><rect x="66" y="62" width="14" height="16"/></symbol>
+  <symbol id="dress" viewBox="0 0 120 120"><path d="M46 24 L38 34 L30 100 L90 100 L82 34 L74 24 Q60 34 46 24 Z"/><path d="M38 48 L82 48"/></symbol>
+  <symbol id="shoe" viewBox="0 0 120 120"><path class="s" d="M18 78 Q20 58 40 56 L72 56 Q98 58 100 78 L100 86 L18 86 Z"/><path d="M18 78 Q20 58 40 56 L72 56 Q98 58 100 78 L100 86 L18 86 Z"/><path d="M40 56 L46 68 L74 68"/></symbol>
+  <symbol id="bag" viewBox="0 0 120 120"><path d="M34 44 L86 44 L92 100 L28 100 Z"/><path d="M46 44 L46 32 Q60 20 74 32 L74 44"/><path d="M28 58 L92 58"/></symbol>
+
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M7 12h10"/><path d="M10 17h4"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7"/><rect x="13.5" y="3.5" width="7" height="7"/><rect x="3.5" y="13.5" width="7" height="7"/><rect x="13.5" y="13.5" width="7" height="7"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5V20h16V9.5"/><path d="M3 9.5 5 4h14l2 5.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0Z"/></symbol>
+</svg>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     The web chrome, written ONCE.
+
+     Eleven pages carry the same utility strip, header and footer. Pasting
+     them eleven times is how a board drifts into eleven slightly different
+     headers, so they live here and are injected into every .dt below.
+     `data-nosearch` drops the header's search field — on /search the page
+     owns a real input and the chrome must not add a second.
+     ══════════════════════════════════════════════════════════════════════ -->
+<template id="tpl-head">
+  <div class="util">
+    <span>توصيل في نفس اليوم — القاهرة والجيزة</span>
+    <span>الدفع عند الاستلام</span>
+    <span>استبدال خلال <span class="num">14</span> يوم</span>
+  </div>
+  <div class="dhead"><div class="dbar">
+    <span class="mark" style="font-size:26px">لوكال</span>
+    <span class="field slot-search" style="max-width:520px;margin:0 auto;width:100%">
+      <svg width="18" height="18" stroke="#605F5A" fill="none" stroke-width="1.5"><use href="#i-search"/></svg>
+      <span class="lede">دوّر على قطعة أو محل…</span>
+    </span>
+    <div class="tools">
+      <span>الأقسام</span>
+      <span style="display:inline-flex;align-items:center;gap:8px">المحلات<svg width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-down"/></svg></span>
+      <span>أوردراتي</span><span>حسابي</span>
+      <span style="display:inline-flex;align-items:center;gap:8px">السلة<span class="cartn num">3</span></span>
+    </div>
+  </div></div>
+</template>
+
+<template id="tpl-foot">
+  <footer class="foot">
+    <div class="fcols">
+      <div>
+        <h4>المحلات</h4>
+        <div class="fshops">
+          <span class="l">Antikka</span><span class="l">Denjoe</span><span class="l">Dryp</span>
+          <span class="l">Eighties</span><span class="l">JEN</span><span class="l">Slack</span>
+          <span class="l">Versattire</span><span class="l">Zedzee</span>
+        </div>
+      </div>
+      <div>
+        <h4>لوكال</h4>
+        <div class="flinks">
+          <span class="l">عن لوكال</span><span class="l">انضم كمحل</span>
+          <span class="l">الشحن والتوصيل</span><span class="l">الاستبدال والاسترجاع</span>
+          <span class="l">الأسئلة الشائعة</span><span class="l">تواصل معنا</span>
+        </div>
+      </div>
+      <div>
+        <h4>اعرف الجديد</h4>
+        <div class="fsub"><span class="i">إيميلك</span><span class="b">اشترك</span></div>
+        <!-- Payment METHODS, drawn. Never imitations of the Visa or Meeza
+             marks: those are trademarks, and a real deployment drops in the
+             files the processor supplies. -->
+        <div class="pays">
+          <span><svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>بطاقات</span>
+          <span><svg viewBox="0 0 24 24"><rect x="3" y="7.5" width="18" height="11"/><path d="M21 11.5h-4a1.5 1.5 0 0 0 0 3h4"/></svg>فاليو</span>
+          <span><svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19"/><path d="M10 7.5h4.5L13 6"/><path d="M14 12.5H9.5L11 14"/></svg>إنستاباي</span>
+          <span><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11"/><circle cx="12" cy="12" r="2.6"/></svg>كاش عند الاستلام</span>
+        </div>
+      </div>
+    </div>
+    <div class="fbot">
+      <span class="mark">لوكال</span>
+      <span>تسوّق من محلات بلدك — القاهرة والجيزة</span>
+      <span class="num">© 2026</span>
+    </div>
+  </footer>
+</template>
+
+<div class="wrap">
+
+<header class="head">
+  <h1>لوكال — شاشات المتجر</h1>
+  <p>كل شاشة الشوبر بيلمسها، بالتصميم الجديد: أرضية حجرية، خط شعرة واحد بيبني كل حاجة،
+     أخضر واحد، وصفر تدوير وصفر ظل. الموبايل الأول عند 390، وبعده نسخة الديسكتوب.</p>
+
+  <div class="notes">
+    <div>
+      <b>الخط الشعرة هو البناء</b>
+      <span>الخلايا بتتشارك حدودها — فراغ ١px فوق أرضية بلون الخط، وبرواز واحد برّه.
+        مفيش كارت بظل، ومفيش زاوية مدوّرة غير حاجة مدوّرة أصلاً.</span>
+    </div>
+    <div>
+      <b>الأرقام لاتينية دايمًا</b>
+      <span>السعر والتوتال ورقم الأوردر بخط Source Code Pro. «ج.م» بعد الرقم في
+        العربي، و«EGP» قبله في الإنجليزي.</span>
+    </div>
+    <div>
+      <b>الأخضر يعني امشي</b>
+      <span>متاح، مفتوح، اتأكد، ضيف للسلة، عدّاد السلة، حلقة الفوكس. الأحمر يعني
+        سعر نزل أو حاجة فشلت — ومفيش استخدام تالت.</span>
+    </div>
+    <div>
+      <b>اللي مش موجود مكتوب</b>
+      <span>مفيش صور منتجات لسه، فالرسمة بتقف مكانها. ومفيش «المفتوح بس» ولا
+        «فيه تجربة» — الداتا دي مش موجودة في السكيما أصلاً.</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     01 · Browsing
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="sec"><h2>٠١ · التصفح</h2><span>الرئيسية، الأقسام، المحلات، صفحة المحل</span></div>
+<div class="row">
+
+  <!-- Home -->
+  <div class="fig">
+    <div class="cap"><b>الرئيسية</b><i>/</i></div>
+    <div class="ph">
+      <div class="bar"><span class="mark">لوكال</span>
+        <span class="ico" style="margin-inline-start:auto"><svg width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg></span>
+      </div>
+      <div class="body">
+        <div style="padding:20px 16px 12px"><div class="lede">القاهرة والجيزة</div></div>
+        <div class="pad" style="padding-top:0"><div class="shead"><div><h3>الأقسام</h3><p class="lede">كل قطعة على رف في محل — مش في مخزن.</p></div><span class="more">كل الأقسام</span></div></div>
+        <div class="rail">
+          <div class="tile" style="width:110px"><svg class="art"><use href="#tee"/></svg><span>تيشيرتات</span></div>
+          <div class="tile" style="width:110px"><svg class="art"><use href="#shirt"/></svg><span>قمصان</span></div>
+          <div class="tile" style="width:110px"><svg class="art"><use href="#pants"/></svg><span>بناطيل</span></div>
+          <div style="width:60px"></div>
+        </div>
+        <div class="pad"><div class="shead"><div><h3>المحلات</h3><p class="lede">محلات ليها عناوين حقيقية تقدر تعدّي عليها.</p></div><span class="more">كل المحلات</span></div></div>
+        <div class="rail">
+          <div style="width:240px"><div class="sign"><b>Versattire</b></div><div class="sbody"><span>Versattire</span><span class="prose">قطن مصري، تفصيل بسيط.</span></div></div>
+          <div style="width:240px"><div class="sign"><b>Dryp</b></div><div class="sbody"><span>Dryp</span><span class="prose">دنيم وقمصان.</span></div></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><span style="position:relative"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span class="badge num">2</span></span><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="fig">
+    <div class="cap"><b>الأقسام</b><i>/categories</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">الأقسام</span></div>
+      <div class="body">
+        <div class="pad"><div class="shead"><div><h3 class="title">الأقسام</h3><p class="lede">كل قطعة على رف في محل — مش في مخزن.</p></div><span class="lede num">12</span></div></div>
+        <div class="grid g2">
+          <div class="tile"><svg class="art"><use href="#tee"/></svg><span>تيشيرتات</span></div>
+          <div class="tile"><svg class="art"><use href="#shirt"/></svg><span>قمصان</span></div>
+          <div class="tile"><svg class="art"><use href="#knit"/></svg><span>تريكو</span></div>
+          <div class="tile"><svg class="art"><use href="#pants"/></svg><span>بناطيل</span></div>
+          <div class="tile"><svg class="art"><use href="#jacket"/></svg><span>جواكت</span></div>
+          <div class="tile"><svg class="art"><use href="#dress"/></svg><span>فساتين</span></div>
+          <div class="tile"><svg class="art"><use href="#shoe"/></svg><span>أحذية</span></div>
+          <div class="tile"><svg class="art"><use href="#bag"/></svg><span>شنط</span></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- Shops -->
+  <div class="fig">
+    <div class="cap"><b>المحلات</b><i>/shops</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">المحلات</span></div>
+      <div class="body">
+        <div class="pad"><div class="shead"><div><h3 class="title">المحلات</h3><p class="lede">محلات ليها عناوين حقيقية تقدر تعدّي عليها.</p></div><span class="lede num">18</span></div></div>
+        <div class="grid g1">
+          <div><div class="sign"><b>Versattire</b></div><div class="sbody"><span>Versattire</span><span class="prose">قطن مصري، تفصيل بسيط.</span></div></div>
+          <div><div class="sign"><b>Dryp</b></div><div class="sbody"><span>Dryp</span><span class="prose">دنيم وقمصان.</span></div></div>
+          <div><div class="sign"><b>Slack</b></div><div class="sbody"><span>Slack</span><span class="prose">قطع أساسية.</span></div></div>
+        </div>
+        <div class="pad"><p class="prose">بتشوف أول <span class="num">18</span> محل من <span class="num">24</span>.</p></div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- Shop page -->
+  <div class="fig">
+    <div class="cap"><b>صفحة المحل</b><i>/shop/versattire</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">Versattire</span></div>
+      <div class="body">
+        <div class="pad" style="padding-bottom:12px;border-bottom:1px solid var(--line)">
+          <div class="lede">الرئيسية / المحلات / Versattire</div>
+        </div>
+        <div class="pad">
+          <div class="shead"><h3 style="font-size:34px;font-weight:300;letter-spacing:-.03em">Versattire</h3><span class="lede num">142</span></div>
+          <p class="prose" style="margin-top:8px">المحل ده بيجهّز ويبعت بنفسه. إنت بتطلب أونلاين، والقطعة بتيجي من الرف بتاعه.</p>
+        </div>
+        <div class="grid g2">
+          <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Versattire</span><span class="pname">قميص كتان</span><span class="price num">450 ج.م</span></div>
+          <div class="card"><div class="well"><svg class="art"><use href="#tee"/></svg></div><span class="brand">Versattire</span><span class="pname">تيشيرت قطن</span><span class="price num">390 ج.م</span></div>
+          <div class="card"><div class="well"><svg class="art"><use href="#knit"/></svg></div><span class="brand">Versattire</span><span class="pname">تريكو صوف</span><span class="price num">890 ج.م</span></div>
+          <div class="card"><div class="well"><svg class="art"><use href="#pants"/></svg></div><span class="brand">Versattire</span><span class="pname">بنطلون واسع</span><span class="price num">720 ج.م</span></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     02 · The garment
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="sec"><h2>٠٢ · القطعة</h2><span>المقاسات اللي خلصت بتفضل مكتوبة ومشطوبة، والعدد مش بيتقال</span></div>
+<div class="row">
+
+  <div class="fig">
+    <div class="cap"><b>صفحة القطعة</b><i>/shop/versattire/linen-shirt</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">قميص كتان</span></div>
+      <div class="body" style="overflow:hidden">
+        <div style="padding:16px 16px 0"><div class="well" style="aspect-ratio:3/4"><svg class="art"><use href="#shirt"/></svg></div></div>
+        <div class="pad" style="display:flex;flex-direction:column;gap:12px">
+          <span class="brand">Versattire</span>
+          <span style="font-size:20px;font-weight:400;letter-spacing:-.022em">قميص كتان — أوف وايت</span>
+          <span class="price num" style="font-size:26px">450 ج.م</span>
+
+          <div><div class="lbl" style="margin-bottom:8px">المقاس</div>
+            <div style="display:flex;gap:8px">
+              <span class="pill">S</span><span class="pill on">M</span><span class="pill">L</span><span class="pill gone">XL</span>
+            </div>
+            <p class="prose" style="margin-top:8px">المشطوب خلص من المحل.</p>
+          </div>
+
+          <div><div class="lbl" style="margin-bottom:8px">اللون</div>
+            <div style="display:flex;gap:14px">
+              <span class="swcol"><span class="sw on" style="background:#F7F6F3"></span>أوف وايت</span>
+              <span class="swcol"><span class="sw" style="background:#D8C7A9"></span>بيج</span>
+              <span class="swcol"><span class="sw" style="background:#1F2A44"></span>كحلي</span>
+            </div>
+          </div>
+
+          <p class="prose">اللي مكتوب هنا هو آخر حاجة المحل قالها لنا. المحل بيراجع الرف قبل ما يأكد الأوردر، ولو القطعة مش موجودة بيتلغي الأوردر ومش بيتخصم منك حاجة.</p>
+
+          <hr class="rule">
+          <div style="display:flex;align-items:center;justify-content:space-between;min-height:44px"><span>الخامة والعناية</span><span class="lede num">+</span></div>
+          <hr class="rule">
+          <div style="display:flex;align-items:center;justify-content:space-between;min-height:44px"><span>التوصيل والاستبدال</span><span class="lede num">+</span></div>
+        </div>
+      </div>
+      <div class="bar2"><div><div class="lede">السعر</div><div class="price num">450 ج.م</div></div>
+        <div class="actions"><span class="btn pri" style="min-height:52px">ضيف للسلة</span></div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     03 · Search
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="sec"><h2>٠٣ · البحث والفلتر</h2><span>على الموبايل الفلتر شيت — على الديسكتوب ريل (تحت)</span></div>
+<div class="row">
+
+  <!-- Search results -->
+  <div class="fig">
+    <div class="cap"><b>نتايج البحث</b><i>/search?q=قميص</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">البحث</span></div>
+      <div class="body">
+        <div class="pad"><div class="field"><svg width="18" height="18" stroke="var(--ink2)" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>قميص</span></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px 12px">
+          <span class="lede"><span class="num" style="color:var(--ink)">14</span> نتيجة لـ «قميص»</span>
+          <span class="btn sm" style="gap:8px"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-filter"/></svg>فلتر<span class="badge num" style="position:static">3</span></span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 16px">
+          <span class="chip">M <span class="lede">×</span></span>
+          <span class="chip">L <span class="lede">×</span></span>
+          <span class="chip">بيج <span class="lede">×</span></span>
+        </div>
+        <div class="grid g2">
+          <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Versattire</span><span class="pname">قميص كتان</span><span class="price num">450 ج.م</span></div>
+          <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg><span class="tag num">−13%</span></div><span class="brand">Dryp</span><span class="pname">قميص كاروهات</span><span style="display:flex;align-items:baseline;gap:8px"><span class="price num sale">520 ج.م</span><span class="was num">600</span></span></div>
+          <div class="card"><div class="well"><svg class="art" style="opacity:.5"><use href="#shirt"/></svg><span class="out">خلص</span></div><span class="brand">Slack</span><span class="pname">قميص فانيلا</span><span class="price num">430 ج.م</span></div>
+          <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Denjoe</span><span class="pname">قميص شامبراي</span><span class="price num">560 ج.م</span></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab on"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- Filter sheet -->
+  <div class="fig">
+    <div class="cap"><b>الفلتر — شيت</b><i>عدّادات المحلات جاية من السيرفر</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">البحث</span></div>
+      <div class="body"><div class="pad"><div class="field"><svg width="18" height="18" stroke="var(--ink2)" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>قميص</span></div></div></div>
+      <div class="scrim"></div>
+      <div class="sheet" style="height:664px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--line);flex:none">
+          <span style="font-size:20px;font-weight:400;letter-spacing:-.022em">فلتر</span>
+          <span class="more">مسح</span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 16px">
+          <div style="padding:14px 0;border-bottom:1px solid var(--line)">
+            <div class="lbl" style="margin-bottom:4px">المحل</div>
+            <div class="chk"><span class="box on"><svg width="12" height="12" stroke="var(--field)" fill="none" stroke-width="3"><use href="#i-check"/></svg></span>Versattire <span class="lede num">(6)</span></div>
+            <div class="chk"><span class="box on"><svg width="12" height="12" stroke="var(--field)" fill="none" stroke-width="3"><use href="#i-check"/></svg></span>Dryp <span class="lede num">(4)</span></div>
+            <div class="chk"><span class="box"></span>Slack <span class="lede num">(3)</span></div>
+            <div class="chk"><span class="box"></span>Denjoe <span class="lede num">(1)</span></div>
+          </div>
+          <div style="padding:14px 0;border-bottom:1px solid var(--line)">
+            <div class="lbl" style="margin-bottom:10px">المقاس</div>
+            <div style="display:flex;gap:8px"><span class="pill">S</span><span class="pill on">M</span><span class="pill on">L</span><span class="pill">XL</span></div>
+          </div>
+          <div style="padding:14px 0;border-bottom:1px solid var(--line)">
+            <div class="lbl" style="margin-bottom:10px">اللون</div>
+            <div style="display:flex;gap:14px">
+              <span class="swcol"><span class="sw" style="background:#F7F6F3"></span>أبيض</span>
+              <span class="swcol"><span class="sw" style="background:#4A5D3A"></span>زيتي</span>
+              <span class="swcol"><span class="sw" style="background:#14130F"></span>أسود</span>
+              <span class="swcol" style="color:var(--green)"><span class="sw on" style="background:#D8C7A9"></span>بيج</span>
+            </div>
+          </div>
+          <div style="padding:14px 0">
+            <div class="lbl">السعر</div>
+            <div class="sum"><span class="price num">300 ج.م</span><span class="price num">800 ج.م</span></div>
+            <div style="position:relative;height:44px;display:grid;align-items:center">
+              <span style="position:absolute;inset-inline:0;height:1px;background:var(--line2)"></span>
+              <span style="position:absolute;inset-inline-start:18%;inset-inline-end:22%;height:1px;background:var(--green)"></span>
+              <span style="position:absolute;inset-inline-start:18%;width:18px;height:18px;border-radius:9999px;background:var(--paper);border:2px solid var(--green)"></span>
+              <span style="position:absolute;inset-inline-end:22%;width:18px;height:18px;border-radius:9999px;background:var(--paper);border:2px solid var(--green)"></span>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px;border-top:1px solid var(--line);flex:none">
+          <span class="btn pri">وريني <span class="num" style="margin-inline:6px">14</span> نتيجة</span>
+        </div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     04 · Buying
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="sec"><h2>٠٤ · الشراء</h2><span>السلة متقسّمة بالمحل — كل محل بيشحن ويتحاسب لوحده</span></div>
+<div class="row">
+
+  <div class="fig">
+    <div class="cap"><b>السلة</b><i>/bag</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">السلة</span></div>
+      <div class="body">
+        <div class="pad">
+          <h3 class="title">السلة</h3>
+          <p class="lede"><span class="num">3</span> قطع — من <span class="num">2</span> محل</p>
+          <p class="prose" style="margin-top:6px">كل محل بيجهّز ويبعت نصّه بنفسه، فبيوصلوك في وقتين مختلفين.</p>
+        </div>
+
+        <div style="padding:0 16px"><hr class="rule"></div>
+        <div class="pad" style="padding-bottom:8px"><div class="shead"><span>Versattire</span><span class="stat good"><i class="dot"></i>مفتوح</span></div></div>
+        <div style="display:flex;gap:12px;padding:0 16px 12px">
+          <div class="well" style="width:72px;aspect-ratio:3/4;flex:none"><svg class="art"><use href="#shirt"/></svg></div>
+          <div style="display:grid;gap:4px;min-width:0;flex:1">
+            <span class="pname">قميص كتان</span>
+            <span class="lede">M · أوف وايت</span>
+            <span class="lede"><span class="num">1</span> × <span class="num">450 ج.م</span></span>
+          </div>
+          <span class="price num">450.00 ج.م</span>
+        </div>
+        <div style="padding:0 16px 12px">
+          <div class="sum"><span class="lede">مجموع المحل</span><span class="price num">450.00 ج.م</span></div>
+          <div class="sum"><span class="lede">توصيل المحل</span><span class="price num">45.00 ج.م</span></div>
+        </div>
+
+        <div style="padding:0 16px"><hr class="rule"></div>
+        <div class="pad" style="padding-bottom:8px"><div class="shead"><span>Dryp</span><span class="stat good"><i class="dot"></i>مفتوح</span></div></div>
+        <div style="display:flex;gap:12px;padding:0 16px 12px">
+          <div class="well" style="width:72px;aspect-ratio:3/4;flex:none"><svg class="art"><use href="#tee"/></svg></div>
+          <div style="display:grid;gap:4px;min-width:0;flex:1">
+            <span class="pname">تيشيرت أوفرسايز</span>
+            <span class="lede">L · أسود</span>
+            <span class="lede"><span class="num">2</span> × <span class="num">390 ج.م</span></span>
+          </div>
+          <span class="price num">780.00 ج.م</span>
+        </div>
+
+        <div class="pad" style="padding-top:0">
+          <hr class="rule">
+          <div style="padding-top:10px">
+            <div class="lbl" style="margin-bottom:6px">طريقة التوصيل</div>
+            <div class="chk"><span class="box on" style="border-radius:9999px"><span style="width:10px;height:10px;border-radius:9999px;background:var(--field)"></span></span>مندوب من المحل</div>
+            <div class="chk"><span class="box" style="border-radius:9999px"></span>توصيل المحل بنفسه</div>
+          </div>
+          <div class="sum" style="border-top:1px solid var(--line);margin-top:8px;padding-top:10px"><span style="font-size:18px">الإجمالي التقريبي</span><span class="price num" style="font-size:18px">1,320.00 ج.م</span></div>
+          <p class="prose" style="margin-top:8px">مصاريف التوصيل لكل محل لوحده — الأوردر من محلين بيتحسب مرتين.</p>
+        </div>
+      </div>
+      <div class="bar2"><div><div class="lede">القطع</div><div class="price num">1,230.00 ج.م</div></div>
+        <div class="actions"><span class="btn pri">إتمام الأوردر</span></div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab on"><span style="position:relative"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span class="badge num">3</span></span><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     05 · Account and states
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="sec"><h2>٠٥ · الحساب والحالات</h2><span>حالة لكل محل — مفيش حالة واحدة بتتكلم عن الأوردر كله</span></div>
+<div class="row">
+
+  <!-- Orders -->
+  <div class="fig">
+    <div class="cap"><b>أوردراتي</b><i>/orders</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">أوردراتي</span></div>
+      <div class="body">
+        <div class="pad">
+          <h3 class="title">أوردراتي</h3>
+          <p class="lede">كل محل بيجهّز نصّه لوحده، وكل نص ليه حالته.</p>
+        </div>
+        <div style="padding:0 16px"><hr class="rule"></div>
+        <div class="pad">
+          <h3 style="font-size:20px;font-weight:400">افتح أوردر</h3>
+          <p class="prose" style="margin-bottom:12px">برقم الأوردر ورقم الموبايل اللي طلبت بيه. من غير حساب.</p>
+          <div style="display:grid;gap:12px">
+            <div><div class="lbl" style="margin-bottom:6px">رقم الأوردر</div><div class="field num" style="justify-content:flex-start">LQ-4821-7730</div></div>
+            <div><div class="lbl" style="margin-bottom:6px">رقم الموبايل</div><div class="field num" style="justify-content:flex-start">0100 000 0000</div></div>
+            <span class="btn pri">افتح الأوردر</span>
+          </div>
+        </div>
+        <div style="padding:0 16px"><hr class="rule"></div>
+        <div class="pad">
+          <h3 style="font-size:20px;font-weight:400">اللي هيظهر لما تفتح أوردر</h3>
+          <p class="prose">الحالات اللي كل محل بيعدّي بيها:</p>
+        </div>
+        <div class="grid g1">
+          <div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px"><span class="stat wait">المحل بيراجع الرف</span><span class="prose" style="flex:1 1 16rem">المحل بيراجع الرف قبل ما يأكد.</span></div>
+          <div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px"><span class="stat good">اتأكد</span><span class="prose" style="flex:1 1 16rem">القطعة موجودة، والمحل بدأ يجهّزها.</span></div>
+          <div style="padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px"><span class="stat live"><i class="dot"></i>مع المندوب</span><span class="prose" style="flex:1 1 16rem">المندوب ماشي بيه دلوقتي.</span></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab on"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- Account -->
+  <div class="fig">
+    <div class="cap"><b>حسابي</b><i>/account — بيشيل روابط الفوتر على الموبايل</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">حسابي</span></div>
+      <div class="body">
+        <div class="pad">
+          <h3 class="title">حسابي</h3>
+          <p class="lede">اللغة، وكل حاجة تخص لوكال والأوردرات.</p>
+        </div>
+        <div class="pad" style="padding-top:0">
+          <div style="border:1px solid var(--line);background:var(--raise);padding:16px;display:grid;gap:8px">
+            <span>إنت بتتصفح كضيف</span>
+            <span class="prose">تقدر تشتري من غير حساب. الأوردر بيتفتح برقمه ورقم الموبايل.</span>
+            <span class="btn sm" style="align-self:flex-start;margin-top:4px">ادخل على حسابك</span>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:0"><div class="lbl" style="margin-bottom:8px">اللغة</div></div>
+        <div class="grid g1">
+          <div class="lrow"><span>العربية</span><span class="end" style="color:var(--green)"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><use href="#i-check"/></svg></span></div>
+          <div class="lrow"><span>English</span></div>
+        </div>
+        <div class="pad"><div class="lbl">لوكال</div></div>
+        <div class="grid g1">
+          <div class="lrow"><span class="lede"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-store"/></svg></span><span style="display:grid"><span>انضم كمحل</span><span class="lede" style="font-size:13px">join-loqaaal.vercel.app</span></span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-chev"/></svg></span></div>
+          <div class="lrow"><span>الشحن والتوصيل</span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-down"/></svg></span></div>
+          <div class="lrow"><span>الاستبدال والاسترجاع</span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-down"/></svg></span></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab on"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- Sign in -->
+  <div class="fig">
+    <div class="cap"><b>الدخول</b><i>/account/sign-in</i></div>
+    <div class="ph">
+      <div class="bar"><span class="t">الدخول</span></div>
+      <div class="body">
+        <div class="pad">
+          <h3 class="title">ادخل على حسابك</h3>
+          <p class="lede">الحساب بيخلّي عناوينك وأوردراتك محفوظة.</p>
+        </div>
+        <div style="padding:0 16px"><hr class="rule"></div>
+        <div class="pad" style="display:grid;gap:16px">
+          <div><div class="lbl" style="margin-bottom:6px">الإيميل</div><div class="field" dir="ltr"></div></div>
+          <div><div class="lbl" style="margin-bottom:6px">الباسورد</div><div class="field" dir="ltr"></div></div>
+          <span class="btn pri">ادخل</span>
+        </div>
+        <div style="padding:0 16px"><hr class="rule"></div>
+        <div class="pad" style="display:grid;gap:12px">
+          <p class="prose">مش لازم حساب عشان تطلب. تقدر تشتري كضيف وتتابع الأوردر برقمه ورقم موبايلك.</p>
+          <span class="btn sm" style="justify-content:center">كمّل كضيف</span>
+          <p class="lede">الدخول برقم الموبايل وكود لسه مش شغال.</p>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-home"/></svg><span>الرئيسية</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-search"/></svg><span>البحث</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-bag"/></svg><span>السلة</span></div>
+        <div class="tab"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-box"/></svg><span>أوردراتي</span></div>
+        <div class="tab on"><svg width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-user"/></svg><span>حسابي</span></div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- 404 -->
+  <div class="fig">
+    <div class="cap"><b>العنوان مش موجود</b><i>404 — من غير كروم</i></div>
+    <div class="ph">
+      <div class="body" style="display:flex;flex-direction:column;justify-content:center;padding:32px 16px">
+        <span class="mark" style="font-size:26px;margin-bottom:24px">لوكال</span>
+        <h3 class="title" style="margin-bottom:12px">العنوان ده مش موجود</h3>
+        <p class="prose" style="margin-bottom:6px">يمكن اللينك اتغيّر، أو القطعة نزلت من على الرف.</p>
+        <p class="prose" style="margin-bottom:24px" dir="ltr">This address does not exist. The link may have changed, or the piece came off the shelf.</p>
+        <div class="grid g1">
+          <div class="lrow"><span>الرئيسية</span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-chev"/></svg></span></div>
+          <div class="lrow"><span>المحلات</span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-chev"/></svg></span></div>
+          <div class="lrow"><span>البحث</span><span class="end"><svg width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.5"><use href="#i-chev"/></svg></span></div>
+        </div>
+      </div>
+      <div class="grain"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     06 · Desktop
+     ══════════════════════════════════════════════════════════════════════ -->
+<div class="sec"><h2>٠٦ · الويب</h2><span>دي صفحات ويب كاملة، مش شاشات موبايل مكبّرة — الصفحة بتنزل لحد الفوتر. فوق ٧٢٠px: شريط علوي، هيدر بميجا، فوتر — ومفيش شريط تابات</span></div>
+<div class="row">
+
+  <!-- Desktop home -->
+  <div class="fig">
+    <div class="cap"><b>الرئيسية — ديسكتوب</b><i>/</i></div>
+    <div class="dt">
+      <div class="body" style="overflow:hidden">
+        <div class="dwrap">
+          <div class="lede" style="margin-bottom:16px">القاهرة والجيزة</div>
+          <div class="shead" style="margin-bottom:12px"><div><h3>الأقسام</h3><p class="lede">كل قطعة على رف في محل — مش في مخزن.</p></div><span class="more">كل الأقسام</span></div>
+        </div>
+        <div class="rail" style="margin:0 32px">
+          <div class="tile" style="width:130px"><svg class="art"><use href="#tee"/></svg><span>تيشيرتات</span></div>
+          <div class="tile" style="width:130px"><svg class="art"><use href="#shirt"/></svg><span>قمصان</span></div>
+          <div class="tile" style="width:130px"><svg class="art"><use href="#knit"/></svg><span>تريكو</span></div>
+          <div class="tile" style="width:130px"><svg class="art"><use href="#pants"/></svg><span>بناطيل</span></div>
+          <div class="tile" style="width:130px"><svg class="art"><use href="#jacket"/></svg><span>جواكت</span></div>
+          <div class="tile" style="width:130px"><svg class="art"><use href="#dress"/></svg><span>فساتين</span></div>
+          <div class="tile" style="width:130px"><svg class="art"><use href="#shoe"/></svg><span>أحذية</span></div>
+        </div>
+        <div class="dwrap" style="padding-bottom:12px">
+          <div class="shead"><div><h3>المحلات</h3><p class="lede">محلات ليها عناوين حقيقية تقدر تعدّي عليها.</p></div><span class="more">كل المحلات</span></div>
+        </div>
+        <div class="grid g4" style="margin:0 32px">
+          <div><div class="sign"><b>Versattire</b></div><div class="sbody"><span>Versattire</span><span class="prose">قطن مصري، تفصيل بسيط.</span></div></div>
+          <div><div class="sign"><b>Dryp</b></div><div class="sbody"><span>Dryp</span><span class="prose">دنيم وقمصان.</span></div></div>
+          <div><div class="sign"><b>Slack</b></div><div class="sbody"><span>Slack</span><span class="prose">قطع أساسية.</span></div></div>
+          <div><div class="sign"><b>Denjoe</b></div><div class="sbody"><span>Denjoe</span><span class="prose">دنيم بس.</span></div></div>
+        </div>
+        <div style="height:64px"></div>
+      </div>
+
+
+      <div class="grain"></div>
+    </div>
+  </div>
+
+  <!-- Desktop search — the rail -->
+  <div class="fig">
+    <div class="cap"><b>البحث — ديسكتوب</b><i>الفلتر بيبقى ريل، مش شيت</i></div>
+    <div class="dt" data-nosearch>
+      <div class="body" style="overflow:hidden">
+        <div class="dwrap" style="display:flex;gap:24px;align-items:flex-start">
+
+          <aside style="flex:1 1 260px;min-width:0">
+            <div class="shead"><h3>فلتر</h3><span class="more">مسح</span></div>
+            <div style="padding:14px 0;border-top:1px solid var(--line);margin-top:12px">
+              <div class="lbl" style="margin-bottom:2px">المحل</div>
+              <div class="chk" style="min-height:36px"><span class="box on"><svg width="12" height="12" stroke="var(--field)" fill="none" stroke-width="3"><use href="#i-check"/></svg></span>Versattire <span class="lede num">(6)</span></div>
+              <div class="chk" style="min-height:36px"><span class="box on"><svg width="12" height="12" stroke="var(--field)" fill="none" stroke-width="3"><use href="#i-check"/></svg></span>Dryp <span class="lede num">(4)</span></div>
+              <div class="chk" style="min-height:36px"><span class="box"></span>Slack <span class="lede num">(3)</span></div>
+              <div class="chk" style="min-height:36px"><span class="box"></span>Denjoe <span class="lede num">(1)</span></div>
+            </div>
+            <div style="padding:14px 0;border-top:1px solid var(--line)">
+              <div class="lbl" style="margin-bottom:10px">المقاس</div>
+              <div style="display:flex;gap:8px"><span class="pill">S</span><span class="pill on">M</span><span class="pill on">L</span><span class="pill">XL</span></div>
+            </div>
+            <div style="padding:14px 0;border-top:1px solid var(--line)">
+              <div class="lbl" style="margin-bottom:10px">اللون</div>
+              <div style="display:flex;gap:14px">
+                <span class="swcol"><span class="sw" style="background:#F7F6F3"></span>أبيض</span>
+                <span class="swcol"><span class="sw" style="background:#4A5D3A"></span>زيتي</span>
+                <span class="swcol"><span class="sw" style="background:#14130F"></span>أسود</span>
+                <span class="swcol" style="color:var(--green)"><span class="sw on" style="background:#D8C7A9"></span>بيج</span>
+              </div>
+            </div>
+            <div style="padding:14px 0;border-top:1px solid var(--line)">
+              <div class="lbl">السعر</div>
+              <div class="sum"><span class="price num">300 ج.م</span><span class="price num">800 ج.م</span></div>
+              <div style="position:relative;height:44px;display:grid;align-items:center">
+                <span style="position:absolute;inset-inline:0;height:1px;background:var(--line2)"></span>
+                <span style="position:absolute;inset-inline-start:18%;inset-inline-end:22%;height:1px;background:var(--green)"></span>
+                <span style="position:absolute;inset-inline-start:18%;width:18px;height:18px;border-radius:9999px;background:var(--paper);border:2px solid var(--green)"></span>
+                <span style="position:absolute;inset-inline-end:22%;width:18px;height:18px;border-radius:9999px;background:var(--paper);border:2px solid var(--green)"></span>
+              </div>
+            </div>
+            <div style="padding:14px 0;border-top:1px solid var(--line)">
+              <div class="chk" style="min-height:36px"><span class="box on"><svg width="12" height="12" stroke="var(--field)" fill="none" stroke-width="3"><use href="#i-check"/></svg></span>المتاح بس</div>
+            </div>
+          </aside>
+
+          <section style="flex:999 1 640px;min-width:0">
+            <div class="shead" style="padding-bottom:12px">
+              <span class="lede"><span class="num" style="color:var(--ink)">14</span> نتيجة لـ «قميص»</span>
+              <span style="display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid var(--line);background:var(--raise);font-size:14px">
+                <span class="lede">ترتيب</span><span>الأحدث</span>
+                <svg width="14" height="14" stroke="var(--ink2)" fill="none" stroke-width="1.5"><use href="#i-down"/></svg>
+              </span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:16px">
+              <span class="chip">M <span class="lede">×</span></span>
+              <span class="chip">L <span class="lede">×</span></span>
+              <span class="chip">بيج <span class="lede">×</span></span>
+            </div>
+            <div class="grid g4">
+              <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Versattire</span><span class="pname">قميص كتان</span><span class="price num">450 ج.م</span></div>
+              <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Versattire</span><span class="pname">قميص أوكسفورد</span><span class="price num">520 ج.م</span></div>
+              <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Dryp</span><span class="pname">قميص دنيم</span><span class="price num">610 ج.م</span></div>
+              <div class="card"><div class="well"><svg class="art" style="opacity:.5"><use href="#shirt"/></svg><span class="out">خلص</span></div><span class="brand">Slack</span><span class="pname">قميص فانيلا</span><span class="price num">430 ج.م</span></div>
+              <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Versattire</span><span class="pname">قميص مقلّم</span><span class="price num">480 ج.م</span></div>
+              <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg><span class="tag num">−13%</span></div><span class="brand">Dryp</span><span class="pname">قميص كاروهات</span><span style="display:flex;align-items:baseline;gap:8px"><span class="price num sale">520 ج.م</span><span class="was num">600</span></span></div>
+              <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Slack</span><span class="pname">قميص كتان أزرق</span><span class="price num">470 ج.م</span></div>
+              <div class="card"><div class="well"><svg class="art"><use href="#shirt"/></svg></div><span class="brand">Denjoe</span><span class="pname">قميص شامبراي</span><span class="price num">560 ج.م</span></div>
+            </div>
+            <div style="padding:24px 0">
+              <span class="btn sm" style="justify-content:center;border-color:var(--line)">اعرض المزيد</span>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+
+      <div class="grain"></div>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+/* The web chrome, injected.
+   Every .dt gets the same utility strip, header and footer — written once in
+   the templates above rather than pasted into each page, which is how a board
+   drifts into ten slightly different headers. A page marked data-nosearch
+   drops the header's search field: on /search the page owns a real input and
+   the chrome must not add a second. */
+(function () {
+  var head = document.getElementById('tpl-head');
+  var foot = document.getElementById('tpl-foot');
+
+  document.querySelectorAll('.dt').forEach(function (page) {
+    var h = head.content.cloneNode(true);
+    if (page.hasAttribute('data-nosearch')) {
+      var field = h.querySelector('.slot-search');
+      /* Replaced by an empty span, not removed: the header is a three-column
+         grid and dropping the middle child would slide the tools inward. */
+      var gap = document.createElement('span');
+      field.replaceWith(gap);
+    }
+    page.insertBefore(h, page.firstChild);
+
+    /* The grain sits above everything, so the footer goes before it. */
+    var grain = page.querySelector('.grain');
+    page.insertBefore(foot.content.cloneNode(true), grain);
+  });
+})();
+</script>
+</body>
+</html>
