@@ -138,7 +138,29 @@ prose caps at 62ch.
 background, with a 1px outer border. Not `border` per cell, which double-draws
 every interior edge.
 
-**Radius: 0.** Everywhere, no exceptions.
+**Radius: the `.dc` scale.** Base 12px, and the derived steps are real
+`calc()` again.
+
+```
+--radius-sm   8px   checkbox, chip inner, skeleton
+--radius-md  10px   button, input, select trigger, size pill
+--radius-lg  12px   card, product well, list row, chat bubble
+--radius-xl  16px   bottom sheet
+--radius-full       status dot, cart count, colour swatch, icon button, pill
+```
+
+Radius and shadow are ONE decision, not two. A hard-offset step cast off a
+square corner reads as a printing misregistration; the step needs a corner to
+sit inside. The flat-zero register removed both together and both come back
+together.
+
+If the base ever returns to 0, the derived steps must go back to literal zeros:
+`calc(var(--radius) - 4px)` at a 0 base is `-4px`, which is invalid, and the
+declaration is dropped with no warning.
+
+**Hairline grids stay square.** `.lq-tiles`, `.lq-cells`, `.lq-rows`,
+`.lq-rail`, `.lq-pgrid` and their cells take no radius — a rounded cell inside a
+shared 1px seam leaves four notches of background at every junction.
 
 **Shadow: hard offset, and only on things you press.** This reverses an earlier
 decision in this file, which said shadow none everywhere and gave `design/` the

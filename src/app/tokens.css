@@ -237,19 +237,23 @@
   --content-max: 1200px;
   --prose-max: 62ch;
 
-  /* ── Radius: zero ───────────────────────────────────────────────────────
-     Everywhere, no exceptions. This is the single largest divergence from the
-     .dc system, which specifies 8–16px. Depth here is the 1px line and the
-     --raise value; there is nothing for a corner to soften.
+  /* ── Radius ─────────────────────────────────────────────────────────────
+     The .dc scale, restored. A flat-zero register was tried and reversed with
+     the shadows: the two are one decision, not two. A hard-offset step cast
+     off a square corner reads as a printing misregistration — the step needs a
+     radius to sit inside, and every pressable surface in the .dc board is
+     drawn that way.
 
-     The derived steps are written as literal 0 rather than
-     calc(var(--radius) - 4px): that expression evaluates to -4px, a negative
-     radius is invalid CSS, and the declaration would be dropped silently. */
-  --radius: 0px;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+     The derived steps are real calc() again and that is now safe: with the
+     base at 12px, --radius-sm resolves to 8px. It was NOT safe while the base
+     was 0, where calc(var(--radius) - 4px) evaluated to -4px, an invalid
+     radius, and the declaration was dropped without a warning. If the base
+     ever goes back to 0, these must go back to literal zeros. */
+  --radius: 0.75rem; /* 12px */
+  --radius-sm: calc(var(--radius) - 4px); /* 8px  — checkbox, chip inner, skeleton */
+  --radius-md: calc(var(--radius) - 2px); /* 10px — button, input, select, size pill */
+  --radius-lg: var(--radius); /* 12px — card, sheet head, list row */
+  --radius-xl: calc(var(--radius) + 4px); /* 16px — bottom sheet */
   /* Kept, and the only rounding in the product: status dots, the cart count,
      colour swatches, avatars. Things that are round because they are round,
      not because a corner was softened. */

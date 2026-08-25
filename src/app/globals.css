@@ -123,15 +123,13 @@
   --tracking-normal: 0em;
   --tracking-caps: 0.13em;
 
-  /* Literal zeros, NOT calc(var(--radius) - 4px). That expression evaluates
-     to -4px, a negative radius is invalid, and the declaration is dropped
-     without a warning. --radius-full survives for the handful of things that
-     are round because they are round: a status dot, the cart count, a colour
-     swatch, an avatar. */
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  /* Mirrors tokens.css so Tailwind's rounded-* utilities and the hand-written
+     rules in components.css cannot disagree about what "md" is. The values
+     live there; these are the registrations. */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
 
   /* Shadow and easing tokens are NOT registered here. Repeating a name inside
