@@ -387,7 +387,11 @@
 /* Green, because the cart count is a GO signal: something is waiting to be
    bought. It is the one always-on use of the accent in the chrome. */
 .lq-cartn{display:inline-grid;place-items:center;min-inline-size:20px;block-size:20px;padding-inline:5px;border-radius:var(--radius-full);background:var(--green);color:var(--text-on-brand);font-family:var(--font-mono);font-size:var(--text-2xs);font-weight:var(--weight-semibold);line-height:1}
-.lq-chev{transition:rotate var(--dur-base) var(--ease)}
+/* SIZED HERE, and flex:none. This sits in `.lq-tools>a`, which is an
+   inline-flex row: an SVG with only width/height ATTRIBUTES is a flex item with
+   nothing stopping it shrinking, so it collapsed to a 1px sliver beside the
+   label and read as a stray glyph. */
+.lq-chev{inline-size:0.62rem;block-size:0.62rem;flex:none;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;color:var(--ink-2);transition:rotate var(--dur-base) var(--ease)}
 [aria-expanded="true"]>.lq-chev{rotate:180deg}
 
 /* ── Brands mega panel ────────────────────────────────────────────────────── */
