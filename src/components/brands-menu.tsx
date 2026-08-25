@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 
 import type { PublicBrand } from "@loqal/contracts/storefront.contract";
@@ -18,13 +26,37 @@ import { Garment, garmentFor } from "@/components/garment";
  * marketplace index is a list of *places*, and the pane is where the place gets
  * to be one. What it can say is currently thin — see the note on `Feature`.
  *
- * WHY THIS IS A SIBLING OF THE HEADER AND NOT A CHILD: the panel is
- * `position: fixed`, and the header sets `backdrop-filter`. A filter creates a
- * containing block for fixed descendants, so a fixed panel nested inside the
- * header would be positioned against the header rather than the viewport, and
- * would additionally be clipped by any `overflow` ancestor. It renders next to
- * the header and positions itself from a measured offset instead.
+ * WHY THE PANEL AND THE SCRIM ARE PORTALLED TO `document.body`:
+ *
+ * `.lq-head` sets `backdrop-filter`, and a filter makes an element a CONTAINING
+ * BLOCK FOR FIXED DESCENDANTS. This component is mounted inside that header
+ * (`shell.tsx`, in `.lq-tools`), so before the portal a `position: fixed`
+ * child did not resolve against the viewport at all — it resolved against the
+ * header's own box.
+ *
+ * That broke the scrim in a way that looked like a hover bug. `inset: 0` made
+ * it cover the HEADER exactly rather than the page, and being a descendant it
+ * painted over the links inside it whatever `--z-scrim` said, because z-index
+ * only orders siblings within one stacking context. The result, with the mouse
+ * completely still: hover the trigger, panel opens, scrim lands on top of the
+ * trigger, `mouseleave` fires, panel closes, scrim goes, `mouseenter` fires.
+ * Forever.
+ *
+ * A portal is the fix rather than moving the JSX, because the trigger has to
+ * stay inside the nav for layout and for the tab order, while the two overlays
+ * must escape the header entirely. `top` is measured from the header's
+ * `getBoundingClientRect().bottom`, which is a VIEWPORT coordinate and is only
+ * correct once the panel actually resolves against the viewport.
  */
+
+/**
+ * A store that never changes. Hoisted to the module so the subscribe identity
+ * is stable — an inline arrow would be a new function every render and would
+ * make React resubscribe each time.
+ */
+const subscribeNever = () => () => {};
+const onClient = () => true;
+const onServer = () => false;
 
 /** Latin initial, or `#` for a shop whose name starts in Arabic or a digit. */
 const initialOf = (name: string) => {
@@ -155,6 +187,20 @@ export function BrandsMenu() {
   useEffect(() => () => clearTimeout(timer.current), []);
 
   /**
+   * Mounted-on-the-client, for the portal below: `document.body` does not exist
+   * while the server renders.
+   *
+   * `useSyncExternalStore` rather than `useState` + `useEffect`, which is the
+   * same call `locale-context.tsx` makes for the same reason. The value is a
+   * fact about the environment rather than React state, it differs between the
+   * server render and the first client render, and it must not tear during
+   * hydration — which is exactly what the third argument is for. Setting state
+   * in an effect would do the same job one wasted render later and React's own
+   * lint rule (`react-hooks/set-state-in-effect`) refuses it.
+   */
+  const mounted = useSyncExternalStore(subscribeNever, onClient, onServer);
+
+  /**
    * Hover opens it on a real pointer; a tap opens it on a touch screen. The
    * media query is read once at the event rather than at mount, because a
    * laptop with a touchscreen can be either at different moments.
@@ -201,55 +247,66 @@ export function BrandsMenu() {
         </svg>
       </Link>
 
-      <div className="lq-scrim" data-open={open} onClick={close} aria-hidden="true" />
+      {/* Portalled, not nested — see the note at the top of this file. Rendered
+          only after mount: `document.body` does not exist during the server
+          render. The panel is `inert` and the scrim transparent while closed,
+          so there is nothing missing from the first paint. */}
+      {mounted
+        ? createPortal(
+            <>
+          <div className="lq-scrim" data-open={open} onClick={close} aria-hidden="true" />
 
-      <div
-        className="lq-mega"
-        data-open={open}
-        style={{ "--mega-top": `${top}px` } as React.CSSProperties}
-        /** Hidden from the tree when closed, so a keyboard does not tab into a
-            panel nobody can see. `pointer-events:none` alone would not do it —
-            it stops the pointer and leaves the links in the tab order.
+          <div
+            className="lq-mega"
+            data-open={open}
+            style={{ "--mega-top": `${top}px` } as React.CSSProperties}
+            /** Hidden from the tree when closed, so a keyboard does not tab into a
+                panel nobody can see. `pointer-events:none` alone would not do it —
+                it stops the pointer and leaves the links in the tab order.
 
-            React 19 types `inert` as a boolean and serialises it to the HTML
-            attribute itself, so this is `inert={!open}` rather than the
-            spread-an-empty-string trick older React needed. */
-        inert={!open}
-        onMouseEnter={() => hoverable() && setOpenLater(true)}
-        onMouseLeave={() => hoverable() && setOpenLater(false)}
-      >
-        <div className="lq-mega__az">
-          {groups.map(([letter, items]) => (
-            <div className="lq-mega__grp" key={letter}>
-              <span className="lq-mega__ltr">{letter}</span>
-              {items.map((brand) => (
-                <Link
-                  key={brand.id}
-                  href={`/shop/${brand.slug}`}
-                  data-bidi
-                  /**
-                   * Pointer AND keyboard both drive the pane. `design/`'s
-                   * version listened for `mouseover` only, so tabbing through
-                   * the index left the pane frozen on whichever shop the mouse
-                   * had last grazed — the feature is invisible to a keyboard.
-                   */
-                  onMouseEnter={() => setFeatured(brand)}
-                  onFocus={() => setFeatured(brand)}
-                  onClick={close}
-                >
-                  {brand.name}
-                </Link>
+                React 19 types `inert` as a boolean and serialises it to the HTML
+                attribute itself, so this is `inert={!open}` rather than the
+                spread-an-empty-string trick older React needed. */
+            inert={!open}
+            onMouseEnter={() => hoverable() && setOpenLater(true)}
+            onMouseLeave={() => hoverable() && setOpenLater(false)}
+          >
+            <div className="lq-mega__az">
+              {groups.map(([letter, items]) => (
+                <div className="lq-mega__grp" key={letter}>
+                  <span className="lq-mega__ltr">{letter}</span>
+                  {items.map((brand) => (
+                    <Link
+                      key={brand.id}
+                      href={`/shop/${brand.slug}`}
+                      data-bidi
+                      /**
+                       * Pointer AND keyboard both drive the pane. `design/`'s
+                       * version listened for `mouseover` only, so tabbing through
+                       * the index left the pane frozen on whichever shop the mouse
+                       * had last grazed — the feature is invisible to a keyboard.
+                       */
+                      onMouseEnter={() => setFeatured(brand)}
+                      onFocus={() => setFeatured(brand)}
+                      onClick={close}
+                    >
+                      {brand.name}
+                    </Link>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
-        </div>
 
-        {shown ? (
-          <Link className="lq-mega__feat" href={`/shop/${shown.slug}`} onClick={close}>
-            <Feature brand={shown} />
-          </Link>
-        ) : null}
-      </div>
+            {shown ? (
+              <Link className="lq-mega__feat" href={`/shop/${shown.slug}`} onClick={close}>
+                <Feature brand={shown} />
+              </Link>
+            ) : null}
+          </div>
+            </>,
+            document.body
+          )
+        : null}
     </>
   );
 }
