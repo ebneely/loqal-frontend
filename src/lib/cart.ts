@@ -9,6 +9,7 @@ import {
 import type { DeliveryMethod } from "@loqal/contracts/enums";
 
 import { api } from "./api";
+import { guestSessionId } from "./orders";
 
 /**
  * The bag: one query, four mutations.
@@ -27,10 +28,29 @@ import { api } from "./api";
 
 export const CART_KEY = ["cart"] as const;
 
+/**
+ * EVERY cart request carries `X-Guest-Session-Id`, signed in or not.
+ *
+ * `CartOwnerGuard` on the API refuses any cart call with a 400 —
+ * "X-Guest-Session-Id must be a client-generated UUID when there is no
+ * signed-in session" — when the header is missing and nobody is signed in.
+ * Without it a guest has no bag at all: the read 400s, all four writes 400,
+ * and the badge in the chrome is permanently zero.
+ *
+ * Sent UNCONDITIONALLY rather than only when anonymous, and that is safe by
+ * the guard's own rule: a signed-in session wins over the header, so a stale
+ * guest id in localStorage cannot reach an account basket. Deciding
+ * "anonymous" here would mean reading the session on every cart call to
+ * answer a question the server already answers better.
+ */
+const guestHeaders = (): Record<string, string> => ({
+  "X-Guest-Session-Id": guestSessionId(),
+});
+
 export function useCart() {
   return useQuery({
     queryKey: CART_KEY,
-    queryFn: ({ signal }) => api.get(cartSummarySchema, "/v1/cart", { signal }),
+    queryFn: ({ signal }) => api.get(cartSummarySchema, "/v1/cart", { signal, headers: guestHeaders() }),
     /**
      * Zero, unlike the catalogue's 60s. A bag is the one thing a shopper edits
      * in another tab, and showing a stale one at checkout is how somebody pays
@@ -59,27 +79,36 @@ function useCartWrite<TArgs>(
 
 export function useAddToBag() {
   return useCartWrite<{ variantId: string; quantity: number }>((body) =>
-    api.post(cartSummarySchema, "/v1/cart/items", body)
+    api.post(cartSummarySchema, "/v1/cart/items", body, {
+      headers: guestHeaders(),
+    })
   );
 }
 
 export function useUpdateBagLine() {
   return useCartWrite<{ variantId: string; quantity: number }>(({ variantId, quantity }) =>
-    api.put(cartSummarySchema, `/v1/cart/items/${encodeURIComponent(variantId)}`, {
-      quantity,
-    })
+    api.put(
+      cartSummarySchema,
+      `/v1/cart/items/${encodeURIComponent(variantId)}`,
+      { quantity },
+      { headers: guestHeaders() }
+    )
   );
 }
 
 export function useRemoveBagLine() {
   return useCartWrite<{ variantId: string }>(({ variantId }) =>
-    api.delete(cartSummarySchema, `/v1/cart/items/${encodeURIComponent(variantId)}`)
+    api.delete(cartSummarySchema, `/v1/cart/items/${encodeURIComponent(variantId)}`, {
+      headers: guestHeaders(),
+    })
   );
 }
 
 export function useSetDeliveryMethod() {
   return useCartWrite<{ deliveryMethod: DeliveryMethod }>((body) =>
-    api.put(cartSummarySchema, "/v1/cart/delivery-method", body)
+    api.put(cartSummarySchema, "/v1/cart/delivery-method", body, {
+      headers: guestHeaders(),
+    })
   );
 }
 
@@ -93,7 +122,7 @@ export function useSetDeliveryMethod() {
 export function useBagCount(): number {
   const { data } = useQuery({
     queryKey: CART_KEY,
-    queryFn: ({ signal }) => api.get(cartSummarySchema, "/v1/cart", { signal }),
+    queryFn: ({ signal }) => api.get(cartSummarySchema, "/v1/cart", { signal, headers: guestHeaders() }),
     staleTime: 0,
     select: (summary) => summary.itemCount,
   });
