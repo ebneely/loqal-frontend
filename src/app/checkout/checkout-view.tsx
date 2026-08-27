@@ -402,7 +402,7 @@ export function CheckoutView() {
 
   return (
     <Shell title={title}>
-      <form className="lq-wrap lq-pad" onSubmit={submit} noValidate>
+      <form method="post" className="lq-wrap lq-pad" onSubmit={submit} noValidate>
         <header className="lq-sec">
           <h1 className="lq-phead__title">{title}</h1>
           <p className="lq-prose">

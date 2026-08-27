@@ -119,7 +119,7 @@ export function SignInView() {
 
           <hr className="lq-rule" />
 
-          <form onSubmit={submit} className="lq-sec" noValidate>
+          <form method="post" onSubmit={submit} className="lq-sec" noValidate>
             <div className="lq-field">
               <label className="lq-label" htmlFor={emailId}>
                 {t("الإيميل", "Email")}
