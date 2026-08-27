@@ -21,6 +21,14 @@ const nextConfig: NextConfig = {
     root: path.join(import.meta.dirname, "..", ".."),
   },
 
+  /**
+   * Dev only. The dev server refuses `/_next/*` for any origin not listed here,
+   * and the default list does not include `127.0.0.1` — so opening the app at
+   * http://127.0.0.1:3000 answered 403 on seven chunks, React never hydrated,
+   * and every handler in the chrome was dead while CSS hover still worked.
+   */
+  allowedDevOrigins: ["127.0.0.1", "localhost", "0.0.0.0"],
+
   /*
    * No `transpilePackages` for @loqal/contracts: the schemas are VENDORED into
    * src/contracts and `@loqal/contracts/*` is a tsconfig path alias onto them,
