@@ -193,14 +193,6 @@ export function SiteFooter() {
       <div className="lq-foot__bot">
         <span className="lq-mark">loqaaal</span>
         <span>{t("تسوّق من محلات بلدك — القاهرة والجيزة", "Shop your own city — Cairo & Giza")}</span>
-        <span className="lq-foot__social">
-          <a href="https://wa.me/201559959890" target="_blank" rel="noopener noreferrer" aria-label={t("واتساب", "WhatsApp")}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 12a8 8 0 1 1-3.2-6.4" />
-              <path d="M4 20l1.4-4A8 8 0 0 0 20 12" />
-            </svg>
-          </a>
-        </span>
         <span data-num>© 2026</span>
       </div>
     </footer>
