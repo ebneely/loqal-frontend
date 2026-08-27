@@ -46,6 +46,8 @@ export const categoriesTag = "categories";
 export const queryKeys = {
   categories: () => ["categories"] as const,
   brands: (page: number) => ["brands", page] as const,
+  /** brandId → name, for the one screen that is handed ids and no names. */
+  brandDirectory: () => ["brand-directory"] as const,
   brand: (slug: string) => ["brand", slug] as const,
   brandProducts: (slug: string, query: ListPublicProductsQuery) =>
     ["brand-products", slug, query] as const,
@@ -154,4 +156,54 @@ export function searchProducts(
     },
     cache: "no-store",
   });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   The shop directory: brandId → name and slug.
+
+   AN ORDER DOES NOT CARRY A SHOP'S NAME. `brandOrders[].brandId` is the only
+   identifier on the whole response — no name, no slug, no logo — so the order
+   screen cannot write "Versattire" over a shop's half from that read alone.
+
+   Three ways to answer that, and only one of them is honest:
+
+     - print the id. A UUID is not a name and reads as a bug.
+     - invent a label per shop ("المحل الأول"). That is an ordering the API
+       never claimed, and it is different every time the array order changes.
+     - RESOLVE IT against the public brand index, which is a real endpoint
+       that really carries ids and names, and say so plainly where the id is
+       not in it.
+
+   This is the third. It is one extra read of a list the storefront already
+   caches for its own shop pages, and a shop that has been delisted since the
+   order was placed is genuinely absent from it — which is a fact about the
+   order, not a failure of the screen, and the order screen says it in words.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export type BrandDirectoryEntry = { id: string; name: string; slug: string };
+
+/**
+ * Every shop the public index will admit to, in as few round trips as the
+ * page cap allows.
+ *
+ * `perPage` is 50 because the API's DTO is `.strict()` and refuses more — the
+ * same cap that broke the sitemap when this repo assumed 60. The page loop is
+ * bounded at four passes: a marketplace with more than 200 live shops needs a
+ * `GET /v1/brands?ids=` on the API rather than a longer loop here, and an
+ * unbounded loop on an order screen is a shopper's data budget spent on shops
+ * that are not in their order.
+ */
+export async function fetchBrandDirectory(): Promise<BrandDirectoryEntry[]> {
+  const PER_PAGE = 50;
+  const MAX_PAGES = 4;
+
+  const entries: BrandDirectoryEntry[] = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const result = await fetchBrands(page, PER_PAGE);
+    for (const brand of result.items) {
+      entries.push({ id: brand.id, name: brand.name, slug: brand.slug });
+    }
+    if (entries.length >= result.total || result.items.length === 0) break;
+  }
+  return entries;
 }

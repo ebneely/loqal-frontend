@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
 import type { BrandOrderStatus } from "@loqal/contracts/enums";
@@ -80,11 +81,8 @@ export function OrdersView() {
   const locale = useLocale();
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
-  /**
-   * `unavailable` is not a validation failure — the input was fine and the
-   * feature is not there. See the note on `submit`.
-   */
-  const [error, setError] = useState<"number" | "phone" | "unavailable" | null>(null);
+  const [error, setError] = useState<"number" | "phone" | null>(null);
+  const router = useRouter();
 
   const numberId = useId();
   const phoneId = useId();
@@ -116,12 +114,6 @@ export function OrdersView() {
       locale === "ar"
         ? "اكتب رقم الموبايل اللي طلبت بيه — 11 رقم."
         : "Enter the phone you ordered with — 11 digits.",
-    /* Says what is absent and what to do instead — the shop confirmed the
-       order over the phone, so the shop can still answer for it. */
-    unavailable:
-      locale === "ar"
-        ? "فتح الأوردر بالرقم لسه مش شغال. لحد ما يشتغل، كلّم المحل اللي طلبت منه — عنده الأوردر برقمه."
-        : "Opening an order by number is not live yet. Until it is, message the shop you ordered from — it has the order under the same number.",
     /* The empty state teaches. It never mentions the emptiness. */
     coming: locale === "ar" ? "اللي هيظهر لما تفتح أوردر" : "What you see when you open an order",
     comingLead:
@@ -163,27 +155,22 @@ export function OrdersView() {
       return;
     }
     /**
-     * THE LOOKUP IS NOT WIRED, AND THIS SAYS SO INSTEAD OF NAVIGATING.
+     * THE ORDER SCREEN OWNS THE READ, so the result gets a URL.
      *
-     * This used to `router.push('/orders/{number}?phone=')`, which is the right
-     * shape — the order screen should own the read so the result gets a URL a
-     * shopper can reopen or send to somebody. But that route does not exist,
-     * so a correctly filled form landed on a 404: a form that fails when it
-     * succeeds, which is worse than one that fails when it fails.
+     * This branch used to report that the lookup was not live: there was no
+     * shopper-side order schema and no route to push to, so a correctly filled
+     * form landed on a 404 — a form that failed when it succeeded. Both are
+     * here now (`shopperOrderSchema`, `/orders/[orderNumber]`), so it pushes.
      *
-     * Two things are missing and neither is a screen. There is no shopper-side
-     * order schema anywhere in `storefront.contract.ts`, and no lookup function
-     * in `lib/`. The only multi-brand order shape in the repo is
-     * `adminOrderDetailSchema.brandOrders`, whose own docstring says it is
-     * SUPER_ADMIN-only. Building the route first would mean inventing the
-     * contract, and a guessed schema for a screen that shows somebody their
-     * money is the wrong thing to guess.
-     *
-     * So the button reports the truth. When `GET /v1/orders/lookup/:orderNumber`
-     * lands with a storefront schema behind it, this becomes the push again and
-     * the `unavailable` branch goes.
+     * The phone travels in the query string because it is HALF THE
+     * CREDENTIAL — the API's lookup takes the pair and answers 404, never 403,
+     * when they do not match — and because a URL carrying both is one the
+     * shopper can reopen or send to somebody. That is also exactly why both
+     * this screen and the order screen are noindex.
      */
-    setError("unavailable");
+    router.push(
+      `/orders/${encodeURIComponent(trimmedNumber)}?phone=${encodeURIComponent(phone.trim())}`
+    );
   };
 
   return (
@@ -266,19 +253,8 @@ export function OrdersView() {
                 the accessibility tree in between. It carries the specific
                 failure, never a generic "check your details". */}
             {error === null ? null : (
-              <p
-                id={errorId}
-                /* `unavailable` is NOT an error the shopper made, so it is not
-                   red. Red here would blame them for a field we have not
-                   built. */
-                className={error === "unavailable" ? "lq-hint" : "lq-hint lq-hint--error"}
-                role="alert"
-              >
-                {error === "number"
-                  ? t.numberError
-                  : error === "phone"
-                    ? t.phoneError
-                    : t.unavailable}
+              <p id={errorId} className="lq-hint lq-hint--error" role="alert">
+                {error === "number" ? t.numberError : t.phoneError}
               </p>
             )}
 

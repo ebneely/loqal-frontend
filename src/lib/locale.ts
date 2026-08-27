@@ -56,3 +56,26 @@ export function formatPrice(
   // The currency mark trails the figure in Arabic and leads it in English.
   return locale === "ar" ? `${figure} ج.م` : `EGP ${figure}`;
 }
+
+/**
+ * A date a shopper reads: the day an order was placed.
+ *
+ * LATIN FIGURES IN BOTH LANGUAGES, like money and like an order number —
+ * `ar-EG` alone renders ٢٠٢٦, and the whole system prints Latin numerals for
+ * anything that gets read out or checked. `-u-nu-latn` is the numbering
+ * system, not a different locale: the month still reads أغسطس.
+ *
+ * Returns an em dash rather than "Invalid Date" on anything unparseable. An
+ * order screen is not the place to render a JavaScript error message, and the
+ * date is never the reason the shopper came.
+ */
+export function formatDate(iso: string, locale: Locale): string {
+  const value = new Date(iso);
+  if (Number.isNaN(value.getTime())) return "—";
+
+  return value.toLocaleDateString(locale === "ar" ? "ar-EG-u-nu-latn" : "en-EG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}

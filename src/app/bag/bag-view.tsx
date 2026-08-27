@@ -1,26 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import type { CartBrand, CartLine, CartSummary } from "@loqal/contracts/cart.contract";
 import type { DeliveryMethod } from "@loqal/contracts/enums";
-/* The routes that are actually live. SHIPPING_SERVICE is modelled and has no
-   courier behind it, so it must be unrepresentable on screen — imported rather
-   than retyped, so switching it on stays a data change. */
-import { LIVE_DELIVERY_METHODS } from "@loqal/contracts/brand.contract";
-import {
-  useCart,
-  useRemoveBagLine,
-  useSetDeliveryMethod,
-  useUpdateBagLine,
-} from "@/lib/cart";
+import { useCart, useRemoveBagLine, useUpdateBagLine } from "@/lib/cart";
 import { formatPrice, type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
 import { Money } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
+/* One component, two screens — the bag and checkout. See the note at the top
+   of delivery-picker.tsx. */
+import { DeliveryPicker, deliveryLabel } from "@/components/delivery-picker";
 
 /**
  * The bag.
@@ -49,9 +42,6 @@ export function BagView() {
   const locale = useLocale();
   const { data: cart, isPending, isError, refetch } = useCart();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
-  /** Revealed by the checkout button. See the long note where it is rendered. */
-  const [checkoutNote, setCheckoutNote] = useState(false);
-
   const title = t("السلة", "Bag");
 
   if (isPending) {
@@ -167,18 +157,6 @@ export function BagView() {
 
         <Summary cart={cart} locale={locale} blocked={blocked} />
 
-        {/* Sits above the action bar rather than inside it: `.lq-actionbar` is a
-            single flex row sized for a figure and a button, and a sentence
-            wedged into it would either squeeze the price or push the button
-            out of thumb reach. */}
-        {checkoutNote ? (
-          <p className="lq-prose" role="status">
-            {t(
-              "إتمام الأوردر لسه مش شغال. حاجاتك محفوظة في السلة، وتقدر تكلّم المحل على واتساب لو محتاج القطعة دلوقتي.",
-              "Checkout is not live yet. Your bag is saved, and you can message the shop on WhatsApp if you need the piece now."
-            )}
-          </p>
-        ) : null}
       </div>
 
       {/* ── The one action of the screen ────────────────────────────────────
@@ -191,38 +169,31 @@ export function BagView() {
           <span className="lq-actionbar__label">{t("القطع", "Items")}</span>
           <Money className="lq-money" amount={cart.subtotal} locale={locale} reconciled />
         </div>
-        {/*
-          A BUTTON, NOT A LINK, because /checkout does not exist.
+        {/* A LINK, because /checkout now exists.
 
-          This was `<Link href="/checkout">` — the primary action of the busiest
-          screen in the app, pointing at the one missing route in the whole
-          project. A shopper who filled a bag and tapped it landed on a 404,
-          which is the same failure the order lookup had: the product breaks
-          precisely when somebody does everything right.
+            It was a button that revealed a sentence saying checkout was not
+            live: the primary action of the busiest screen in the app did
+            nothing, because there was no create-order contract to build
+            against. There is one now — `createOrderBodySchema` — so this is
+            the destination again.
 
-          It is not built because nothing can build it yet. There is no
-          create-order body anywhere in order.contract.ts — only
-          transitionBrandOrderBodySchema, which is the brand's side — and
-          shippingAddressSchema is a snapshot INSIDE an order rather than an
-          address book to pick from. A checkout screen would have to invent the
-          contract that takes somebody's money and address, which is the last
-          thing to guess at.
-
-          So the button says so and names what the shopper can still do: the bag
-          is saved, and the shop is reachable. The delivery method above it IS
-          wired, so the screen is not inert — the one checkout decision the API
-          can currently answer is answerable here.
-        */}
-        <button
-          type="button"
+            `aria-disabled` rather than `disabled`, and it stays a link either
+            way: a shopper under a shop's minimum needs to READ why, and the
+            reason is the red line in the summary above. A dead control with
+            no explanation beside it is the failure this file already fixed
+            once. */}
+        <Link
+          href="/checkout"
           className="lq-btn lq-btn--primary lq-btn--lg"
           // Every shop's minimum has to be met, because each one is a separate
           // order that shop has to be willing to fulfil.
           aria-disabled={blocked.length > 0}
-          onClick={() => setCheckoutNote(true)}
+          onClick={(event) => {
+            if (blocked.length > 0) event.preventDefault();
+          }}
         >
           {t("إتمام الأوردر", "Checkout")}
-        </button>
+        </Link>
       </div>
     </Shell>
   );
@@ -665,128 +636,6 @@ function Counted({
     </>
   );
 }
-
-/** The shopper reads a method, not an enum. */
-/* ══════════════════════════════════════════════════════════════════════════
-   Choosing how it gets here.
-
-   THE ONE CHECKOUT DECISION THAT IS ACTUALLY WIRED. `useSetDeliveryMethod`
-   has existed in lib/cart.ts since the bag was built and nothing called it:
-   the summary READ `cart.deliveryMethod` and printed a label, so a shopper
-   could see the method was unset and had no way to set it, and every shop's
-   `impliedFare` stayed null behind the message saying it would be set later.
-   `POST /v1/cart/delivery-method` is real; only the control was missing.
-
-   ONE CHOICE FOR THE WHOLE BASKET, not one per shop, and that is the API's
-   shape rather than a simplification: `availableDeliveryMethods` is the
-   INTERSECTION across every shop present, because the basket ships as one
-   decision. A method only one shop offers is not offered at all — which is
-   also why the empty case below is a real state and not a defect.
-
-   SHIPPING_SERVICE IS FILTERED OUT AND MUST STAY FILTERED OUT. It is modelled
-   end to end and has no courier contract behind it; brand.contract.ts says no
-   brand may carry it and no UI may render it. `LIVE_DELIVERY_METHODS` is that
-   list, imported rather than retyped, so switching the route on is a data
-   change here too.
-
-   Radios rather than a native <select>: the OS wheel cannot be styled, cannot
-   carry a second line of Arabic, and looks like a different product on every
-   Android skin.
-   ══════════════════════════════════════════════════════════════════════════ */
-
-function DeliveryPicker({ cart, locale }: { cart: CartSummary; locale: Locale }) {
-  const setMethod = useSetDeliveryMethod();
-  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
-
-  const options = cart.availableDeliveryMethods.filter((method) =>
-    (LIVE_DELIVERY_METHODS as readonly DeliveryMethod[]).includes(method)
-  );
-
-  return (
-    <div style={STACK}>
-      <span className="lq-hint">{t("طريقة التوصيل", "Delivery method")}</span>
-
-      {options.length === 0 ? (
-        /* Says WHY rather than showing an empty box. The shopper can act on
-           this — dropping one shop can put a method back on the table. */
-        <p className="lq-hint">
-          {t(
-            "المحلات اللي في السلة مفيش بينها طريقة توصيل مشتركة. شيل محل عشان تكمّل، أو اطلب من كل محل لوحده.",
-            "The shops in your bag share no delivery method. Remove one to continue, or order from each shop separately."
-          )}
-        </p>
-      ) : (
-        <div role="radiogroup" aria-label={t("طريقة التوصيل", "Delivery method")} style={STACK}>
-          {options.map((method) => {
-            const chosen = cart.deliveryMethod === method;
-            return (
-              <button
-                key={method}
-                type="button"
-                role="radio"
-                aria-checked={chosen}
-                className="lq-pay"
-                disabled={setMethod.isPending}
-                onClick={() => {
-                  /* Already the answer — a second write would spend a round
-                     trip on Egyptian mobile data to change nothing. */
-                  if (chosen || setMethod.isPending) return;
-                  setMethod.mutate({ deliveryMethod: method });
-                }}
-              >
-                <span className="lq-pay__radio" aria-hidden="true" />
-                <span className="lq-pay__body">
-                  <span className="lq-pay__title">{deliveryLabel(method, locale)}</span>
-                  <span className="lq-pay__note">{deliveryNote(method, locale)}</span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {setMethod.isError ? (
-        <p className="lq-hint lq-hint--error" role="alert">
-          {t(
-            "مش قادرين نحفظ طريقة التوصيل دلوقتي. جرّب تاني.",
-            "We could not save the delivery method. Try again."
-          )}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-/**
- * What each route MEANS for the shopper, which the enum name does not say.
- *
- * The rider line is the product's own rule and the reason checkout has a rider
- * step at all: the shop books the courier, not Loqal.
- */
-function deliveryNote(method: DeliveryMethod, locale: Locale): string {
-  const notes: Record<DeliveryMethod, [string, string]> = {
-    RIDER_PER_BRAND: [
-      "كل محل بيطلب مندوب لنصّه، فمصاريف التوصيل بتتحسب لكل محل.",
-      "Each shop books a rider for its own half, so delivery is charged per shop.",
-    ],
-    SHIPPING_SERVICE: ["", ""],
-    BRAND_OWN_DELIVERY: [
-      "المحل بيوصّل بنفسه. غالبًا أسرع، وبيشتغل جوّه منطقة المحل بس.",
-      "The shop delivers itself. Usually faster, and only inside its own area.",
-    ],
-  };
-  return notes[method][locale === "ar" ? 0 : 1];
-}
-
-function deliveryLabel(method: DeliveryMethod, locale: Locale): string {
-  const labels: Record<DeliveryMethod, [string, string]> = {
-    RIDER_PER_BRAND: ["مندوب من المحل", "A rider from the shop"],
-    SHIPPING_SERVICE: ["شركة شحن", "A shipping company"],
-    BRAND_OWN_DELIVERY: ["توصيل المحل بنفسه", "The shop's own delivery"],
-  };
-  return labels[method][locale === "ar" ? 0 : 1];
-}
-
 
 /* Still inline where the stack is NOT a cart line body: a shop header, the
    delivery label pair, the picker. `.lq-line__body` is the same three
