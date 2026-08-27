@@ -513,6 +513,13 @@
 .lq-tile .lq-garment{opacity:0.8;transition:translate var(--dur-settle) var(--slow),opacity var(--dur-slow) var(--ease)}
 .lq-tile:hover .lq-garment{translate:0 -6px;opacity:1}
 .lq-tile:active{background:var(--raise)}
+/* A tile that is NOT a link. The search API has no category filter — see the
+   note on categories/page.tsx — so the tiles name what the shops sell and
+   nothing more. Hover feedback is removed with the destination: a cell that
+   lifts under the cursor is promising a tap that does nothing. */
+.lq-tile--static{cursor:default}
+.lq-tile--static:hover{background:var(--paper)}
+.lq-tile--static:hover .lq-garment{translate:none;opacity:0.8}
 .lq-tile__art{inline-size:clamp(56px,7vw,96px);aspect-ratio:1}
 .lq-tile__name{font-size:var(--text-sm);font-weight:var(--weight-light);text-align:center}
 

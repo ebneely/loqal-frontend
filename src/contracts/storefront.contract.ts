@@ -33,10 +33,18 @@ export const publicPageSchema = <T extends z.ZodTypeAny>(item: T) =>
     })
     .strict();
 
+/**
+ * `perPage` caps at 50, matching `listPublicProductsQuerySchema` on the API,
+ * and the number is not a preference. This file advertised 60, the API's DTO
+ * is `.strict()` and refuses anything above 50, so every caller that trusted
+ * the local cap got a 400 — the sitemap asked for 60 per shop and shipped with
+ * no product URLs at all. A contract that is looser than the wire buys nothing
+ * and hides the failure until runtime.
+ */
 export const listPublicProductsQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).default(1),
-    perPage: z.coerce.number().int().min(1).max(60).default(24),
+    perPage: z.coerce.number().int().min(1).max(50).default(24),
     categoryId: z.string().uuid().optional(),
   })
   .strict();

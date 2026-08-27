@@ -32,7 +32,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let brands;
   try {
-    brands = await fetchBrands(1, 100);
+    // FIFTY, not a hundred: `listBrandsSchema` on the API caps `perPage` at 50
+    // and is `.strict()`, so 100 was a 400 that the catch below swallowed — the
+    // sitemap shipped with the home page in it and nothing else. When there are
+    // more than fifty shops this wants `generateSitemaps()` and a shard each,
+    // which is the same note the block above already makes about products.
+    brands = await fetchBrands(1, 50);
   } catch {
     // A sitemap that throws takes the whole route down and Google gets a 500.
     // Answering with the static entries is strictly better than that.
@@ -48,7 +53,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const productPages = await Promise.all(
     brands.items.map(async (brand) => {
       try {
-        const page = await fetchBrandProducts(brand.slug, { page: 1, perPage: 60 });
+        // Same cap, same reason: the API's `listPublicProductsQuerySchema`
+        // stops at 50, so 60 was a 400 on every shop.
+        const page = await fetchBrandProducts(brand.slug, { page: 1, perPage: 50 });
         return page.items.map((product) => ({
           url: `${SITE}/shop/${brand.slug}/${product.slug}`,
           lastModified: new Date(product.updatedAt),

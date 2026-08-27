@@ -1,5 +1,6 @@
 import {
   publicBrandPageSchema,
+  publicBrandSchema,
   publicCategoryListSchema,
   publicProductDetailSchema,
   publicProductPageSchema,
@@ -45,6 +46,7 @@ export const categoriesTag = "categories";
 export const queryKeys = {
   categories: () => ["categories"] as const,
   brands: (page: number) => ["brands", page] as const,
+  brand: (slug: string) => ["brand", slug] as const,
   brandProducts: (slug: string, query: ListPublicProductsQuery) =>
     ["brand-products", slug, query] as const,
   product: (brandSlug: string, productSlug: string) =>
@@ -70,6 +72,25 @@ export function fetchBrands(page = 1, perPage = 24) {
   return api.get(publicBrandPageSchema, "/v1/brands", {
     query: { page, perPage },
     next: { revalidate: CATALOG_REVALIDATE, tags: ["brands"] },
+  });
+}
+
+/**
+ * One shop, by the slug in the URL.
+ *
+ * The shop route used to render the SLUG wherever the name belongs — the `h1`,
+ * the breadcrumb, the top bar and every metadata field all printed
+ * `zara-zamalek`. The slug is an address, not a name, and a shopper reading an
+ * Arabic page has no reason to be shown a hyphenated Latin handle of their own
+ * shop. This is the read that answers the real one.
+ *
+ * Same ISR window and the SAME TAG as the shop's products, deliberately: a
+ * brand renaming itself and a brand publishing a product both invalidate the
+ * same page, so one `revalidateTag(brandTag(slug))` should drop both.
+ */
+export function fetchBrand(slug: string) {
+  return api.get(publicBrandSchema, `/v1/brands/slug/${encodeURIComponent(slug)}`, {
+    next: { revalidate: CATALOG_REVALIDATE, tags: [brandTag(slug)] },
   });
 }
 

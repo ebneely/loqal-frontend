@@ -80,23 +80,59 @@ export default async function CategoriesPage() {
                 : "Categories show up here once shops start listing."}
             </p>
           ) : (
-            <div className="lq-tiles">
-              {categories.map((category, index) => (
-                <Link
-                  key={category.id}
-                  href={`/search?category=${encodeURIComponent(category.slug)}`}
-                  className="lq-tile lq-rv"
-                  style={{ "--lq-d": `${(index % 4) * 70}ms` } as React.CSSProperties}
-                >
-                  <span className="lq-tile__art">
-                    <Garment className="lq-garment" kind={garmentFor(category.slug)} />
-                  </span>
-                  <span className="lq-tile__name" data-bidi>
-                    {category.name[locale] ?? category.name.ar ?? category.name.en}
-                  </span>
-                </Link>
-              ))}
-            </div>
+            <>
+              {/*
+                THE TILES ARE NOT LINKS, and that is the honest answer rather
+                than a missing feature.
+
+                They used to point at `/search?category=<slug>`. Nothing reads
+                that parameter, because nothing CAN: `searchProductsQuerySchema`
+                is `.strict()` and accepts query, page, perPage, brands, sizes,
+                colors, price, sort and inStockOnly — there is no category
+                filter anywhere in the search API. Every tile was a dead end
+                that landed the shopper on an empty search box.
+
+                Running the category NAME as a text search was the other
+                candidate and it was rejected on the Arabic: search is trigram
+                similarity over the product name, and Egyptian category names
+                are broken plurals. "تيشيرتات" would find "تيشيرت", but
+                "بناطيل" shares almost no trigrams with "بنطلون" and "جواكت"
+                none with "جاكيت" — so half the tiles would look like the
+                category was empty. A filter that works for some categories and
+                silently reports nothing for the rest is worse than one that
+                says it is not here yet.
+
+                So the tiles stay as the answer to "what do these shops sell",
+                the note below says why they do not open, and it hands over the
+                two ways in that DO work today.
+              */}
+              <p className="lq-hint">
+                {locale === "ar"
+                  ? "التصفّح بالقسم لسه مش شغّال — البحث بيدوّر بأسماء القطع، مش بالأقسام. لحد ما ييجي، "
+                  : "Browsing by category is not live yet — search matches piece names, not categories. Until it is, "}
+                <Link href="/search">{locale === "ar" ? "دوّر بالاسم" : "search by name"}</Link>
+                {locale === "ar" ? " أو افتح " : " or open a "}
+                <Link href="/shops">{locale === "ar" ? "محل" : "shop"}</Link>
+                {locale === "ar" ? "." : "."}
+              </p>
+
+              <div className="lq-tiles">
+                {categories.map((category, index) => (
+                  <div
+                    key={category.id}
+                    className="lq-tile lq-tile--static lq-rv"
+                    style={{ "--lq-d": `${(index % 4) * 70}ms` } as React.CSSProperties}
+                  >
+                    <span className="lq-tile__art">
+                      <Garment className="lq-garment" kind={garmentFor(category.slug)} />
+                    </span>
+                    <span className="lq-tile__name" data-bidi>
+                      {category.name[locale] ?? category.name.ar ?? category.name.en}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </section>
       </div>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api";
-import { fetchBrandProducts } from "@/lib/catalog";
+import { fetchBrand, fetchBrandProducts } from "@/lib/catalog";
 import { defaultLocale } from "@/lib/locale";
 import { Shell } from "@/components/shell";
 import { ProductCard } from "@/components/product-card";
@@ -22,9 +22,26 @@ export function generateStaticParams(): { brand: string }[] {
 
 type Params = { brand: string };
 
-async function load(brand: string) {
+/**
+ * The shop and its first page of stock, in ONE round trip's worth of latency.
+ *
+ * Two reads rather than one because the products endpoint answers products and
+ * nothing else — it carries no brand name — and the page was printing the URL
+ * SLUG in every place the name belongs. `Promise.all`, not sequential awaits:
+ * neither read depends on the other and serialising them would add an API
+ * round trip to the render on Egyptian mobile data.
+ *
+ * A 404 from EITHER read is the shop not existing, which is `notFound()` and
+ * not a 500 — the same rule the product page states. Anything else keeps its
+ * stack and reaches `error.tsx`.
+ */
+async function load(slug: string) {
   try {
-    return await fetchBrandProducts(brand, { page: 1, perPage: 24 });
+    const [brand, products] = await Promise.all([
+      fetchBrand(slug),
+      fetchBrandProducts(slug, { page: 1, perPage: 24 }),
+    ]);
+    return { brand, products };
   } catch (error) {
     if (error instanceof ApiError && error.isNotFound) return null;
     throw error;
@@ -38,9 +55,25 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { brand } = await params;
   const canonical = `/shop/${brand}`;
+
+  /**
+   * The NAME, never the slug. A title of "zara-zamalek" is what a search
+   * result and a shared WhatsApp link were both showing. If the shop cannot be
+   * read the page below is a 404 anyway, so this falls back to the neutral
+   * title rather than printing the address as a name.
+   */
+  const page = await load(brand);
+  if (!page) return { title: "الصفحة مش موجودة" };
+
+  const name = page.brand.name;
+  const description =
+    page.brand.description?.ar ??
+    page.brand.description?.en ??
+    `تسوّق من ${name} على loqaaal — توصيل في نفس اليوم من محلات القاهرة والجيزة.`;
+
   return {
-    title: brand,
-    description: `تسوّق من ${brand} على loqaaal — توصيل في نفس اليوم من محلات القاهرة والجيزة.`,
+    title: name,
+    description,
     alternates: {
       canonical,
       languages: { ar: canonical, en: `${canonical}?lang=en` },
@@ -49,7 +82,11 @@ export async function generateMetadata({
       type: "website",
       url: canonical,
       locale: "ar_EG",
-      title: brand,
+      title: name,
+      description,
+      // The shop's own cover if it has one. Without it a shared link is a
+      // grey card; nothing is invented when it is null.
+      images: page.brand.coverUrl ? [{ url: page.brand.coverUrl, alt: name }] : undefined,
     },
   };
 }
@@ -61,9 +98,11 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
 
   const locale = defaultLocale;
   const ar = locale === "ar";
+  /** The shop's own name. `brand` stays what it is — the slug in the URL. */
+  const name = page.brand.name;
 
   return (
-    <Shell title={brand}>
+    <Shell title={name}>
       <div className="lq-wrap">
         {/* The trail back out. A shopper who arrived on a shop from a search
             result has no other way up to the shop index. */}
@@ -81,7 +120,7 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
             /
           </span>
           <span className="lq-eyebrow" data-bidi>
-            {brand}
+            {name}
           </span>
         </nav>
 
@@ -89,11 +128,15 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
           The shop sign. Set large and light, the way the name sits over a real
           shopfront — the shop is a place, not a seller label.
 
-          NO neighbourhood and NO street, and that is deliberate:
-          `publicBrandSchema` carries id, slug, name, logo, cover and
-          description and nothing else, and this route reads
-          `fetchBrandProducts`, which answers products. Printing an address here
-          would mean inventing one. `/shops` carries the same note.
+          The NAME comes from `fetchBrand`, not from the route param. The slug
+          is the address and stays in the URL — a shopper who came from a
+          search result was being shown `zara-zamalek` here.
+
+          NO neighbourhood and NO street, and that is still deliberate:
+          `publicBrandSchema` carries the name, the art, the delivery terms and
+          the return window, and nothing anywhere in it is a location. Printing
+          an address here would mean inventing one. `/shops` carries the same
+          note.
         */}
         <header
           className="lq-pad lq-sec lq-rv"
@@ -108,11 +151,11 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
                  base `h1` rule is the only tracking this heading gets. */
               style={{ fontSize: "var(--text-3xl)", fontWeight: 300 }}
             >
-              {brand}
+              {name}
             </h1>
-            {page.total > 0 ? (
+            {page.products.total > 0 ? (
               <span className="lq-hint" data-num>
-                {page.total}
+                {page.products.total}
               </span>
             ) : null}
           </div>
@@ -124,7 +167,7 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
           </p>
         </header>
 
-        {page.items.length === 0 ? (
+        {page.products.items.length === 0 ? (
           /* Describes what will appear, never the emptiness. */
           <p className="lq-pad lq-hint" style={{ paddingBlock: "var(--space-8)" }}>
             {ar
@@ -136,12 +179,12 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
              ground and the padding, so the card is the cell — a wrapper here
              would only re-pad what the grid already padded. */
           <div className="lq-pgrid">
-            {page.items.map((product, index) => (
+            {page.products.items.map((product, index) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 brandSlug={brand}
-                brandName={brand}
+                brandName={name}
                 locale={locale}
                 /* The first row is the LCP. Everything below it stays lazy. */
                 priority={index < 2}
@@ -154,11 +197,11 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
 
         {/* The catalogue is paged and this screen shows page one. Said out loud
             rather than left as a silent truncation. */}
-        {page.total > page.items.length ? (
+        {page.products.total > page.products.items.length ? (
           <p className="lq-pad lq-hint" style={{ paddingBlock: "var(--space-6)" }}>
             {ar
-              ? `بتشوف أول ${page.items.length} قطعة من ${page.total}.`
-              : `Showing the first ${page.items.length} of ${page.total} pieces.`}
+              ? `بتشوف أول ${page.products.items.length} قطعة من ${page.products.total}.`
+              : `Showing the first ${page.products.items.length} of ${page.products.total} pieces.`}
           </p>
         ) : null}
       </div>

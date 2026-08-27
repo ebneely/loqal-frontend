@@ -97,13 +97,19 @@ export default async function HomePage() {
 
           {/* The same `.lq-tile` the category index uses, laid into a hairline
               rail instead of a hairline grid. The kind is hashed off the slug,
-              so a category keeps the same drawing here and on `/categories`. */}
+              so a category keeps the same drawing here and on `/categories`.
+
+              NOT LINKS, for the reason spelled out at length on
+              `/categories`: the search API has no category filter and cannot
+              be given one from here, so `/search?category=<slug>` was a tile
+              that opened an empty search box. The rail names what the shops
+              sell; `كل الأقسام` above and the shops below are the ways in that
+              work. */}
           <div className="lq-crail lq-band">
             {cats.map((category, index) => (
               <div key={category.id}>
-                <Link
-                  href={`/search?category=${encodeURIComponent(category.slug)}`}
-                  className="lq-tile lq-rv"
+                <div
+                  className="lq-tile lq-tile--static lq-rv"
                   style={
                     {
                       /* Modulo, not the raw index: a rail shows about six cells
@@ -120,7 +126,7 @@ export default async function HomePage() {
                   <span className="lq-tile__name" data-bidi>
                     {category.name[locale] ?? category.name.ar ?? category.name.en}
                   </span>
-                </Link>
+                </div>
               </div>
             ))}
           </div>
