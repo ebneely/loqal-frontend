@@ -111,11 +111,18 @@ export function Shell({
               real input, and shipping both put two search boxes on top of each
               other — one live, one a link back to the page you are already on.
               The grid column stays empty rather than collapsing, so the mark
-              and the tools do not jump when you navigate into search. */}
+              and the tools do not jump when you navigate into search.
+
+              IT CARRIES `.lq-head__search` ONLY, never also `.lq-search`.
+              `.lq-search > .lq-icon` is position:absolute, which pulls the
+              magnifier out of this flex row and pins it on top of the
+              placeholder. That rule exists for a real <input>, which reserves
+              padding for the icon; this is a link laid out with a gap and
+              needs the icon to stay in flow. */}
           {onSearch ? (
             <span aria-hidden="true" />
           ) : (
-            <Link className="lq-head__search lq-search" href="/search">
+            <Link className="lq-head__search" href="/search">
               <span className="lq-icon" data-icon="search" aria-hidden="true" />
               <span className="lq-search__fake">
                 {t("دوّر على قطعة أو محل…", "Search for a piece or a shop…")}
