@@ -477,6 +477,10 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-mega{position:fixed;inset-inline:0;inset-block-start:var(--mega-top,96px);z-index:var(--z-sheet);display:grid;grid-template-columns:1fr minmax(240px,300px);gap:var(--space-10);max-block-size:min(72vh,560px);overflow-y:auto;padding:var(--space-8) var(--pad);background:var(--raise);border-block-end:var(--border-width) solid var(--line);opacity:0;translate:0 -8px;pointer-events:none;transition:opacity var(--dur-base) var(--ease),translate var(--dur-base) var(--ease)}
 .lq-mega[data-open="true"]{opacity:1;translate:0 0;pointer-events:auto}
 .lq-mega__az{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--space-6) var(--space-8);align-content:start}
+/* One column while it is a message or a skeleton — an auto-fill grid would
+   strand one sentence in a 150px track. */
+.lq-mega__az[data-empty="true"]{grid-template-columns:1fr}
+.lq-mega__wait{display:grid;gap:var(--space-3);max-inline-size:22rem}
 .lq-mega__grp{display:flex;flex-direction:column;gap:var(--space-2)}
 .lq-mega__ltr{font-family:var(--font-mono);font-size:var(--text-2xs);font-weight:var(--weight-semibold);letter-spacing:var(--tracking-caps);color:var(--ink-3);padding-block-end:var(--space-1);border-block-end:var(--border-width) solid var(--line)}
 .lq-mega__grp a{font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink);padding-block:2px;transition:color var(--dur-fast) var(--ease)}
@@ -788,12 +792,10 @@ html[data-greeted="1"] .lq-open{display:none}
 
 .lq-hero__panel{position:relative;z-index:var(--z-rail);background:var(--paper);
   border:var(--border-width) solid var(--line);box-shadow:var(--shadow-xs);
-  margin:var(--space-6) var(--pad);padding:clamp(20px,3.4cqi,38px);
-  text-align:center;max-inline-size:min(46ch,90%);
-  /* Three squares and the two hairlines between them. */
-  min-block-size:calc(3 * var(--lq-square) + 2px);
+  margin:var(--space-6) var(--pad);padding:clamp(18px,2.6cqi,30px);
+  text-align:center;max-inline-size:min(38ch,88%);
   display:grid;align-content:center}
-.lq-hero__lede{font-size:clamp(1.5rem,1.05rem + 1.9cqi,2.6rem);font-weight:var(--weight-light);
+.lq-hero__lede{font-size:clamp(1.4rem,1rem + 1.6cqi,2.25rem);font-weight:var(--weight-light);
   line-height:1.16;letter-spacing:-0.03em;text-wrap:balance;margin-inline:auto;max-inline-size:16ch}
 [dir="rtl"] .lq-hero__lede{letter-spacing:0}
 .lq-hero__acts{margin-block-start:var(--space-5);display:flex;flex-wrap:wrap;
@@ -827,7 +829,14 @@ html[data-greeted="1"] .lq-open{display:none}
 }
 
 .lq-home__eyebrow{padding-block:var(--space-5) var(--space-3)}
-.lq-home__head{padding-block-end:var(--space-3)}
+.lq-home__head{padding-block-end:var(--space-5)}
+/* Rhythm between the home sections. They ran into each other — the shop
+   rail's own bottom hairline sat directly under the next heading, so the
+   heading read as a caption on the row above it.
+   The rule is on the section, not between them, so the last one carries the
+   air above the footer too and there is no spacer div to keep in sync. */
+.lq-home__sec{padding-block:clamp(40px,6svh,88px)}
+.lq-home__sec + .lq-home__sec{border-block-start:var(--border-width) solid var(--line)}
 /* Inset by the gutter, NOT capped — see the note above. */
 .lq-band{margin-inline:var(--pad)}
 

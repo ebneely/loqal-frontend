@@ -122,7 +122,7 @@ export function BrandsMenu() {
    * when the shop count outgrows a page this needs a dedicated index endpoint
    * rather than a bigger `perPage`.
    */
-  const { data } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: queryKeys.brands(1),
     queryFn: () => fetchBrands(1, 24),
     staleTime: 5 * 60 * 1000,
@@ -271,7 +271,31 @@ export function BrandsMenu() {
             onMouseEnter={() => hoverable() && setOpenLater(true)}
             onMouseLeave={() => hoverable() && setOpenLater(false)}
           >
-            <div className="lq-mega__az">
+            <div className="lq-mega__az" data-empty={groups.length === 0}>
+              {/* The panel used to render an empty band when the read failed or
+                  had not landed: a pale strip, a scrim over the page and no
+                  word about why. Loading is a skeleton, and an empty list says
+                  which of the two it is. */}
+              {groups.length === 0 ? (
+                isPending ? (
+                  <div className="lq-mega__wait" aria-hidden="true">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span className="lq-skel" key={i} style={{ blockSize: "14px" }} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="lq-hint" role={isError ? "alert" : undefined}>
+                    {isError
+                      ? locale === "ar"
+                        ? "مش قادرين نوصل للمحلات دلوقتي."
+                        : "We cannot reach the shops right now."
+                      : locale === "ar"
+                        ? "المحلات هتظهر هنا أول ما تفتح."
+                        : "Shops show up here as they open."}
+                  </p>
+                )
+              ) : null}
+
               {groups.map(([letter, items]) => (
                 <div className="lq-mega__grp" key={letter}>
                   <span className="lq-mega__ltr">{letter}</span>

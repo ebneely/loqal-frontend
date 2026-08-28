@@ -98,7 +98,7 @@ export default async function HomePage() {
           matters on this screen is the shops one below, which is the section a
           shopper came for. */}
       {cats.length > 0 ? (
-        <section aria-labelledby="home-cats">
+        <section className="lq-home__sec" aria-labelledby="home-cats">
           <div className="lq-band lq-home__head">
             <div className="lq-sec__head">
               <div>
@@ -157,7 +157,7 @@ export default async function HomePage() {
       ) : null}
 
       {/* ── المحلات ───────────────────────────────────────────────────────── */}
-      <section aria-labelledby="home-shops">
+      <section className="lq-home__sec" aria-labelledby="home-shops">
         <div className="lq-band lq-home__head">
           <div className="lq-sec__head">
             <div>
@@ -235,7 +235,7 @@ export default async function HomePage() {
           product grid under a full shop rail says the shelves are bare, which
           is a different claim from "we could not read them". */}
       {pieces.length > 0 ? (
-        <section aria-labelledby="home-pieces">
+        <section className="lq-home__sec" aria-labelledby="home-pieces">
           <div className="lq-band lq-home__head">
             <div className="lq-sec__head">
               <div>
@@ -270,8 +270,6 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {/* The board leaves this much air under the last row before the footer. */}
-      <div style={{ blockSize: "var(--space-16)" }} />
     </Shell>
   );
 }
