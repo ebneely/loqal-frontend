@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { fetchBrands, fetchCategories } from "@/lib/catalog";
+import { fetchBrands, fetchBrandProducts, fetchCategories } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
+import { Hero } from "@/components/hero";
 import { ShopCard } from "@/components/shop-card";
+import { ProductCard } from "@/components/product-card";
 import { Garment, garmentFor } from "@/components/garment";
 
 /**
@@ -55,16 +57,37 @@ export default async function HomePage() {
   const shops = brands.status === "fulfilled" ? brands.value.items : [];
   const shopsFailed = brands.status === "rejected";
 
+  /**
+   * The pieces, after the shops — a shopper who has just read four shop names
+   * should be able to see what is actually on their shelves without choosing
+   * one first.
+   *
+   * FROM THE SHOPS THEMSELVES, not from search: `/v1/search/products` requires
+   * a query of at least one character, so there is no endpoint that lists the
+   * catalogue. Two pieces from each of the first four shops keeps one shop
+   * from filling the row, and `allSettled` keeps one unreachable shop from
+   * emptying it.
+   *
+   * Sequential after the brand read, because it needs the slugs. One extra
+   * round trip on a page that is cached for five minutes.
+   */
+  const shopPicks = await Promise.allSettled(
+    shops.slice(0, 4).map((shop) => fetchBrandProducts(shop.slug, { page: 1, perPage: 4 }))
+  );
+
+  const pieces = shopPicks
+    .flatMap((result, index) =>
+      result.status === "fulfilled"
+        ? result.value.items.slice(0, 2).map((product) => ({ product, shop: shops[index] }))
+        : []
+    )
+    .slice(0, 8);
+
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
   return (
     <Shell>
-      {/* The city, as an eyebrow. Loqal is Cairo and Giza only today, and
-          saying so here is better than a shopper in Alexandria discovering it
-          at checkout. */}
-      <div className="lq-wrap lq-pad lq-home__eyebrow">
-        <span className="lq-eyebrow">{t("القاهرة والجيزة", "Cairo & Giza")}</span>
-      </div>
+      <Hero locale={locale} />
 
       {/* ── الأقسام ─────────────────────────────────────────────────────────
           A RAIL at every width. This screen is the way in, not the index: the
@@ -76,7 +99,7 @@ export default async function HomePage() {
           shopper came for. */}
       {cats.length > 0 ? (
         <section aria-labelledby="home-cats">
-          <div className="lq-wrap lq-pad lq-home__head">
+          <div className="lq-band lq-home__head">
             <div className="lq-sec__head">
               <div>
                 <h2 className="lq-sec__title" id="home-cats">
@@ -84,8 +107,8 @@ export default async function HomePage() {
                 </h2>
                 <p className="lq-eyebrow">
                   {t(
-                    "كل قطعة على رف في محل — مش في مخزن.",
-                    "Every piece is on a shelf in a shop, not in a warehouse."
+                    "اتفرّج على الرفوف حسب النوع.",
+                    "Browse the shelves by kind."
                   )}
                 </p>
               </div>
@@ -135,12 +158,12 @@ export default async function HomePage() {
 
       {/* ── المحلات ───────────────────────────────────────────────────────── */}
       <section aria-labelledby="home-shops">
-        <div className="lq-wrap lq-pad lq-home__head">
+        <div className="lq-band lq-home__head">
           <div className="lq-sec__head">
             <div>
-              <h1 className="lq-sec__title" id="home-shops">
+              <h2 className="lq-sec__title" id="home-shops">
                 {t("المحلات", "Shops")}
-              </h1>
+              </h2>
               <p className="lq-eyebrow">
                 {t(
                   "محلات ليها عناوين حقيقية تقدر تعدّي عليها.",
@@ -193,7 +216,7 @@ export default async function HomePage() {
              out otherwise at checkout has been lied to by the one screen this
              product asks her to trust. The card renders each of those fields
              the day the API answers it, and not one release before. */
-          <div className="lq-shops lq-band">
+          <div className="lq-shops lq-band" data-cols={Math.min(shops.length, 4)}>
             {shops.map((shop, index) => (
               /* The cell, so the card stretches to the tallest in the row: a
                  shop with a one-line description and one with a three-line one
@@ -206,6 +229,46 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {/* ── القطع ────────────────────────────────────────────────────────────
+          Rendered only when the shops answered with something. An empty
+          product grid under a full shop rail says the shelves are bare, which
+          is a different claim from "we could not read them". */}
+      {pieces.length > 0 ? (
+        <section aria-labelledby="home-pieces">
+          <div className="lq-band lq-home__head">
+            <div className="lq-sec__head">
+              <div>
+                <h2 className="lq-sec__title" id="home-pieces">
+                  {t("القطع", "Pieces")}
+                </h2>
+                <p className="lq-eyebrow">
+                  {t(
+                    "من رفوف المحلات اللي فوق.",
+                    "From the shelves of the shops above."
+                  )}
+                </p>
+              </div>
+              <Link className="lq-sec__more" href="/search">
+                {t("دوّر على قطعة", "Search for a piece")}
+              </Link>
+            </div>
+          </div>
+
+          <div className="lq-pgrid lq-band lq-pgrid--home" data-cols={Math.min(pieces.length, 4)}>
+            {pieces.map(({ product, shop }, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                brandSlug={shop.slug}
+                brandName={shop.name}
+                locale={locale}
+                delayMs={(index % 4) * 70}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* The board leaves this much air under the last row before the footer. */}
       <div style={{ blockSize: "var(--space-16)" }} />

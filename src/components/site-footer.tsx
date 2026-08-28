@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { fetchBrands, queryKeys } from "@/lib/catalog";
 import { useLocale } from "@/lib/locale-context";
+import { Wordmark } from "@/components/wordmark";
 
 /**
  * The footer. DESKTOP ONLY — the container query in components.css hides it
@@ -152,7 +153,9 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3>loqaaal</h3>
+          <h3>
+            <Wordmark />
+          </h3>
           <div className="lq-foot__links">
             {LINKS.map((link) => {
               const external = link.href.startsWith("http");
@@ -191,7 +194,9 @@ export function SiteFooter() {
       </div>
 
       <div className="lq-foot__bot">
-        <span className="lq-mark">loqaaal</span>
+        <span className="lq-mark">
+          <Wordmark />
+        </span>
         <span>{t("تسوّق من محلات بلدك — القاهرة والجيزة", "Shop your own city — Cairo & Giza")}</span>
         <span data-num>© 2026</span>
       </div>

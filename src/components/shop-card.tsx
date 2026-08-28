@@ -30,6 +30,22 @@ import type { Locale } from "@/lib/locale";
  *      الزمالك and finds out at checkout that it is not has been lied to by the
  *      one screen this product asks them to trust.
  */
+/**
+ * One or two letters for a shop with no logo. Two initials only when the name
+ * is two words of Latin script — Arabic joins, so a second letter lifted out
+ * of the middle of a word is a different glyph than the one the reader sees.
+ */
+function initialsOf(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+
+  const latin = /^[\p{Script=Latin}]/u.test(words[0]);
+  if (latin && words.length > 1) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return latin ? words[0][0].toUpperCase() : words[0][0];
+}
+
 export function ShopCard({
   shop,
   locale,
@@ -82,8 +98,20 @@ export function ShopCard({
             {locale === "ar" ? "مقفول" : "Closed"}
           </span>
         ) : null}
-        <span className="lq-shopcard__word" data-bidi aria-hidden="true">
-          {shop.name}
+        {/* The sign carries the shop's own logo where it has one. Where it
+            does not, its initials in a plate — NOT the name set huge behind
+            the card, which cropped every name wider than the cell and left
+            "Paymob Test Bra" sitting under the real name at 12% opacity. */}
+        <span className="lq-shopcard__logo" aria-hidden="true">
+          {shop.logoUrl ? (
+            /* A plain <img>, not next/image: `remotePatterns` is read from
+               LOQAL_MEDIA_HOST, so on any deployment that has not set it every
+               shop logo would throw instead of rendering. */
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={shop.logoUrl} alt="" loading="lazy" decoding="async" />
+          ) : (
+            <span className="lq-shopcard__initials">{initialsOf(shop.name)}</span>
+          )}
         </span>
       </span>
 

@@ -580,11 +580,17 @@ html[data-greeted="1"] .lq-open{display:none}
 /* 96px and the name set bottom-start, not a 16:9 well with it centred. The
    board draws it this way and it is the better read: the card is a shopfront
    seen along the street, not a photograph of one taken square on. */
-.lq-shopcard__sign{position:relative;block-size:96px;background:var(--raise);border-block-end:var(--border-width) solid var(--line);overflow:hidden}
+.lq-shopcard__sign{position:relative;block-size:132px;background:var(--raise);border-block-end:var(--border-width) solid var(--line);overflow:hidden;transition:background var(--dur-fast) var(--ease)}
 .lq-shopcard:hover .lq-shopcard__sign{background:var(--paper)}
 /* aria-hidden in the markup: the accessible name is the real one below, and a
    screen reader should not read the shop twice. */
-.lq-shopcard__word{position:absolute;inset-block-end:-2px;inset-inline-start:var(--space-3);font-family:var(--font-display);font-size:var(--text-3xl);font-weight:var(--weight-bold);letter-spacing:var(--tracking-display);line-height:1;color:var(--ink);opacity:0.12;white-space:nowrap;pointer-events:none;transition:scale var(--dur-settle) var(--slow),opacity var(--dur-slow) var(--ease)}
+/* A LOGO OR INITIALS, centred — not the shop name set huge and faded behind
+   the card. That treatment cropped every name longer than the card ("Paymob
+   Test Bra") and put unreadable 12%-opacity text where a shopfront sign goes. */
+.lq-shopcard__logo{position:absolute;inset:0;display:grid;place-items:center;padding:var(--space-4)}
+.lq-shopcard__logo img{max-inline-size:100%;max-block-size:100%;object-fit:contain}
+.lq-shopcard__initials{display:grid;place-items:center;inline-size:68px;block-size:68px;border:var(--border-width) solid var(--line);border-radius:var(--radius-md);background:var(--paper);font-family:var(--font-display);font-size:var(--text-xl);font-weight:var(--weight-bold);letter-spacing:0;line-height:1;color:var(--ink-2);transition:border-color var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
+.lq-shopcard:hover .lq-shopcard__initials{border-color:var(--green-line);color:var(--green)}
 /* The sign grows very slightly as the card is entered — design/'s
    `.shopcard:hover .sign .nm`. It scales from the edge it is anchored to, or it
    would drift away from the corner it is pinned in.
@@ -645,6 +651,17 @@ html[data-greeted="1"] .lq-open{display:none}
    not touch the grid rule and read as one 2px line. */
 .lq-pgrid{display:grid;gap:1px;background:var(--line);border-block:var(--border-width) solid var(--line);grid-template-columns:repeat(2,1fr)}
 .lq-pgrid>*{background:var(--paper);padding:var(--space-3)}
+/* Same reason as the shop rail: the box hugs its cells, so one piece is one
+   cell and not one cell beside three grey ones. */
+@container (min-width:640px){
+  .lq-pgrid--home{inline-size:fit-content;max-inline-size:100%;
+    grid-template-columns:repeat(3,minmax(0,320px))}
+  .lq-pgrid--home[data-cols="1"]{grid-template-columns:minmax(0,320px)}
+  .lq-pgrid--home[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,320px))}
+}
+@container (min-width:900px){
+  .lq-pgrid--home[data-cols="4"]{grid-template-columns:repeat(4,minmax(0,320px))}
+}
 @container (min-width:768px){.lq-pgrid{grid-template-columns:repeat(3,1fr)}}
 @container (min-width:1024px){.lq-pgrid{grid-template-columns:repeat(4,1fr)}}
 
@@ -739,6 +756,76 @@ html[data-greeted="1"] .lq-open{display:none}
    marketplace behind a gesture nobody makes with a mouse. Categories stay a
    rail at every width: there are twelve of them and they are the way in, not
    the index. */
+/* ── The first screen ─────────────────────────────────────────────────────
+   A wall of garments with the sentence on a panel over it, and a row of
+   shopfronts along the bottom edge. Both are drawn from the same twelve paths
+   the rest of the storefront uses; there is still no photography here.
+
+   `svh`, not `vh`: on a phone `vh` is the viewport with the address bar hidden,
+   so a hero sized in it is taller than the screen on arrival and the button
+   starts below the fold. */
+/* One square's height, shared: the wall's rows are built from it and the
+   panel is sized to exactly three of them, so the box lines up with the
+   grid behind it instead of ending mid-square. */
+.lq-hero{--lq-square:clamp(150px,21svh,240px);
+  display:grid;grid-template-rows:1fr auto;min-block-size:clamp(600px,90svh,940px)}
+.lq-hero__field{position:relative;display:grid;place-items:center;overflow:hidden}
+
+/* The shared-hairline grid: one 1px background showing through a 1px gap, not
+   a border per cell, which double-draws every interior edge. */
+.lq-wall{position:absolute;inset:0;display:grid;gap:1px;background:var(--line);
+  grid-template-columns:repeat(auto-fill,minmax(clamp(132px,16cqi,216px),1fr));
+  grid-auto-rows:var(--lq-square);overflow:hidden}
+.lq-cell{background:var(--paper);display:grid;place-items:center;padding:12%}
+/* Drawn in --ink-3 rather than the hairline colour: on the stone ground a
+   --line stroke at this size reads as a smudge, and the wall is meant to be
+   legible as garments. Still well under the sentence in front of it. */
+.lq-cell__art{stroke:var(--ink-3)}
+.lq-cell__art [data-solid]{fill:color-mix(in srgb,var(--ink) 5%,transparent)}
+/* A piece crossing a square has to paint over it, and every square fills its
+   own stone. Raised only while it travels; the panel sits above at --z-rail. */
+.lq-cell[data-moving="true"]{position:relative;z-index:1}
+
+.lq-hero__panel{position:relative;z-index:var(--z-rail);background:var(--paper);
+  border:var(--border-width) solid var(--line);box-shadow:var(--shadow-xs);
+  margin:var(--space-6) var(--pad);padding:clamp(20px,3.4cqi,38px);
+  text-align:center;max-inline-size:min(46ch,90%);
+  /* Three squares and the two hairlines between them. */
+  min-block-size:calc(3 * var(--lq-square) + 2px);
+  display:grid;align-content:center}
+.lq-hero__lede{font-size:clamp(1.5rem,1.05rem + 1.9cqi,2.6rem);font-weight:var(--weight-light);
+  line-height:1.16;letter-spacing:-0.03em;text-wrap:balance;margin-inline:auto;max-inline-size:16ch}
+[dir="rtl"] .lq-hero__lede{letter-spacing:0}
+.lq-hero__acts{margin-block-start:var(--space-5);display:flex;flex-wrap:wrap;
+  align-items:center;justify-content:center;gap:var(--space-3) var(--space-5)}
+.lq-hero__more{font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2);
+  text-decoration:none;border-block-end:var(--border-width) solid var(--line);padding-block-end:2px;
+  transition:color var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+.lq-hero__more:hover{color:var(--ink);border-color:var(--ink)}
+
+/* The mark: the three a's carry the brand colour. On the ink footer the
+   brand green is 2.1:1 and unreadable, so it lightens there rather than
+   being dropped — the mark is the same mark on both grounds. */
+.lq-mark__a{color:var(--green)}
+.lq-foot .lq-mark{color:var(--text-on-ink)}
+.lq-foot .lq-mark__a{color:color-mix(in oklab,var(--green) 52%,white)}
+
+/* The street. `direction:ltr` because the row is moved by a transform, and
+   under rtl a logical start edge would send it out of frame instead of across
+   it. It is a drawing, not text — it has no reading order to mirror. */
+.lq-street{direction:ltr;position:relative;overflow:hidden;background:var(--raise);
+  border-block-start:var(--border-width) solid var(--line);
+  block-size:clamp(148px,24svh,268px)}
+.lq-street__row{position:absolute;inset-block:0;inset-inline-start:0;display:flex;
+  align-items:flex-end;animation:lq-street 52s linear infinite}
+.lq-street__row svg{block-size:100%;inline-size:auto;flex:none}
+/* Drawn twice, so -50% lands on an identical frame and the loop has no seam. */
+@keyframes lq-street{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+@media (prefers-reduced-motion:reduce){
+  .lq-street__row{animation:none}
+}
+
 .lq-home__eyebrow{padding-block:var(--space-5) var(--space-3)}
 .lq-home__head{padding-block-end:var(--space-3)}
 /* Inset by the gutter, NOT capped — see the note above. */
@@ -761,7 +848,18 @@ html[data-greeted="1"] .lq-open{display:none}
   .lq-crail>*{inline-size:130px}
   /* The rail stops being a rail. overflow:visible so the grid can never keep a
      stale scroll offset from the phone layout. */
-  .lq-shops{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
+  /* `fit-content`, and one rule per count. The hairline is the grid's OWN
+     background, so a box wider than its cells paints a bare grey panel where
+     the marketplace has not got a fourth shop yet — and 1fr tracks stretched
+     three shops across the whole screen.
+     Written out rather than repeat(var(--n)): repeat() takes an integer, and a
+     var() or min() in the count makes the whole declaration invalid and
+     silently dropped. */
+  .lq-shops{display:grid;inline-size:fit-content;max-inline-size:100%;overflow:visible;
+    grid-template-columns:repeat(4,minmax(0,320px))}
+  .lq-shops[data-cols="1"]{grid-template-columns:minmax(0,320px)}
+  .lq-shops[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,320px))}
+  .lq-shops[data-cols="3"]{grid-template-columns:repeat(3,minmax(0,320px))}
   .lq-shops>*{inline-size:auto}
 }
 

@@ -10,6 +10,7 @@ import { BrandsMenu } from "@/components/brands-menu";
 import { SiteFooter } from "@/components/site-footer";
 import { LocaleSwitch } from "@/components/locale-switch";
 import { Reveal } from "@/components/reveal";
+import { Wordmark } from "@/components/wordmark";
 
 /**
  * The storefront chrome.
@@ -100,7 +101,7 @@ export function Shell({
       <header className="lq-head">
         <div className="lq-head__bar">
           <Link href="/" className="lq-mark" aria-label="loqaaal">
-            loqaaal
+            <Wordmark />
           </Link>
 
           {/* A real link, not a live field. Search is a route with its own
@@ -165,7 +166,7 @@ export function Shell({
              Wherever a mark would go, the word is set in Readex Pro 700 at
              −0.03em — which is what `.lq-topbar__mark` is. */
           <Link href="/" className="lq-topbar__mark" aria-label="loqaaal">
-            loqaaal
+            <Wordmark />
           </Link>
         )}
         {/* Same rule as the desktop header: not on /search, where it would
