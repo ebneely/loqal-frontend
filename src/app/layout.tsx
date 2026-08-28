@@ -115,6 +115,15 @@ export default function RootLayout({
       className={`${readexPro.variable} ${sourceCodePro.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        {/* Blocking and inline on purpose: it must decide before the body is
+            parsed, and sessionStorage cannot be read on the server. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(sessionStorage.getItem('loqal_greeted')==='1'){document.documentElement.dataset.greeted='1'}else{sessionStorage.setItem('loqal_greeted','1')}}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         <LocaleProvider>
           {/* Over the page, never instead of it — see the note in opening.tsx.
