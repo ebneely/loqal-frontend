@@ -130,7 +130,65 @@
 .lq-card--link:active{box-shadow:none;translate:calc(4px * var(--elev-dir)) 4px;background:var(--accent)}
 
 /* ── Skeleton ─────────────────────────────────────────────────────────────── */
-.lq-skel{border-radius:var(--radius-sm);background:linear-gradient(90deg,var(--muted) 0%,color-mix(in oklab,var(--muted) 60%,white) 50%,var(--muted) 100%);background-size:200% 100%;animation:lq-shimmer var(--dur-slow) linear infinite}
+/* THE SHELF FILLING, not a shimmer.
+   A sweep of white travelling left-to-right is what every social feed does, and
+   it has two problems here: it is nobody's, and it is a physical direction in a
+   product that mirrors. This fills with the brand green instead — the way a
+   rail fills as stock is put out — which is the site's own colour doing the
+   waiting, and which reads the same in both scripts because it is not going
+   anywhere.
+   The stagger is on the SKELETON, not the card, so a grid of six fills out of
+   order like a shop rather than in sequence like a list. */
+.lq-skel{border-radius:var(--radius-sm);background:var(--muted);animation:lq-fill 1.5s var(--ease-in-out) infinite}
+.lq-skel:nth-of-type(2){animation-delay:.12s}
+.lq-skel:nth-of-type(3){animation-delay:.3s}
+.lq-skel:nth-of-type(4){animation-delay:.08s}
+.lq-skel:nth-of-type(5){animation-delay:.24s}
+.lq-skel:nth-of-type(n+6){animation-delay:.18s}
+/* Grid children carry their own offset so neighbouring cards are never in step. */
+.lq-pgrid>*:nth-child(2n) .lq-skel{animation-delay:.16s}
+.lq-pgrid>*:nth-child(3n) .lq-skel{animation-delay:.32s}
+@keyframes lq-fill{
+  0%,100%{background:var(--muted)}
+  50%{background:color-mix(in oklab,var(--green) 22%,var(--muted))}
+}
+/* Reduced motion: the block stays, tinted and still. A clamped duration would
+   still pulse; this stops it and keeps the placeholder visible. */
+@media (prefers-reduced-motion:reduce){
+  .lq-skel{animation:none;background:color-mix(in oklab,var(--green) 10%,var(--muted))}
+}
+
+/* ── The opening ──────────────────────────────────────────────────────────── */
+/* Shown once per session, over a page that is already rendered underneath. The
+   overlay leaves; it never decides when the site is allowed to appear. */
+/* One animation: appear, hold while the a's fill, then leave. The component
+   removes itself on this animation ending rather than on a timer that has to
+   agree with a duration written here. */
+.lq-open{position:fixed;inset:0;z-index:var(--z-modal,60);display:grid;place-items:center;background:var(--paper);animation:lq-open-hold 1550ms var(--ease) both}
+.lq-open__mark{display:flex;font-family:var(--font-sans);font-size:clamp(2.75rem,11vw,5.25rem);font-weight:var(--weight-bold);letter-spacing:-0.035em;line-height:1;color:var(--ink)}
+/* The a's start as faint ink and take the green in order. Not opacity on the
+   whole mark: the word must be legible from the first frame, and only the
+   three that are the brand's signature should move. */
+.lq-open__a{color:color-mix(in oklab,var(--ink) 16%,var(--paper));animation:lq-open-a 260ms var(--ease) both}
+.lq-open__a:nth-of-type(1){animation-delay:180ms}
+.lq-open__a:nth-of-type(2){animation-delay:340ms}
+.lq-open__a:nth-of-type(3){animation-delay:500ms}
+@keyframes lq-open-hold{
+  0%{opacity:0}
+  8%{opacity:1}
+  74%{opacity:1}
+  100%{opacity:0;visibility:hidden}
+}
+@keyframes lq-open-a{to{color:var(--green)}}
+/* Reduced motion keeps the greeting and drops the sequence: the mark is simply
+   there, in its finished state, and still leaves. A clamped duration would
+   still animate; this removes the animation and keeps the result. */
+@media (prefers-reduced-motion:reduce){
+  .lq-open__a{animation:none;color:var(--green)}
+  /* Shortened, NOT removed: `animationend` is what takes the overlay away, and
+     an overlay with no animation would never fire it and would never leave. */
+  .lq-open{animation-duration:420ms}
+}
 
 /* ── Money ────────────────────────────────────────────────────────────────── */
 .lq-money{font-family:var(--font-mono);font-variant-numeric:tabular-nums lining-nums;font-weight:var(--weight-figure);letter-spacing:-0.02em;color:var(--price);white-space:nowrap;unicode-bidi:plaintext}

@@ -3,6 +3,7 @@ import { Readex_Pro, Source_Code_Pro } from "next/font/google";
 
 import { QueryProvider } from "@/lib/query";
 import { LocaleProvider } from "@/lib/locale-context";
+import { Opening } from "@/components/opening";
 import { defaultLocale, localeDir } from "@/lib/locale";
 
 import "./globals.css";
@@ -116,6 +117,10 @@ export default function RootLayout({
     >
       <body>
         <LocaleProvider>
+          {/* Over the page, never instead of it — see the note in opening.tsx.
+              Mounted inside LocaleProvider so a future greeting can be worded,
+              though today it is only the mark and needs no words. */}
+          <Opening />
           <QueryProvider>{children}</QueryProvider>
         </LocaleProvider>
       </body>
