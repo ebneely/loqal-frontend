@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { fetchBrands } from "@/lib/catalog";
-import { defaultLocale } from "@/lib/locale";
+import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { ShopCard } from "@/components/shop-card";
 
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ShopsPage() {
-  const locale = defaultLocale;
+  const locale = await getLocale();
 
   let page;
   try {

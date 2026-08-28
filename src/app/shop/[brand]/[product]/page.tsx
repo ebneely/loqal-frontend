@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api";
 import { fetchProduct } from "@/lib/catalog";
-import { defaultLocale } from "@/lib/locale";
+import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 
 import { ProductView } from "./product-view";
@@ -113,7 +113,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
    * `useLocale()`; the server-rendered copy is the one Google indexes, and
    * Arabic is the language it should rank in.
    */
-  const locale = defaultLocale;
+  const locale = await getLocale();
 
   const name = product.name?.[locale] ?? product.name?.ar ?? product.name?.en ?? "";
 

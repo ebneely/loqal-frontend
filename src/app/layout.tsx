@@ -4,7 +4,8 @@ import { Readex_Pro, Source_Code_Pro } from "next/font/google";
 import { QueryProvider } from "@/lib/query";
 import { LocaleProvider } from "@/lib/locale-context";
 import { Opening } from "@/components/opening";
-import { defaultLocale, localeDir } from "@/lib/locale";
+import { localeDir } from "@/lib/locale";
+import { getLocale } from "@/lib/locale-server";
 
 import "./globals.css";
 
@@ -95,18 +96,10 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  /**
-   * Rendered in ARABIC, statically, and NOT from the cookie.
-   *
-   * Reading cookies() here would mark every route in the app dynamic and the
-   * whole catalogue would drop off ISR — `next build` reports it as `ƒ` the
-   * moment this function awaits headers. English is applied on mount by
-   * LocaleProvider instead; see the long note there for the trade-off.
-   */
-  const locale = defaultLocale;
+  const locale = await getLocale();
 
   return (
     <html
@@ -125,7 +118,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <LocaleProvider>
+        <LocaleProvider locale={locale}>
           {/* Over the page, never instead of it — see the note in opening.tsx.
               Mounted inside LocaleProvider so a future greeting can be worded,
               though today it is only the mark and needs no words. */}

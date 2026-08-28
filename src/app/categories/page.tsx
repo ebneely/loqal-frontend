@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { fetchCategories } from "@/lib/catalog";
-import { defaultLocale } from "@/lib/locale";
+import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { Garment, garmentFor } from "@/components/garment";
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CategoriesPage() {
-  const locale = defaultLocale;
+  const locale = await getLocale();
 
   /**
    * Not `allSettled` here, unlike the home page: this screen IS the category

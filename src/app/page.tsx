@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { fetchBrands, fetchCategories } from "@/lib/catalog";
-import { defaultLocale } from "@/lib/locale";
+import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { ShopCard } from "@/components/shop-card";
 import { Garment, garmentFor } from "@/components/garment";
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
  * grid and already has the query state for one.
  */
 export default async function HomePage() {
-  const locale = defaultLocale;
+  const locale = await getLocale();
 
   /**
    * Both reads in parallel. Sequential awaits would serialise two independent

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api";
 import { fetchBrand, fetchBrandProducts } from "@/lib/catalog";
-import { defaultLocale } from "@/lib/locale";
+import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { ProductCard } from "@/components/product-card";
 
@@ -96,7 +96,7 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
   const page = await load(brand);
   if (!page) notFound();
 
-  const locale = defaultLocale;
+  const locale = await getLocale();
   const ar = locale === "ar";
   /** The shop's own name. `brand` stays what it is — the slug in the URL. */
   const name = page.brand.name;
