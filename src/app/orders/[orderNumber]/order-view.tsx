@@ -13,10 +13,17 @@ import type {
 } from "@loqal/contracts/storefront.contract";
 import { ApiError } from "@/lib/api";
 import { fetchBrandDirectory, queryKeys, type BrandDirectoryEntry } from "@/lib/catalog";
-import { useOrderLookup, usePaymentLink } from "@/lib/orders";
+import {
+  orderKeys,
+  useOrderLookup,
+  usePaymentLink,
+  useRequestReturn,
+  useResendOrderVerification,
+  useVerifyOrderCode,
+} from "@/lib/orders";
 import { formatDate, formatPrice, type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shell } from "@/components/shell";
 import { Money } from "@/components/money";
 import { StatusPill } from "@/components/status-pill";
@@ -147,10 +154,18 @@ export function OrderView({ orderNumber }: { orderNumber: string }) {
     );
   }
 
-  return <Loaded order={order} locale={locale} />;
+  return <Loaded order={order} locale={locale} phone={phoneParam} />;
 }
 
-function Loaded({ order, locale }: { order: ShopperOrder; locale: Locale }) {
+function Loaded({
+  order,
+  locale,
+  phone,
+}: {
+  order: ShopperOrder;
+  locale: Locale;
+  phone: string;
+}) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
   /**
@@ -185,6 +200,15 @@ function Loaded({ order, locale }: { order: ShopperOrder; locale: Locale }) {
    */
   const awaitingPayment = order.brandOrders.some((half) => half.status === "PENDING_PAYMENT");
 
+  /**
+   * A cash/wallet order sits here until the phone code is confirmed — see
+   * `OrderVerificationService`. Checked the same way `awaitingPayment` is:
+   * off the status enum, because there is no other signal on the wire for it.
+   */
+  const awaitingVerification = order.brandOrders.some(
+    (half) => half.status === "PENDING_VERIFICATION"
+  );
+
   return (
     <Shell title={t("الأوردر", "Order")}>
       <div className="lq-wrap lq-pad">
@@ -217,6 +241,9 @@ function Loaded({ order, locale }: { order: ShopperOrder; locale: Locale }) {
           </p>
         </header>
 
+        {awaitingVerification ? (
+          <VerificationGate order={order} phone={phone} locale={locale} />
+        ) : null}
         {awaitingPayment ? <PaymentRecovery order={order} locale={locale} /> : null}
 
         {/* ── One section per shop ─────────────────────────────────────────── */}
@@ -227,6 +254,9 @@ function Loaded({ order, locale }: { order: ShopperOrder; locale: Locale }) {
             shop={shops.get(half.brandId) ?? null}
             locale={locale}
             delayMs={index * 70}
+            orderId={order.id}
+            orderNumber={order.orderNumber}
+            phone={phone}
           />
         ))}
 
@@ -322,11 +352,17 @@ function ShopHalf({
   shop,
   locale,
   delayMs,
+  orderId,
+  orderNumber,
+  phone,
 }: {
   half: ShopperBrandOrder;
   shop: BrandDirectoryEntry | null;
   locale: Locale;
   delayMs: number;
+  orderId: string;
+  orderNumber: string;
+  phone: string;
 }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
@@ -406,6 +442,20 @@ function ShopHalf({
             reconciled
           />
         </div>
+      ) : null}
+
+      {/* ONLY DELIVERED OFFERS THIS. Every other state — including
+          RETURN_REQUESTED and RETURNED — already has its own sentence above
+          from `consequence()`, which is the return's state shown instead of a
+          button that would 409. */}
+      {half.status === "DELIVERED" ? (
+        <ReturnRequest
+          brandOrderId={half.id}
+          orderId={orderId}
+          orderNumber={orderNumber}
+          phone={phone}
+          locale={locale}
+        />
       ) : null}
     </section>
   );
@@ -538,6 +588,347 @@ function PaymentRecovery({ order, locale }: { order: ShopperOrder; locale: Local
         </p>
       ) : null}
     </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   The gate for a cash/wallet order still waiting on its phone code.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * `OrderVerificationService.verify` answers every distinguishable failure as
+ * a 400 with its own English message — there is no separate status code per
+ * reason — so the four cases are told apart by matching that message rather
+ * than `error.statusCode`. Anything unmatched falls through to the API's own
+ * words, exactly like `Failure` does in `checkout-view.tsx`.
+ */
+function describeVerifyError(error: Error, locale: Locale): string {
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+
+  if (error instanceof ApiError) {
+    const message = error.message;
+    if (message.includes("Incorrect code")) {
+      return t("الكود غلط. جرّب تاني.", "That code is wrong. Try again.");
+    }
+    if (message.includes("Too many incorrect attempts")) {
+      return t(
+        "حاولت كتير بكود غلط. اطلب كود جديد.",
+        "Too many wrong attempts. Request a new code."
+      );
+    }
+    if (message.includes("This code has expired")) {
+      return t("الكود ده خلص وقته. اطلب كود جديد.", "This code has expired. Request a new one.");
+    }
+    if (message.includes("No verification code has been sent")) {
+      return t("لسه محبعتش كود. دوس ابعت الكود.", "No code has been sent yet. Tap Send code.");
+    }
+    if (error.isNotFound) {
+      return t(
+        "مفيش أوردر بالرقم ده مع رقم الموبايل ده.",
+        "No order opens with that number and that phone."
+      );
+    }
+  }
+  return t(
+    "مش قادرين نتأكد من الكود دلوقتي. جرّب تاني بعد شوية.",
+    "We cannot check the code right now. Try again shortly."
+  );
+}
+
+/** The resend cooldown names its own remaining seconds — surfaced, not re-derived. */
+function describeResendError(error: Error, locale: Locale): string {
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+
+  if (error instanceof ApiError) {
+    const waitMatch = /Please wait (\d+)s/.exec(error.message);
+    if (waitMatch) {
+      const seconds = waitMatch[1];
+      return t(
+        `لسه بدري. استنى ${seconds} ثانية وابعت تاني.`,
+        `Too soon. Wait ${seconds}s and resend.`
+      );
+    }
+    if (error.isNotFound) {
+      return t(
+        "مفيش أوردر بالرقم ده مع رقم الموبايل ده.",
+        "No order opens with that number and that phone."
+      );
+    }
+  }
+  return t(
+    "مش قادرين نبعت كود دلوقتي. جرّب تاني بعد شوية.",
+    "We cannot send a code right now. Try again shortly."
+  );
+}
+
+/**
+ * A cash or wallet order sits at PENDING_VERIFICATION until this passes — see
+ * `order-verification.service.ts`. Sits above the shops for the same reason
+ * `PaymentRecovery` does: it gates the whole order, not one shop's half.
+ *
+ * Submitting sends `{ orderNumber, phone, code }` — the same credential the
+ * page itself was opened with, never a session, because this page has no
+ * signed-in path to fall back to.
+ */
+function VerificationGate({
+  order,
+  phone,
+  locale,
+}: {
+  order: ShopperOrder;
+  phone: string;
+  locale: Locale;
+}) {
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const queryClient = useQueryClient();
+  const verify = useVerifyOrderCode();
+  const resend = useResendOrderVerification();
+  const [code, setCode] = useState("");
+  const [sent, setSent] = useState(false);
+  const id = useId();
+
+  const refreshOrder = () =>
+    queryClient.invalidateQueries({ queryKey: orderKeys.lookup(order.orderNumber, phone) });
+
+  return (
+    <section className="lq-sec" aria-label={t("تأكيد الأوردر", "Order verification")}>
+      <hr className="lq-rule" />
+      <h2 className="lq-sec__title">{t("أكّد رقم موبايلك", "Confirm your phone")}</h2>
+      <p className="lq-prose">
+        {t(
+          "بعتنالك كود على الموبايل اللي طلبت بيه. اكتبه هنا عشان الأوردر يوصل للمحل.",
+          "We sent a code to the phone you ordered with. Enter it here so the order reaches the shop."
+        )}
+      </p>
+
+      <form
+        className="lq-vp"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          verify.mutate(
+            { orderId: order.id, orderNumber: order.orderNumber, phone, code: code.trim() },
+            { onSuccess: () => refreshOrder() }
+          );
+        }}
+      >
+        <div className="lq-field">
+          <label className="lq-label" htmlFor={id}>
+            {t("كود التأكيد", "Verification code")}
+          </label>
+          <input
+            id={id}
+            className="lq-input"
+            data-num
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={code}
+            onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+            placeholder="000000"
+          />
+        </div>
+
+        {verify.isError ? (
+          <p className="lq-hint lq-hint--error" role="alert">
+            {describeVerifyError(verify.error, locale)}
+          </p>
+        ) : null}
+
+        <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+          <button
+            type="submit"
+            className="lq-btn lq-btn--primary lq-btn--lg"
+            disabled={verify.isPending || code.trim().length !== 6}
+          >
+            {verify.isPending ? t("ثانية واحدة", "One moment") : t("أكّد الكود", "Verify code")}
+          </button>
+          <button
+            type="button"
+            className="lq-btn lq-btn--secondary"
+            disabled={resend.isPending}
+            onClick={() => {
+              setSent(false);
+              resend.mutate(
+                { orderId: order.id, orderNumber: order.orderNumber, phone },
+                { onSuccess: () => setSent(true) }
+              );
+            }}
+          >
+            <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
+            {resend.isPending ? t("ثانية واحدة", "One moment") : t("ابعت الكود تاني", "Resend code")}
+          </button>
+        </div>
+      </form>
+
+      {resend.isError ? (
+        <p className="lq-hint lq-hint--error" role="alert">
+          {describeResendError(resend.error, locale)}
+        </p>
+      ) : null}
+      {sent && resend.isSuccess ? (
+        <p className="lq-hint">
+          {t("بعتنا كود جديد على موبايلك.", "We sent a fresh code to your phone.")}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   The return request for one DELIVERED brand order.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * `ReturnsService.request` answers every rule as a 409 with its own English
+ * sentence — the window, an already-open return, a status other than
+ * DELIVERED — so, exactly like verification above, the specific cases are
+ * matched by message rather than re-derived from a rule this file does not
+ * own.
+ */
+function describeReturnError(error: Error, locale: Locale): string {
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+
+  if (error instanceof ApiError) {
+    const message = error.message;
+    const windowMatch = /past its (\d+)-day return window/.exec(message);
+    if (windowMatch) {
+      const days = windowMatch[1];
+      return t(
+        `المدة اللي بتسمح بالاسترجاع (${days} يوم) خلصت.`,
+        `The return window (${days} days) has passed.`
+      );
+    }
+    if (message.includes("already open for this order")) {
+      return t(
+        "فيه طلب استرجاع مفتوح للأوردر ده بالفعل.",
+        "A return is already open for this order."
+      );
+    }
+    if (error.isNotFound) {
+      return t(
+        "مفيش أوردر بالرقم ده مع رقم الموبايل ده.",
+        "No order opens with that number and that phone."
+      );
+    }
+    if (error.isConflict) {
+      // "Only a delivered order can be returned" / no delivery record: both
+      // reachable only by a race with the page's own status, since the
+      // button is gated on DELIVERED already.
+      return t(
+        "حالة الأوردر اتغيّرت. حدّث الصفحة وشوف حالته دلوقتي.",
+        "The order's status changed. Refresh the page to see it now."
+      );
+    }
+  }
+  return t(
+    "مش قادرين نفتح طلب استرجاع دلوقتي. جرّب تاني بعد شوية.",
+    "We cannot open a return right now. Try again shortly."
+  );
+}
+
+function ReturnRequest({
+  brandOrderId,
+  orderId,
+  orderNumber,
+  phone,
+  locale,
+}: {
+  brandOrderId: string;
+  orderId: string;
+  orderNumber: string;
+  phone: string;
+  locale: Locale;
+}) {
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const queryClient = useQueryClient();
+  const request = useRequestReturn();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const id = useId();
+
+  if (request.isSuccess) {
+    // The status the page needed to show has already moved to
+    // RETURN_REQUESTED on the server; `consequence()` on the refreshed order
+    // says so, so this form has nothing left to offer.
+    return null;
+  }
+
+  if (!open) {
+    return (
+      <div>
+        <button type="button" className="lq-btn lq-btn--ghost" onClick={() => setOpen(true)}>
+          {t("اطلب استرجاع", "Request a return")}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="lq-vp"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        request.mutate(
+          {
+            orderId,
+            body: {
+              brandOrderId,
+              reason: reason.trim(),
+              orderNumber,
+              phone,
+            },
+          },
+          {
+            onSuccess: () =>
+              queryClient.invalidateQueries({
+                queryKey: orderKeys.lookup(orderNumber, phone),
+              }),
+          }
+        );
+      }}
+    >
+      <div className="lq-field">
+        <label className="lq-label" htmlFor={id}>
+          {t("سبب الاسترجاع", "Reason for the return")}
+        </label>
+        <textarea
+          id={id}
+          className="lq-input"
+          data-bidi
+          rows={3}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          placeholder={t("اكتب سبب الاسترجاع هنا", "Write the reason here")}
+        />
+      </div>
+
+      {request.isError ? (
+        <p className="lq-hint lq-hint--error" role="alert">
+          {describeReturnError(request.error, locale)}
+        </p>
+      ) : null}
+
+      <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+        <button
+          type="submit"
+          className="lq-btn lq-btn--primary"
+          disabled={request.isPending || reason.trim().length === 0}
+        >
+          {request.isPending ? t("ثانية واحدة", "One moment") : t("ابعت الطلب", "Submit request")}
+        </button>
+        <button
+          type="button"
+          className="lq-btn lq-btn--ghost"
+          onClick={() => setOpen(false)}
+          disabled={request.isPending}
+        >
+          {t("إلغاء", "Cancel")}
+        </button>
+      </div>
+    </form>
   );
 }
 

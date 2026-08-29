@@ -5,10 +5,16 @@ import { useRef } from "react";
 
 import {
   createOrderResultSchema,
+  orderActionOkSchema,
   orderPaymentLinkSchema,
+  requestReturnResultSchema,
   shopperOrderSchema,
   type CreateOrderBody,
   type CreateOrderResult,
+  type RequestReturnBody,
+  type RequestReturnResult,
+  type ResendOrderVerificationBody,
+  type VerifyOrderCodeBody,
 } from "@loqal/contracts/storefront.contract";
 
 import { ApiError, api } from "./api";
@@ -203,6 +209,62 @@ export function usePaymentLink() {
       );
       return result.checkoutUrl;
     },
+    retry: false,
+  });
+}
+
+/**
+ * `POST /v1/orders/:orderId/verification/verify` — checks a cash/wallet
+ * order's phone code.
+ *
+ * `orderNumber` and `phone` travel in the BODY, not the path — the same
+ * credential `useOrderLookup` already reads off this page's own URL. There is
+ * no signed-in variant here because this page has none: every read and write
+ * on it authorises the one way, guest or not.
+ */
+export function useVerifyOrderCode() {
+  return useMutation<{ ok: true }, Error, { orderId: string } & VerifyOrderCodeBody>({
+    mutationFn: ({ orderId, ...body }) =>
+      api.post(
+        orderActionOkSchema,
+        `/v1/orders/${encodeURIComponent(orderId)}/verification/verify`,
+        body
+      ),
+    retry: false,
+  });
+}
+
+/**
+ * `POST /v1/orders/:orderId/verification` — asks for a fresh code.
+ *
+ * The API rate-limits this itself (`OrderVerificationService.resend`'s
+ * cooldown), so there is nothing to throttle here — a refused resend comes
+ * back as a 409 the caller reads and shows.
+ */
+export function useResendOrderVerification() {
+  return useMutation<{ ok: true }, Error, { orderId: string } & ResendOrderVerificationBody>({
+    mutationFn: ({ orderId, ...body }) =>
+      api.post(
+        orderActionOkSchema,
+        `/v1/orders/${encodeURIComponent(orderId)}/verification`,
+        body
+      ),
+    retry: false,
+  });
+}
+
+/**
+ * `POST /v1/orders/:orderId/returns` — opens a return on one brand order.
+ *
+ * The window and the one-open-return rule are the API's, not this file's —
+ * see `ReturnsService.request`. A refusal comes back as a 409 whose message
+ * names the actual reason, and the caller shows that reason rather than
+ * re-deriving it.
+ */
+export function useRequestReturn() {
+  return useMutation<RequestReturnResult, Error, { orderId: string; body: RequestReturnBody }>({
+    mutationFn: ({ orderId, body }) =>
+      api.post(requestReturnResultSchema, `/v1/orders/${encodeURIComponent(orderId)}/returns`, body),
     retry: false,
   });
 }

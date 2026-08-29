@@ -6,6 +6,7 @@ import {
   OrderStatusSchema,
   PaymentMethodSchema,
   ProductStatusSchema,
+  ReturnStatusSchema,
 } from './enums';
 
 /**
@@ -611,3 +612,76 @@ export const orderPaymentLinkSchema = z.object({
   checkoutUrl: z.string().nullable(),
 });
 export type OrderPaymentLink = z.infer<typeof orderPaymentLinkSchema>;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Cash-order phone verification.
+
+   The guest credential — orderNumber + phone — matches
+   `order-verification.contract.ts`'s `guestCredentialSchema` key for key,
+   because this page authorises every write the same way it authorises the
+   read: there is no signed-in path on this screen at all, only the order
+   number and the phone the URL already carries.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const guestCredentialBodySchema = {
+  orderNumber: z.string().trim().min(1).max(40),
+  phone: z.string().trim().regex(/^01[0-9]{9}$/, 'Expected an Egyptian mobile number'),
+};
+
+/** `POST /v1/orders/:orderId/verification` — resend the phone code. */
+export const resendOrderVerificationBodySchema = z
+  .object(guestCredentialBodySchema)
+  .strict();
+export type ResendOrderVerificationBody = z.infer<
+  typeof resendOrderVerificationBodySchema
+>;
+
+/** `POST /v1/orders/:orderId/verification/verify` — check the phone code. */
+export const verifyOrderCodeBodySchema = z
+  .object({
+    ...guestCredentialBodySchema,
+    code: z.string().trim().regex(/^[0-9]{6}$/, 'Expected a 6-digit code'),
+  })
+  .strict();
+export type VerifyOrderCodeBody = z.infer<typeof verifyOrderCodeBodySchema>;
+
+/** Both verification routes answer this and nothing else. */
+export const orderActionOkSchema = z.object({ ok: z.literal(true) }).strict();
+export type OrderActionOk = z.infer<typeof orderActionOkSchema>;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Returns.
+
+   Same credential as above. `brandOrderId` is one of `order.brandOrders[].id`
+   already on the page — never typed by the shopper — and the reason is free
+   text: there is no taxonomy in `RequestReturnDto` to mirror.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export const requestReturnBodySchema = z
+  .object({
+    brandOrderId: z.string().uuid(),
+    reason: z.string().trim().min(1).max(500),
+    orderNumber: z.string().trim().min(1).max(40).optional(),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^01[0-9]{9}$/, 'Expected an Egyptian mobile number')
+      .optional(),
+  })
+  .strict();
+export type RequestReturnBody = z.infer<typeof requestReturnBodySchema>;
+
+/**
+ * `POST /v1/orders/:orderId/returns` — NOT `returnListItemResponseSchema`.
+ * That is the brand's dashboard projection; this route answers
+ * `ReturnsService.request`'s own return value, which is only these three
+ * fields.
+ */
+export const requestReturnResultSchema = z
+  .object({
+    id: z.string(),
+    brandOrderId: z.string().uuid(),
+    status: ReturnStatusSchema,
+  })
+  .strict();
+export type RequestReturnResult = z.infer<typeof requestReturnResultSchema>;
