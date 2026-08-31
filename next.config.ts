@@ -49,6 +49,19 @@ const nextConfig: NextConfig = {
    */
 
   /**
+   * Whether `remotePatterns` below is populated, exposed to client code as a
+   * build-time boolean. `next/image` THROWS on a remote src with no matching
+   * pattern, so on a deployment that never set LOQAL_MEDIA_HOST every product
+   * photo would take its whole page down — `shop-card.tsx` already dodged this
+   * with a plain `<img>`, and `product-photo.tsx` reads this flag to fall back
+   * to the garment drawing instead. "1"/"" rather than a real boolean because
+   * `env` values are inlined as strings.
+   */
+  env: {
+    NEXT_PUBLIC_LOQAL_MEDIA_READY: process.env.LOQAL_MEDIA_HOST ? "1" : "",
+  },
+
+  /**
    * Product photography is brand-supplied and arrives from the API's media
    * host, so the remote patterns are read from the environment rather than
    * hardcoded — a storefront that only renders images from a domain baked

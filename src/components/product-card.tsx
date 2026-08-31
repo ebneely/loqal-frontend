@@ -1,10 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 
 import type { PublicProduct } from "@loqal/contracts/storefront.contract";
 import type { Locale } from "@/lib/locale";
 import { Money } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
+import { ProductPhoto } from "@/components/product-photo";
 
 /**
  * `.lq-pcard` — the one product tile, used by every grid on the storefront.
@@ -57,10 +57,13 @@ export function ProductCard({
     >
       <span className="lq-pcard__well">
         {product.coverUrl ? (
-          <Image
+          /* `ProductPhoto`, not a bare `next/image`: with no configured media
+             host or a file that fails to load, it degrades to the same garment
+             drawing the branch below draws, instead of throwing. */
+          <ProductPhoto
             src={product.coverUrl}
             alt={name}
-            fill
+            productId={product.id}
             // 2-up on a phone, 3-up at 768, 4-up at 1024 — the same steps the
             // grid uses, so the browser never downloads a 1200px file for a
             // 190px tile on mobile data.

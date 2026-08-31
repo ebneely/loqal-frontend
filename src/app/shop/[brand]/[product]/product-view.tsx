@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
 import type {
@@ -12,6 +11,7 @@ import { useAddToBag } from "@/lib/cart";
 import type { Locale } from "@/lib/locale";
 import { Money, MoneyWas } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
+import { ProductPhoto } from "@/components/product-photo";
 
 /**
  * The product screen.
@@ -332,10 +332,13 @@ export function ProductView({
                 className="lq-pcard__well lq-rv"
                 style={{ "--lq-d": `${index * 70}ms` } as React.CSSProperties}
               >
-                <Image
+                {/* `ProductPhoto`, not a bare `next/image`: with no configured
+                    media host or a file that fails to load it degrades to the
+                    garment drawing below, instead of throwing the page down. */}
+                <ProductPhoto
                   src={url}
                   alt={name}
-                  fill
+                  productId={product.id}
                   sizes="(min-width: 900px) 45vw, 100vw"
                   // The first photo is the LCP on this screen.
                   priority={index === 0}
