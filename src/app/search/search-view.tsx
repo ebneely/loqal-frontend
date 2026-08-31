@@ -22,6 +22,9 @@ import { Shell } from "@/components/shell";
 import { Money, MoneyWas } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
 import { EmptyState } from "@/components/state";
+import { useFailureVariant } from "@/components/failure-variant";
+import { StateRail } from "@/components/state-rail";
+import { StateWayOn } from "@/components/state-wayon";
 
 /**
  * Search, with the filter rail.
@@ -200,6 +203,42 @@ export function SearchView({
     results.error instanceof ApiError &&
     results.error.statusCode === 400;
 
+  /**
+   * THREE DEAD ENDS, ONE PER VISIT.
+   *
+   * Drawn once on mount, so a shopper does not watch the screen change shape
+   * while she reads it. Only this failure has three: a search refused for the
+   * category alone is recoverable, and a request that never came back is not
+   * the same fact and does not get the same answers.
+   */
+  const variant = useFailureVariant();
+
+  /**
+   * THE SHELF'S OWN NAME, RUN AS THE QUERY THE API DOES ANSWER.
+   *
+   * `recover` is not a picture of the failure, it is a way around it: the
+   * category was refused, `query` never was, so the same word goes back as
+   * text. It is narrower than a real category filter — a piece filed under
+   * Bags whose title never says "bag" does not come back — and the line above
+   * the grid says so rather than letting her believe she has seen the shelf.
+   *
+   * The rail's own filters go with the category: they were ticked against a
+   * facet set this response cannot produce.
+   */
+  const recovery = useInfiniteQuery({
+    queryKey: queryKeys.search(categoryName, 1, { sort: filters.sort }),
+    queryFn: ({ pageParam }) =>
+      searchProducts(categoryName, pageParam, 20, { sort: filters.sort }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
+    enabled: staleApi && variant === "recover" && categoryName.length > 0,
+  });
+  const recovered = recovery.data?.pages.flatMap((page) => page.items) ?? [];
+  /* Nothing under the name either, so there is nothing to recover and this
+     treatment degrades to the one that always has something to hand over. */
+  const recoverable =
+    variant === "recover" && (recovery.isPending || recovered.length > 0);
+
   const pages = results.data?.pages ?? [];
   const items = pages.flatMap((page) => page.items);
   /** Facets describe the whole match set, so the first page is authoritative. */
@@ -242,6 +281,12 @@ export function SearchView({
   const clearFilters = () => setFilters(category ? { category } : {});
   /** The shelf, dropped; a typed word and the rail's own filters kept. */
   const clearCategory = () => patch({ category: undefined });
+  /** The shelf's name, typed into the box for her: the search that does work. */
+  const searchCategoryName = () => {
+    setTerm(categoryName);
+    setSubmitted(categoryName);
+    setFilters({ sort: filters.sort });
+  };
 
   return (
     <Shell title={t("البحث", "Search")}>
@@ -357,36 +402,108 @@ export function SearchView({
               </Link>
             </div>
           </section>
-        ) : staleApi || results.isError ? (
+        ) : staleApi ? (
           /* NO RAIL AND NO COLUMN. A filter rail beside a search that did not
              run is furniture, and it squeezes the one thing on the page that
              has something to say into two thirds of the width, off-centre. */
           <section className="lq-sec">
-            {staleApi ? (
-              /* The one failure this screen can talk a shopper out of. The
-               action drops the category and re-runs, which is a search
-               that works on every build of the API. */
+            {recoverable ? (
+              <div className="lq-recover">
+                <p className="lq-recover__say" role="status">
+                  <span
+                    className="lq-icon lq-recover__ic"
+                    data-icon="info"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {t(
+                      `بنعرض كل حاجة اسمها «${categoryName}». السيرفر ده بيقارن بالاسم، فالقطعة اللي متسجلة في القسم من غير الكلمة دي مش هتبان.`,
+                      `Showing everything called “${categoryName}”. This server matches on the name, so a piece filed under it without the word in its title is not here.`,
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    className="lq-btn lq-btn--secondary lq-recover__act"
+                    onClick={clearCategory}
+                  >
+                    {t("شيل القسم", "Drop the category")}
+                  </button>
+                </p>
+
+                {recovery.isPending ? (
+                  <div className="lq-pgrid" aria-hidden="true">
+                    {Array.from({ length: 8 }, (_, index) => (
+                      <span key={index} className="lq-recover__skel">
+                        <span className="lq-skel lq-recover__skelart" />
+                        <span className="lq-skel lq-recover__skelline" />
+                        <span
+                          className="lq-skel lq-recover__skelline"
+                          data-short="true"
+                        />
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="lq-sum__row lq-recover__count">
+                      <p className="lq-hint" aria-live="polite">
+                        {t(`${recovered.length} قطعة`, `${recovered.length} pieces`)}
+                      </p>
+                      <SortSelect
+                        value={filters.sort ?? "relevance"}
+                        locale={locale}
+                        onChange={(sort) => patch({ sort })}
+                      />
+                    </div>
+                    <div className="lq-pgrid">
+                      {recovered.map((item, index) => (
+                        <SearchCard
+                          key={item.id}
+                          item={item}
+                          locale={locale}
+                          delayMs={(index % 4) * 70}
+                        />
+                      ))}
+                    </div>
+                    {recovery.hasNextPage ? (
+                      <div style={{ paddingBlock: "var(--space-6)" }}>
+                        <button
+                          type="button"
+                          className="lq-btn lq-btn--secondary lq-btn--block"
+                          aria-busy={recovery.isFetchingNextPage}
+                          onClick={() => recovery.fetchNextPage()}
+                        >
+                          {recovery.isFetchingNextPage
+                            ? t("بنجيب المزيد…", "Loading…")
+                            : t("اعرض المزيد", "Show more")}
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+              </div>
+            ) : variant === "rail" ? (
               <EmptyState
                 size="page"
                 art="shelf"
+                artwork={<StateRail />}
                 role="alert"
-                seed="search-stale"
                 title={t(
-                  "التصفّح بالقسم لسه مش شغّال على السيرفر ده",
-                  "This server cannot filter by category yet",
+                  "الرف موجود. الباب اللي عليه لسه مقفول",
+                  "The rail is here. This door to it is not open yet",
                 )}
                 body={t(
-                  "القسم اللي اخترته اترفض. البحث بالاسم شغّال عادي — شيل القسم وجرّب.",
-                  "The category was refused. Searching by name still works — drop it and try.",
+                  "السيرفر ده بيرد على البحث بالاسم مش بالقسم. دوّر بالاسم وهترجع تلاقي نفس القطع.",
+                  "This server answers a search by name but not by shelf. Search the name and the same pieces come back.",
                 )}
                 actions={
                   <>
                     <button
                       type="button"
                       className="lq-btn lq-btn--primary"
-                      onClick={clearCategory}
+                      onClick={searchCategoryName}
                     >
-                      {t("شيل القسم", "Drop the category")}
+                      {t(`دوّر على «${categoryName}»`, `Search for “${categoryName}”`)}
                     </button>
                     <Link className="lq-btn lq-btn--secondary" href="/shops">
                       {t("اتفرّج على المحلات", "Browse the shops")}
@@ -395,32 +512,39 @@ export function SearchView({
                 }
               />
             ) : (
-              <EmptyState
-                size="page"
-                art="crooked"
-                tone="loud"
-                role="alert"
-                seed="search-error"
-                title={t(
-                  "مش قادرين ندوّر دلوقتي",
-                  "We cannot search right now",
-                )}
-                body={t(
-                  "الطلب مارجعش. مش مشكلة في اللي كتبته — جرّب تاني، وغالبًا هيرد.",
-                  "The request did not come back. Nothing is wrong with what you typed — try again, and it usually answers.",
-                )}
-                actions={
-                  <button
-                    type="button"
-                    className="lq-btn lq-btn--primary"
-                    aria-busy={results.isFetching}
-                    onClick={() => results.refetch()}
-                  >
-                    {t("حاول تاني", "Try again")}
-                  </button>
-                }
+              <StateWayOn
+                categorySlug={category}
+                categoryName={categoryName}
+                locale={locale}
+                onSearchName={searchCategoryName}
+                t={t}
               />
             )}
+          </section>
+        ) : results.isError ? (
+          <section className="lq-sec">
+            <EmptyState
+              size="page"
+              art="crooked"
+              tone="loud"
+              role="alert"
+              seed="search-error"
+              title={t("مش قادرين ندوّر دلوقتي", "We cannot search right now")}
+              body={t(
+                "الطلب مارجعش. مش مشكلة في اللي كتبته — جرّب تاني، وغالبًا هيرد.",
+                "The request did not come back. Nothing is wrong with what you typed — try again, and it usually answers.",
+              )}
+              actions={
+                <button
+                  type="button"
+                  className="lq-btn lq-btn--primary"
+                  aria-busy={results.isFetching}
+                  onClick={() => results.refetch()}
+                >
+                  {t("حاول تاني", "Try again")}
+                </button>
+              }
+            />
           </section>
         ) : (
           <div className="lq-body">

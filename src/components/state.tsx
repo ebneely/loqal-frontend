@@ -147,6 +147,7 @@ export function StateArt({
 export function EmptyState({
   art,
   seed,
+  artwork,
   title,
   body,
   note,
@@ -157,6 +158,12 @@ export function EmptyState({
 }: {
   art: StateArtKind;
   seed?: string;
+  /**
+   * Replaces the drawing outright. For the one treatment whose picture is not
+   * an SVG — it carries its own still fallback, so `art` stays required and
+   * stays the answer under reduced motion.
+   */
+  artwork?: React.ReactNode;
   title: React.ReactNode;
   body?: React.ReactNode;
   /** A reference number, a slug, the thing support would ask for. */
@@ -171,7 +178,7 @@ export function EmptyState({
 }) {
   return (
     <div className="lq-state" data-tone={tone} data-size={size} role={role}>
-      <StateArt kind={art} seed={seed} />
+      {artwork ?? <StateArt kind={art} seed={seed} />}
       <div className="lq-state__say">
         <p className="lq-state__title">{title}</p>
         {body ? <p className="lq-state__body">{body}</p> : null}
