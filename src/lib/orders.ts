@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 
 import {
@@ -18,6 +18,7 @@ import {
 } from "@loqal/contracts/storefront.contract";
 
 import { ApiError, api } from "./api";
+import { CART_KEY } from "./cart";
 
 /**
  * Orders: one lookup, one create, one recovery.
@@ -165,12 +166,15 @@ export function useOrderLookup(orderNumber: string, phone: string) {
  * `PUT /v1/cart/delivery-method`, which the bag already wrote. See
  * `createOrderBodySchema`.
  *
- * The cart cache is NOT cleared here. The order is only really the shopper's
- * once they have been sent somewhere that proves it, and on a card order that
- * somewhere is Paymob — emptying the bag before the payment page loads means a
- * shopper who backs out has lost their basket and their order both.
+ * The cart cache is cleared here for CASH, WALLET and INSTAPAY — the API
+ * empties the server-side cart after the commit (`order-checkout.service.ts`),
+ * and with `refetchOnWindowFocus` off the tab-bar badge would otherwise keep
+ * counting a bag that no longer exists until a hard reload. NOT for CARD or
+ * VALU: the shopper is leaving for Paymob, and a bag emptied before that page
+ * loads means a shopper who backs out has lost their basket and their order both.
  */
 export function useCreateOrder() {
+  const client = useQueryClient();
   return useMutation<
     CreateOrderResult,
     Error,
@@ -180,6 +184,13 @@ export function useCreateOrder() {
       const headers: Record<string, string> = { "Idempotency-Key": idempotencyKey };
       if (anonymous) headers["X-Guest-Session-Id"] = guestSessionId();
       return api.post(createOrderResultSchema, "/v1/orders", body, { headers });
+    },
+    onSuccess: (_result, { body }) => {
+      // CARD and VALU keep the cache: a Paymob redirect follows, and a back-out
+      // must still find the bag — see the comment above.
+      if (body.paymentMethod !== "CARD" && body.paymentMethod !== "VALU") {
+        void client.invalidateQueries({ queryKey: CART_KEY });
+      }
     },
     /* No retry, at any count. This is the one call in the app that spends
        money, and a transport-level retry is a second order the shopper did not
@@ -199,6 +210,12 @@ export function useCreateOrder() {
  * a card order comes back with a null `checkoutUrl`, and again from the order
  * screen, where a half still sitting in PENDING_PAYMENT is the only evidence
  * the storefront has that money is still owed.
+ *
+ * NO CREDENTIAL TRAVELS, ON PURPOSE: the route is `@AllowAnonymous` and reads
+ * nothing but the path (`orders.public.controller.ts`) — the unguessable order
+ * id IS the credential, exactly as it is for the checkout response that
+ * produced it. It takes no body, no phone and no X-Guest-Session-Id, so
+ * sending any of them would be an invention the API ignores.
  */
 export function usePaymentLink() {
   return useMutation<string | null, Error, { orderId: string }>({
