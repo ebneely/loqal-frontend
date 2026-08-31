@@ -57,11 +57,20 @@ export default async function SearchPage({
 }) {
   const params = await searchParams;
   const category = first(params.category).trim().toLowerCase();
+  const query = first(params.q).trim().slice(0, 200);
+  const categorySlug = isSlug(category) ? category : "";
 
   return (
+    /* KEYED ON THE PARAMS. The view seeds its state from these props ONCE, so
+       without the key a navigation from `?category=a` to `?category=b` reuses
+       the same instance and changes nothing — every category link in the
+       header was a dead tap from this page. A remount is also the right reset:
+       a new shelf should not inherit the old shelf's typed term or ticked
+       filters, and the results already fetched stay warm in the query cache. */
     <SearchView
-      initialQuery={first(params.q).trim().slice(0, 200)}
-      initialCategory={isSlug(category) ? category : ""}
+      key={`${categorySlug}|${query}`}
+      initialQuery={query}
+      initialCategory={categorySlug}
     />
   );
 }
