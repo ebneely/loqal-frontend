@@ -25,7 +25,7 @@
 /* ── The drawing ─────────────────────────────────────────────────────────────
    A rail, hangers on it, and a garment. --wire is the hanger height and every
    other measure is derived from it, so the whole illustration scales with one
-   clamp: about 37px on a 390px phone, 42px on a desktop. CONTAINER units, not viewport
+   clamp: about 58px on a 390px phone, 74px on a desktop. CONTAINER units, not viewport
    ones: components.css makes `.lq-shell` an inline-size container precisely so
    a 430px phone frame embedded in a desktop page still lays out like a phone,
    and this drawing has no business being the one thing that measures the
@@ -36,10 +36,11 @@
    point on the rail, and pivots about the same point. One fraction, used
    twice, and the hanger cannot come off the rail as the art rescales. */
 .lq-art {
-  --wire: clamp(34px, 9.5cqi, 42px);
+  --wire: clamp(52px, 15cqi, 74px);
   --worn: calc(var(--wire) * 2.45);
+  --sway: 2.4deg;
   position: relative;
-  inline-size: min(320px, 88%);
+  inline-size: min(420px, 92%);
   margin-inline: auto;
   color: var(--ink);
 }
@@ -50,13 +51,28 @@
   display: block;
   block-size: 0;
   border-block-start: var(--border-width) solid var(--line-strong);
+  /* Drawn from the middle outward, then the hangers arrive on it. The resting
+     state is the finished rail, so `none` under reduced motion is the rail. */
+  transform: scaleX(1);
+  animation: lq-draw var(--dur-slow) var(--ease) both;
+}
+@keyframes lq-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
+/* The hangers land as one group, which leaves every per-hanger animation
+   declaration free for the sway and its overrides. */
 .lq-art__hangs {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: clamp(16px, 6cqi, 30px);
+  gap: clamp(16px, 6cqi, 34px);
+  animation: lq-hung var(--dur-settle) var(--ease) 120ms both;
+}
+@keyframes lq-hung {
+  from { opacity: 0; translate: 0 calc(var(--wire) * -0.5); }
+  to { opacity: 1; translate: 0 0; }
 }
 
 .lq-art__hang {
@@ -74,13 +90,21 @@
 /* Out of phase and out of tempo. Three hangers swinging in step is a
    metronome; the negative delays mean they are already scattered on the first
    frame, so nothing lines up even for a moment. */
-.lq-art__hang[data-sway="2"] { animation-duration: 7.6s; animation-delay: -2.4s; }
-.lq-art__hang[data-sway="3"] { animation-duration: 5.6s; animation-delay: -4.1s; }
+.lq-art__hang[data-sway="2"] {
+  --sway: 3.2deg;
+  animation-duration: 7.6s;
+  animation-delay: -2.4s;
+}
+.lq-art__hang[data-sway="3"] {
+  --sway: 1.8deg;
+  animation-duration: 5.6s;
+  animation-delay: -4.1s;
+}
 
 @keyframes lq-sway {
   0%, 100% { rotate: 0deg; }
-  25% { rotate: 2.2deg; }
-  75% { rotate: -2.2deg; }
+  25% { rotate: var(--sway); }
+  75% { rotate: calc(var(--sway) * -1); }
 }
 
 .lq-art__wire {
@@ -110,12 +134,38 @@
   inline-size: var(--worn);
   block-size: var(--worn);
   margin-block-start: calc(var(--wire) * -0.125 - var(--worn) * 0.2);
+  /* A beat behind the hanger it hangs from. Cloth has weight and arrives late;
+     a garment welded to its hanger reads as a sticker. */
+  transform-origin: 50% 12%;
+  animation: lq-drag 6.4s var(--ease-in-out) 260ms infinite;
+}
+@keyframes lq-drag {
+  0%, 100% { rotate: 0deg; }
+  25% { rotate: -1.4deg; }
+  75% { rotate: 1.4deg; }
 }
 
 /* The lean. A static transform, so it is the drawing and not the animation:
-   under reduced motion the hanger stops swinging and stays crooked. */
+   under reduced motion the hanger stops swinging and stays crooked. The slip
+   is its arrival: it overshoots past the lean and comes back, ending on the
+   same -7deg the static rule holds. */
 .lq-art[data-art="crooked"] .lq-art__hang {
   transform: rotate(-7deg);
+  animation:
+    lq-sway 6.4s var(--ease-in-out) 0s infinite,
+    lq-slip 720ms var(--ease-in-out) 200ms both;
+}
+@keyframes lq-slip {
+  0% { transform: rotate(1.5deg); }
+  60% { transform: rotate(-11deg); }
+  100% { transform: rotate(-7deg); }
+}
+
+/* Nothing on it any more, so it swings wider and quicker than a loaded one.
+   That is the whole joke, told in two numbers. */
+.lq-art[data-art="slipped"] .lq-art__hang {
+  --sway: 5.5deg;
+  animation-duration: 3.6s;
 }
 
 /* The bare rail runs three hangers across it instead of one, so it gets a
@@ -123,7 +173,7 @@
    than 42 for the same reason it is capped at all: three hangers plus two gaps
    must still fit inside --lq-art's 320px. */
 .lq-art[data-art="shelf"] {
-  --wire: clamp(38px, 11cqi, 44px);
+  --wire: clamp(46px, 13cqi, 64px);
 }
 /* Nothing on this shelf, and the empty band is the point — the hangers alone
    are a hairline with three small marks on it, which reads as a divider. */
@@ -152,14 +202,17 @@
   translate: 0 12%;
   rotate: -15deg;
   opacity: 0.9;
-  /* The one gesture on this screen: it drops the last few degrees and stops.
-     `both`, and the last frame is the resting rule above it, so a screen that
-     never runs the animation looks identical to one that has finished it. */
-  animation: lq-settle var(--dur-settle) var(--ease) both;
+  /* It falls, catches on its hem, rocks once and stops. `both`, and the last
+     frame is the resting rule above it, so a screen that never runs the
+     animation looks identical to one that has finished it. */
+  animation: lq-settle 980ms var(--ease-in-out) 340ms both;
 }
 @keyframes lq-settle {
-  from { rotate: -27deg; translate: 0 6%; opacity: 0; }
-  to { rotate: -15deg; translate: 0 12%; opacity: 0.9; }
+  0% { rotate: -36deg; translate: 0 -22%; opacity: 0; }
+  46% { rotate: -8deg; translate: 0 14%; opacity: 0.9; }
+  68% { rotate: -20deg; translate: 0 10%; }
+  86% { rotate: -13deg; translate: 0 12.5%; }
+  100% { rotate: -15deg; translate: 0 12%; opacity: 0.9; }
 }
 
 /* ── The state around it ─────────────────────────────────────────────────────
@@ -227,7 +280,10 @@
    garment's angle are static transforms and stay exactly as they are.
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
+  .lq-art__rail,
+  .lq-art__hangs,
   .lq-art__hang,
+  .lq-art__worn,
   .lq-art__fallen {
     animation: none;
   }
