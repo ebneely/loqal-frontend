@@ -500,8 +500,7 @@ export function SearchView({
                    action drops the category and re-runs, which is a search
                    that works on every build of the API. */
                 <EmptyState
-                  art="crooked"
-                  tone="loud"
+                  art="shelf"
                   role="alert"
                   seed="search-stale"
                   title={t(
