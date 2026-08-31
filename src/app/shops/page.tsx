@@ -5,6 +5,8 @@ import { fetchBrands } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { ShopCard } from "@/components/shop-card";
+import { EmptyState } from "@/components/state";
+import { ReloadButton } from "@/components/reload";
 
 /**
  * المحلات — the shop index.
@@ -76,17 +78,46 @@ export default async function ShopsPage() {
           </div>
 
           {page === null ? (
-            <p className="lq-hint lq-hint--error" role="alert">
-              {locale === "ar"
-                ? "مش قادرين نوصل للمحلات دلوقتي. حدّث الصفحة بعد شوية."
-                : "We cannot reach the shops right now. Reload in a moment."}
-            </p>
+            <EmptyState
+              art="crooked"
+              tone="loud"
+              role="alert"
+              seed="shops-down"
+              title={
+                locale === "ar"
+                  ? "مش قادرين نوصل للمحلات دلوقتي"
+                  : "We cannot reach the shops right now"
+              }
+              body={
+                locale === "ar"
+                  ? "المحلات فاتحة، إحنا اللي مش واصلين ليها في اللحظة دي. جرّب تاني."
+                  : "The shops are open — we are the ones who cannot reach them this second. Try again."
+              }
+              actions={
+                <>
+                  <ReloadButton>{locale === "ar" ? "حاول تاني" : "Try again"}</ReloadButton>
+                  <Link className="lq-btn lq-btn--secondary" href="/categories">
+                    {locale === "ar" ? "اتفرّج على الأقسام" : "Browse the categories"}
+                  </Link>
+                </>
+              }
+            />
           ) : page.items.length === 0 ? (
-            <p className="lq-hint">
-              {locale === "ar"
-                ? "المحلات اللي بتوصّل لمنطقتك هتظهر هنا."
-                : "Shops that deliver to your area show up here."}
-            </p>
+            <EmptyState
+              art="shelf"
+              seed="shops-empty"
+              title={locale === "ar" ? "لسه مفيش محل هنا" : "No shops here yet"}
+              body={
+                locale === "ar"
+                  ? "المحلات اللي بتوصّل لمنطقتك هتظهر هنا أول ما تفتح. لو عندك محل، ده مكانه."
+                  : "Shops that deliver to your area show up here as they open. If you run one, this is where it goes."
+              }
+              actions={
+                <Link className="lq-btn lq-btn--primary" href="/">
+                  {locale === "ar" ? "الرئيسية" : "Home"}
+                </Link>
+              }
+            />
           ) : (
             <div className="lq-cells">
               {page.items.map((shop, index) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { localeDir, defaultLocale } from "@/lib/locale";
+import { EmptyState } from "@/components/state";
 
 import "./globals.css";
 
@@ -29,6 +30,10 @@ import "./globals.css";
  * move itself. `next/link` is an error here for the same reason and the lint
  * rule against `location.assign` is written for healthy screens, so it is
  * disabled on that one line rather than obeyed.
+ *
+ * `EmptyState` IS SAFE HERE and it is the only import that is: `state.tsx` has
+ * no hooks, no context and no client-only API — it is a drawing and four slots.
+ * That is why it was written that way.
  */
 
 export default function GlobalError({
@@ -49,39 +54,49 @@ export default function GlobalError({
             <section className="lq-sec">
               <span className="lq-mark">loqaaal</span>
 
-              <div style={{ display: "grid", gap: "var(--space-2)" }}>
-                <h1 className="lq-phead__title">الموقع وقف دلوقتي</h1>
-                <p className="lq-prose">
-                  مش قادرين نحمّل الصفحة أصلاً. السلة والأوردرات بتاعتك زي ما هي.
-                  جرّب تحمّل تاني بعد شوية.
-                </p>
-                <p className="lq-prose" lang="en">
-                  The site failed to load. Your bag and your orders are untouched.
-                  Try loading it again in a moment.
-                </p>
-                {error.digest ? (
-                  <p className="lq-hint">
-                    رقم العطل / Fault reference{" "}
-                    <span data-num data-bidi>
-                      {error.digest}
+              <EmptyState
+                art="crooked"
+                tone="loud"
+                role="alert"
+                seed={error.digest ?? "global-error"}
+                title="الموقع وقف دلوقتي"
+                body={
+                  <>
+                    مش قادرين نحمّل الصفحة أصلاً. السلة والأوردرات بتاعتك زي ما
+                    هي — جرّب تحمّل تاني بعد شوية.
+                    <br />
+                    <span className="lq-hint" lang="en" data-bidi>
+                      The site failed to load. Your bag and your orders are
+                      untouched. Try loading it again in a moment.
                     </span>
-                  </p>
-                ) : null}
-              </div>
-
-              <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
-                <button type="button" className="lq-btn lq-btn--primary" onClick={() => reset()}>
-                  حاول تاني
-                </button>
-                <button
-                  type="button"
-                  className="lq-btn lq-btn--secondary"
-                  // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- the router is under the layout that failed
-                  onClick={() => window.location.assign("/")}
-                >
-                  الرئيسية
-                </button>
-              </div>
+                  </>
+                }
+                note={
+                  error.digest ? (
+                    <>
+                      رقم العطل / Fault reference{" "}
+                      <span data-num data-bidi>
+                        {error.digest}
+                      </span>
+                    </>
+                  ) : null
+                }
+                actions={
+                  <>
+                    <button type="button" className="lq-btn lq-btn--primary" onClick={() => reset()}>
+                      حاول تاني
+                    </button>
+                    <button
+                      type="button"
+                      className="lq-btn lq-btn--secondary"
+                      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- the router is under the layout that failed
+                      onClick={() => window.location.assign("/")}
+                    >
+                      الرئيسية
+                    </button>
+                  </>
+                }
+              />
             </section>
           </div>
         </div>

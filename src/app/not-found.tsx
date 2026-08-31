@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/state";
+
 /**
  * The 404.
  *
@@ -18,9 +20,11 @@ import Link from "next/link";
  * in `Shell`, and a second top bar and tab bar nested in the first is worse
  * than none. The three rows below are the navigation for this screen.
  *
- * It says what happened and hands over three doors. No apology, no "Oops", no
- * illustration of a lost parcel — the address is wrong, which is a fact and not
- * an incident.
+ * THE DRAWING IS THE SENTENCE. The copy has always said the piece may have come
+ * off the shop's shelf; `slipped` is exactly that picture — the hanger is still
+ * on the rail, swinging, and the garment is on the floor under it. It is not an
+ * apology and it is not a mascot: it is the same rail, hanger and line-art
+ * garment every category tile in this app is drawn from.
  */
 
 const WAYS_OUT = [
@@ -43,16 +47,22 @@ export default function NotFound() {
             loqaaal
           </Link>
 
-          <div style={{ display: "grid", gap: "var(--space-2)" }}>
-            <h1 className="lq-phead__title">العنوان ده مش موجود</h1>
-            <p className="lq-prose">
-              يمكن الرابط اتغيّر، أو القطعة اتشالت من رفّ المحل.
-            </p>
-            <p className="lq-prose" lang="en">
-              This address does not exist. The link may have changed, or the piece may
-              have come off the shop&apos;s shelf.
-            </p>
-          </div>
+          <EmptyState
+            art="slipped"
+            seed="not-found"
+            title="العنوان ده مش موجود"
+            body={
+              <>
+                يمكن الرابط اتغيّر، أو القطعة نزلت من على الشمّاعة وخلاص. مفيش
+                حاجة اتكسرت — العنوان بس مش بتاعنا.
+                <br />
+                <span className="lq-hint" lang="en" data-bidi>
+                  This address does not exist. The link may have changed, or the
+                  piece may have come off the shop&apos;s shelf.
+                </span>
+              </>
+            }
+          />
 
           {/* The same hairline list the rest of the app navigates with: cells
               share their borders, so every interior edge is drawn once. */}
