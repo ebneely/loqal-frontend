@@ -884,4 +884,131 @@ html[data-greeted="1"] .lq-open{display:none}
   .lq-mega,.lq-scrim{display:none}
 }
 
+/* == PHONE CONTENT ========================================================
+   Everything below is scoped to the phone side of the SAME 720 container
+   query the chrome switches on, so nothing above 720 moves by a pixel.
+
+   One idea runs through all of it. At 360 and 390 the shell IS the screen,
+   `html` is `overflow-x:hidden` and `.lq-hero__field` is `overflow:hidden` --
+   so a box that does not fit is not something you scroll to, it is something
+   that is silently CUT. Every rule here gives a box that could not shrink a
+   way to shrink; not one of them adds a clip.
+   ========================================================================= */
+@container (max-width:719px){
+
+  /* -- The hero panel ------------------------------------------------------
+     The reported bug: the secondary link cut off at the inline edge.
+
+     The panel is capped at 88% of a field it ALSO carries --pad of margin
+     inside, so the box lands within a few pixels of the screen edge; and at
+     390 the two actions inside it measure 274px in a 274px row -- nought
+     slack. One pixel more (the fallback face before Readex Pro lands, a phone
+     set to a larger text size, a longer word in either language) puts the
+     trailing link past the field's overflow:hidden, where there is no
+     scrollbar to reach it and nothing says it is there.
+
+     Two fixes, both of the cause: the panel is capped BY the gutter it is
+     inset by, so the box can never be wider than the screen it sits on; and
+     each action may take the whole row and break its own label, so the pair
+     drops to two lines rather than running off the end. */
+  .lq-hero__panel{margin-inline:var(--gutter-phone);
+    max-inline-size:min(38ch,100% - 2 * var(--gutter-phone))}
+  .lq-hero__acts>*{min-inline-size:0;max-inline-size:100%}
+  /* .lq-btn is white-space:nowrap everywhere and should be -- a two-line
+     button is a last resort. This is the last resort: a cut label reads as a
+     broken page, a wrapped one reads as a long word. */
+  .lq-hero__acts .lq-btn{white-space:normal;padding-block:var(--space-2);
+    padding-inline:var(--space-4)}
+  .lq-hero__more{overflow-wrap:break-word}
+
+  /* -- Two things on one line ----------------------------------------------
+     `.lq-sec__head` is a nowrap flex row carrying a title and a "see all"
+     link, or a title and a count. A flex item's automatic minimum size is its
+     MIN-CONTENT, so neither child could shrink below its longest word and a
+     long shop name pushed the link off the end of /shops.
+
+     The floor comes off the title block, not off the link: the link is the
+     one that has to stay whole and `flex:none` already says so, and a title
+     has somewhere to go — it wraps inside its own column. The cap is the
+     backstop for the case where the link alone is longer than the row. */
+  .lq-sec__head>*{min-inline-size:0;max-inline-size:100%}
+  .lq-sec__more{overflow-wrap:break-word}
+
+  /* -- Long strings --------------------------------------------------------
+     A shop or a piece can arrive named with one forty-character token: a slug
+     that escaped into a name, a Latin brand written without spaces. Arabic
+     does it too, with a long compound that offers no break opportunity.
+
+     `break-word` and NOT `anywhere`: it breaks a word only when that word
+     alone does not fit, so ordinary Arabic and English still wrap at their
+     spaces and the measure does not change. */
+  .lq-sec__title,.lq-phead__title,.lq-eyebrow,.lq-hint,.lq-prose,
+  .lq-crumb,.lq-tile__name,.lq-row__body,
+  .lq-pcard__name,.lq-pcard__brand,
+  .lq-shopcard__name,.lq-shopcard__place,
+  .lq-line__name,.lq-line__meta{overflow-wrap:break-word}
+
+  /* -- Shops, two up -------------------------------------------------------
+     `.lq-cells` stepped to two columns at 520 and stayed at one below it,
+     which put a single 132px shopfront sign across a whole 390px screen and
+     one shop per scroll. Every reference storefront shows a phone two shops
+     wide, and the card holds together at ~180px: the sign keeps its height,
+     the name stays 16px and the place line stays 14px. */
+  .lq-cells{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+  /* -- A track that cannot be pushed --------------------------------------
+     `1fr` is `minmax(auto,1fr)`, and `auto` there is MIN-CONTENT: one
+     unbroken forty-character name in one card widens its own track, and the
+     grid — hairline background and all — grows past the screen. `break-word`
+     cannot help, because it breaks a line and does not change what a word
+     measures. `minmax(0,1fr)` is what lets the track stay at half the screen
+     and hand the breaking back to the text.
+
+     `--home` is excluded because it takes its own fit-content tracks from
+     640 up and this block still covers it; it is corrected below 640 in the
+     block at the bottom of the file. */
+  .lq-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lq-pgrid:not(.lq-pgrid--home){grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* One track, same reason: an order row on /orders carries a nowrap status
+     pill, and a long one widened the whole stack rather than wrapping under
+     the sentence beside it. */
+  .lq-rows{grid-template-columns:minmax(0,1fr)}
+
+  /* -- The cell that is not there ------------------------------------------
+     These grids draw their hairlines as a shared BACKGROUND showing through a
+     1px gap, which is what stops every interior edge being drawn twice. The
+     cost is that a track with no cell in it is not empty -- it paints as a
+     bare grey panel. With an odd number of pieces that is what sits beside
+     the last card, and with one piece it is half the section: it is the grey
+     block on the home screen today.
+
+     A grid container's own ::after IS a grid item, so it fills the missing
+     track with paper and nothing else moves. Under 720 every one of these
+     grids is exactly two tracks, so at most one cell can ever be missing. */
+  .lq-tiles:has(> :last-child:nth-child(odd))::after,
+  .lq-cells:has(> :last-child:nth-child(odd))::after,
+  .lq-pgrid:not(.lq-pgrid--home):has(> :last-child:nth-child(odd))::after{
+    content:"";background:var(--paper)}
+
+  /* -- Clearance for the tab bar -------------------------------------------
+     The bar is sticky at the block end of the shell, so it holds its own space
+     at the foot of the document and no destination is unreachable. It still
+     floats over whatever is beneath it for the whole of the scroll, and the
+     last row of a page ends flush against its hairline -- on /account the
+     final row is read through it. One bar of paper at the end of the column is
+     the clearance, written in --tabbar-height so it follows the bar if the bar
+     ever changes height. */
+  .lq-shell>main{padding-block-end:calc(var(--tabbar-height) + env(safe-area-inset-bottom))}
+}
+
+/* The home grid keeps its own fit-content tracks from 640 up -- see
+   `.lq-pgrid--home` above -- where a missing cell cannot happen and a filler
+   would add a cell that should not be there. Below 640 it is two tracks like
+   the rest, and it is the grid the grey block is actually on. */
+@container (max-width:639px){
+  .lq-pgrid--home{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lq-pgrid--home:has(> :last-child:nth-child(odd))::after{
+    content:"";background:var(--paper)}
+}
+
 }

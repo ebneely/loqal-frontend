@@ -198,7 +198,7 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
             </p>
             <div className="lq-rows">
               <Link className="lq-row" href="/categories">
-                <span className="lq-icon lq-row__lead" data-icon="grid" aria-hidden="true" />
+                <span className="lq-icon lq-row__lead" data-icon="shirt" aria-hidden="true" />
                 <span className="lq-row__body">
                   <span>{t("اتفرّج على الأقسام", "Browse the categories")}</span>
                   <span className="lq-hint">
