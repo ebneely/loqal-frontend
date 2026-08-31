@@ -8,17 +8,16 @@ import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { ProductCard } from "@/components/product-card";
 
-export const revalidate = 300;
-export const dynamicParams = true;
-
 /**
- * Empty, and required — see the long note on the product page. Without a
- * `generateStaticParams` export a dynamic segment renders on demand no matter
- * what `revalidate` says.
+ * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
+ * per-reader. `revalidate` (and, on the shop routes, an empty
+ * `generateStaticParams`) asked Next to cache one copy of it, which threw
+ * DYNAMIC_SERVER_USAGE on every request — a 500 on the shop pages and a
+ * "we cannot reach the categories" on the ones that catch their own errors.
+ *
+ * The catalogue reads keep their own `next: { revalidate }`, so a request
+ * costs a render and no database round trip.
  */
-export function generateStaticParams(): { brand: string }[] {
-  return [];
-}
 
 type Params = { brand: string };
 

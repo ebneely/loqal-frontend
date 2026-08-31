@@ -17,7 +17,15 @@ import { Garment, garmentFor } from "@/components/garment";
  * The categories themselves ARE the content, which is why each one gets a
  * drawing and a whole cell rather than a chip in a row.
  */
-export const revalidate = 300;
+/**
+ * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
+ * per-reader. `revalidate` asked Next to cache one copy of it, which threw
+ * DYNAMIC_SERVER_USAGE on every request — a 500 on the shop pages and a
+ * "we cannot reach the categories" on the ones that catch their own errors.
+ *
+ * The catalogue reads keep their own `next: { revalidate }`, so a request
+ * costs a render and no database round trip.
+ */
 
 export const metadata: Metadata = {
   title: "الأقسام",

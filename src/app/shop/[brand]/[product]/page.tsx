@@ -9,42 +9,15 @@ import { Shell } from "@/components/shell";
 import { ProductView } from "./product-view";
 
 /**
- * ISR. The page is built on first request and served from the cache for five
- * minutes after that, then regenerated in the background.
+ * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
+ * per-reader. `revalidate` (and, on the shop routes, an empty
+ * `generateStaticParams`) asked Next to cache one copy of it, which threw
+ * DYNAMIC_SERVER_USAGE on every request — a 500 on the shop pages and a
+ * "we cannot reach the categories" on the ones that catch their own errors.
  *
- * Five minutes and not an hour because `inStock` is on this page: a stale
- * `true` is the one error that sells a shopper something the shop does not
- * have. Five minutes and not zero because a product page is identical for every
- * visitor and rendering it per request is the difference between a shop that
- * survives a good day and one that falls over on it.
+ * The catalogue reads keep their own `next: { revalidate }`, so a request
+ * costs a render and no database round trip.
  */
-export const revalidate = 300;
-
-/**
- * A slug the build has never seen still renders — it is generated on demand and
- * cached from then on. Pre-generating every product of every shop at build time
- * would tie deploy length to catalogue size, and a new shop's first customer
- * would be waiting on a rebuild.
- */
-export const dynamicParams = true;
-
-/**
- * Deliberately EMPTY, and it has to exist.
- *
- * A dynamic segment with no `generateStaticParams` at all is rendered on
- * demand every time — `revalidate` alone does not opt it into the static
- * cache, and `next build` reports it as `ƒ`. Exporting this, even returning
- * nothing, is what makes the route statically generated with a fallback: the
- * first request for a slug renders and caches it, every request after that is
- * served from the cache until the 5-minute window turns over.
- *
- * Empty rather than a real list because pre-generating every product of every
- * shop would tie deploy length to catalogue size, and a new shop's first
- * customer would be waiting on a rebuild.
- */
-export function generateStaticParams(): Params[] {
-  return [];
-}
 
 type Params = { brand: string; product: string };
 

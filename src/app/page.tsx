@@ -10,11 +10,14 @@ import { ProductCard } from "@/components/product-card";
 import { Garment, garmentFor } from "@/components/garment";
 
 /**
- * ISR, five minutes — the same clock as every other catalogue read. The home
- * screen is identical for every visitor, so rendering it per request buys
- * nothing and costs a database round trip on the busiest URL on the site.
+ * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
+ * per-reader. `revalidate` asked Next to cache one copy of it, which threw
+ * DYNAMIC_SERVER_USAGE on every request — a 500 on the shop pages and a
+ * "we cannot reach the categories" on the ones that catch their own errors.
+ *
+ * The catalogue reads keep their own `next: { revalidate }`, so a request
+ * costs a render and no database round trip.
  */
-export const revalidate = 300;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -69,7 +72,7 @@ export default async function HomePage() {
    * emptying it.
    *
    * Sequential after the brand read, because it needs the slugs. One extra
-   * round trip on a page that is cached for five minutes.
+   * round trip, against the fetch cache rather than the database.
    */
   const shopPicks = await Promise.allSettled(
     shops.slice(0, 4).map((shop) => fetchBrandProducts(shop.slug, { page: 1, perPage: 4 }))
