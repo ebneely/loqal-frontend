@@ -183,6 +183,16 @@ export const publicCategorySchema = z
     slug: z.string(),
     name: bilingualSchema,
     parentId: z.string().uuid().nullable(),
+    /**
+     * The storefront reads none of these three, and they are here because the
+     * API sends them: CATEGORY_FIELDS in the backend's category repository
+     * selects them, so `.strict()` rejected every category list and
+     * /categories rendered "we cannot reach the categories" against an API
+     * that was answering 200.
+     */
+    sortOrder: z.number().int(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
   })
   .strict();
 export type PublicCategory = z.infer<typeof publicCategorySchema>;
