@@ -1,0 +1,252 @@
+/* ==========================================================================
+   Loqal storefront — the phone chrome layer.
+
+   Loaded AFTER components.css so the few rules here that refine an existing
+   phone class (`.lq-topbar .lq-iconbtn`) win without needing a `!important`
+   or a bumped selector. Nothing in this file may touch a desktop surface.
+
+   WHY IT IS A SEPARATE FILE rather than more of components.css: the drawer and
+   the hamburger are one feature with one owner, and components.css is already
+   900 lines carrying every surface in the product. Splitting the phone chrome
+   out means the two can be worked on at once without one overwriting the other.
+
+   THE 720px SWITCH IS NOT REPEATED HERE, and that is the point. `.lq-topbar`
+   and `.lq-tabbar` are already hidden above 720px by the container query in
+   components.css, so the hamburger — a child of `.lq-topbar` — disappears with
+   the bar it lives in and needs no breakpoint of its own. Every other rule
+   below is scoped to a class only the phone chrome uses. Above 720px this file
+   changes nothing at all.
+
+   The drawer is portalled to `document.body`, OUTSIDE `.lq-shell`, so a
+   container query cannot reach it — see the note at the top of nav-drawer.tsx.
+   It is instead kept off screen by a transform and out of the tree by `inert`.
+
+   LOGICAL PROPERTIES ONLY. This is an Arabic-first storefront: the drawer
+   slides in from the inline START, which is the RIGHT edge under `dir="rtl"`
+   and the left under `dir="ltr"`, and not one rule below names either.
+   ========================================================================== */
+
+/* ── The hamburger, in the phone top bar ──────────────────────────────────── */
+/* `.lq-iconbtn` already gives it a 44px box, the round hit area and the press.
+   All that is left is the glyph size: icons.css sets an icon to 1em and
+   `.lq-iconbtn` inherits 16px body text, which is the in-a-button size. A
+   chrome control standing on its own is 18. Both buttons in the bar take it,
+   so the hamburger and the search affordance are the same weight either side
+   of the mark rather than one being visibly smaller than the other. */
+.lq-topbar .lq-iconbtn {
+  font-size: var(--text-lg);
+}
+
+/* The leading control, and nothing else has to move: `.lq-topbar` is a flex
+   row, `.lq-topbar__mark` already carries `margin-inline-end:auto` and
+   `.lq-topbar__end` already carries `margin-inline-start:auto`, so inserting
+   the trigger as the first child reads hamburger · mark · search with no new
+   layout rule. Pulled back by half a gutter step so the GLYPH lines up with
+   the page gutter instead of the button's invisible 44px box. */
+.lq-topbar__menu {
+  margin-inline-start: calc(var(--space-2) * -1);
+}
+/* And the same pull at the other edge, or the bar is lopsided: two 44px boxes
+   with only one of them pulled leaves the search glyph 8px further inside its
+   gutter than the hamburger is inside its own. */
+.lq-topbar__end {
+  margin-inline-end: calc(var(--space-2) * -1);
+}
+
+/* ── The scrim ────────────────────────────────────────────────────────────── */
+/* NOT `.lq-scrim`. That class is the brands mega panel's, and components.css
+   hides it entirely under 720px — reusing it would have made this scrim
+   invisible on exactly the widths it exists for.
+
+   Above the tab bar and the action bar, which is why it is on --z-sheet (60)
+   rather than --z-scrim (35): both of those are stuck to the block end of a
+   phone screen and a scrim that leaves the tab bar tappable is not a scrim. */
+.lq-nav__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease);
+}
+.lq-nav__scrim[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── The drawer ───────────────────────────────────────────────────────────── */
+/* `--nav-side` is the sign of the closed-state transform: the panel is pinned
+   to the inline START, so it hides by moving toward the physical left in LTR
+   and the physical right in RTL. One custom property, one flipped value, and
+   no mirrored rule anywhere. (`--elev-dir` in tokens.css has the same shape and
+   the opposite sign; it is not reused here because it means "which way a shadow
+   falls", and a drawer borrowing it would break the day the elevation changes.)
+
+   `translate` is used rather than `transform` so a press or a hover elsewhere
+   in the cascade cannot clobber the whole transform list.
+
+   A fixed element parked outside the viewport does NOT extend the document's
+   scrollable overflow, so the closed drawer cannot produce the sideways scroll
+   this whole plan exists to remove. */
+.lq-nav {
+  --nav-side: -1;
+
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: calc(var(--z-sheet) + 1);
+  display: flex;
+  flex-direction: column;
+  /* Wide enough for a two-word Arabic row, never wider than the screen, and
+     always leaving a strip of scrim to tap on to get out. */
+  inline-size: min(86vw, 20rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block-start: env(safe-area-inset-top);
+  padding-block-end: env(safe-area-inset-bottom);
+  background: var(--surface-page);
+  border-inline-end: var(--border-width) solid var(--line);
+  translate: calc(100% * var(--nav-side)) 0;
+  pointer-events: none;
+  transition: translate var(--dur-base) var(--ease);
+}
+[dir="rtl"] .lq-nav {
+  --nav-side: 1;
+}
+.lq-nav[data-open="true"] {
+  translate: 0 0;
+  pointer-events: auto;
+}
+
+/* The head mirrors the top bar it was opened from — same height, same gutter,
+   same hairline underneath — so the drawer reads as the bar unfolding rather
+   than as a second surface arriving from somewhere else. */
+.lq-nav__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  min-block-size: var(--bar-height);
+  padding-inline: var(--gutter-phone);
+  border-block-end: var(--border-width) solid var(--line);
+}
+.lq-nav__mark {
+  margin-inline-end: auto;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-display);
+  color: var(--text-title);
+}
+/* Same optical pull as the hamburger, at the other edge. */
+.lq-nav__close {
+  margin-inline-end: calc(var(--space-2) * -1);
+}
+
+.lq-nav__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-block: var(--space-2) var(--space-6);
+}
+
+/* Groups separated by the system's one hairline, not by a wall of whitespace:
+   this is a 320px column and the space is worth more to the rows. */
+.lq-nav__sec {
+  display: flex;
+  flex-direction: column;
+}
+.lq-nav__sec + .lq-nav__sec {
+  margin-block-start: var(--space-2);
+  padding-block-start: var(--space-2);
+  border-block-start: var(--border-width) solid var(--line);
+}
+.lq-nav__cap {
+  padding: var(--space-2) var(--gutter-phone) var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+}
+
+/* A destination. 44px floor, and the padding is what gets it there rather than
+   a fixed height, so a shop name that wraps to two lines grows the row instead
+   of spilling out of it. */
+.lq-nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--tap-min);
+  padding-inline: var(--gutter-phone);
+  padding-block: var(--space-2);
+  color: var(--text-title);
+  font-size: var(--text-base);
+  font-weight: var(--weight-light);
+  transition: background var(--dur-fast) var(--ease);
+}
+.lq-nav__link:hover,
+.lq-nav__link:active {
+  background: var(--raise);
+}
+/* The route you are already on, marked the same way the tab bar marks it. */
+.lq-nav__link[aria-current="page"] {
+  color: var(--brand);
+  font-weight: var(--weight-regular);
+}
+.lq-nav__link .lq-icon {
+  flex: none;
+  font-size: var(--text-lg);
+  color: var(--text-muted);
+}
+.lq-nav__link[aria-current="page"] .lq-icon {
+  color: var(--brand);
+}
+
+/* The footer's six links. Quieter than the destinations above and with no
+   icons — they are read, not scanned — but still on the 44px tap floor,
+   because this is a phone in daylight and not a mouse. */
+.lq-nav__more {
+  display: flex;
+  flex-direction: column;
+}
+.lq-nav__more a {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--tap-min);
+  padding-inline: var(--gutter-phone);
+  padding-block: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-light);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.lq-nav__more a:hover,
+.lq-nav__more a:active {
+  background: var(--raise);
+  color: var(--text-title);
+}
+
+/* The language row. Not a link, so it is laid out as a label and a control
+   rather than as another row that navigates. */
+/* Compounded, so it outranks the `.lq-nav__sec + .lq-nav__sec` rule above
+   rather than losing its block padding to it. */
+.lq-nav__sec.lq-nav__lang {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-inline: var(--gutter-phone);
+  padding-block: var(--space-3);
+}
+.lq-nav__lang > span {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+/* `.lq-lang` was drawn for a desktop header at 36px. On a phone every button
+   is on the tap floor. Scoped to the drawer, so the header keeps its 36. */
+.lq-nav__lang .lq-lang button {
+  min-block-size: var(--tap-min);
+}

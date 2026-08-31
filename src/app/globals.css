@@ -2,6 +2,9 @@
 @import "./tokens.css";
 @import "./icons.css";
 @import "./components.css";
+/* LAST, so the phone chrome layer can refine a class components.css already
+   set without reaching for !important. Nothing in it applies above 720px. */
+@import "./mobile-chrome.css";
 
 /* ==========================================================================
    Loqal storefront — the base layer.

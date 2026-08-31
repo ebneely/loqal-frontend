@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { useBagCount } from "@/lib/cart";
 import { useLocale } from "@/lib/locale-context";
 import { BrandsMenu } from "@/components/brands-menu";
+import { NavDrawer } from "@/components/nav-drawer";
 import { SiteFooter } from "@/components/site-footer";
 import { LocaleSwitch } from "@/components/locale-switch";
 import { Reveal } from "@/components/reveal";
@@ -21,9 +23,11 @@ import { Wordmark } from "@/components/wordmark";
  * lays out like a phone. Nothing here reads the viewport and nothing branches
  * on width in JS.
  *
- *   Phone    56px bar with the mark and a search affordance, and the five-slot
- *            tab bar at the bottom. No footer: a dark 400px block above a fixed
- *            tab bar is a dead end, and `/account` carries those links.
+ *   Phone    56px bar with a hamburger, the mark and a search affordance; the
+ *            five-slot tab bar at the bottom; and a drawer behind the hamburger
+ *            for everything the five slots cannot carry. No footer: a dark
+ *            400px block above a fixed tab bar is a dead end, and the drawer
+ *            carries the footer's links.
  *   Desktop  the utility strip, a sticky header with the mark, a live search
  *            field and the tools, the brands mega-menu, and the footer. No tab
  *            bar — five buttons pinned to the bottom of a 1080px window with
@@ -33,19 +37,39 @@ import { Wordmark } from "@/components/wordmark";
  * container query. That is deliberate: branching in JS would need the width,
  * which the server does not have, and would flash the wrong chrome on hydration.
  *
- * WHY THE TWO NAVIGATIONS DIFFER, and why they still agree: the phone tab bar
- * is the five destinations, and the desktop header is the same five plus the
- * brands mega-menu. `design/`'s header carried only الأقسام, المحلات and السلة,
- * which leaves a signed-in shopper no way to reach their own orders above
- * 720px. Every destination is reachable at every width.
+ * WHY THE TWO NAVIGATIONS DIFFER, and why they still agree: the phone carries
+ * five tabs plus a drawer, and the desktop header carries the same destinations
+ * plus the brands mega-menu. `design/`'s header carried only الأقسام, المحلات
+ * and السلة, which leaves a signed-in shopper no way to reach their own orders
+ * above 720px. Every destination is reachable at every width.
  */
 
+/**
+ * FIVE SLOTS, and the two that changed are the whole argument.
+ *
+ * Seven does not fit: at 390px each slot is ~50px and the labels — which are
+ * always visible here, on purpose — stop being readable. So the bar carries the
+ * five things a shop is for and the other two move somewhere that suits them
+ * better rather than being deleted.
+ *
+ *   OUT, Search   it already has a permanent affordance in the top bar, one tap
+ *                 away on every screen, so a slot of its own bought nothing.
+ *   OUT, Account  a preference-and-history destination visited deliberately and
+ *                 rarely, which is exactly what a hamburger drawer is for.
+ *   IN, Products  the two things a marketplace is for were both missing from
+ *   IN, Shops     the bar. Products lands on `/categories`, which IS the
+ *                 browse-the-catalogue route — there is no `/products` in
+ *                 `src/app` and a tab pointing at a 404 is worse than no tab.
+ *
+ * Every one of these hrefs is a real route: `/`, `/categories`, `/shops`,
+ * `/bag`, `/orders`. Check `src/app` before adding a sixth.
+ */
 const TABS = [
   { href: "/", icon: "house", ar: "الرئيسية", en: "Home" },
-  { href: "/search", icon: "search", ar: "البحث", en: "Search" },
+  { href: "/categories", icon: "shirt", ar: "المنتجات", en: "Products" },
+  { href: "/shops", icon: "store", ar: "المحلات", en: "Shops" },
   { href: "/bag", icon: "shopping-bag", ar: "السلة", en: "Bag" },
   { href: "/orders", icon: "package", ar: "أوردراتي", en: "Orders" },
-  { href: "/account", icon: "user", ar: "حسابي", en: "Account" },
 ] as const;
 
 /**
@@ -83,6 +107,22 @@ export function Shell({
   const label = (tab: (typeof TABS)[number]) => (locale === "ar" ? tab.ar : tab.en);
   /** The search route owns a real input; the chrome must not add a second. */
   const onSearch = pathname.startsWith("/search");
+
+  /**
+   * The drawer's state lives here rather than inside `NavDrawer`, because the
+   * trigger and the panel cannot be siblings: the button belongs in the top bar
+   * for layout and tab order, and the panel has to escape it entirely — see the
+   * containing-block note in nav-drawer.tsx.
+   *
+   * NOTHING HERE READS THE VIEWPORT. The drawer is unreachable above 720px
+   * because the bar the trigger sits in is hidden there by the container query,
+   * not because any JS measured a width.
+   */
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  /** Passed to the drawer so its rows light the same way the tabs do. */
+  const activeHere = useCallback((href: string) => isActive(pathname, href), [pathname]);
 
   return (
     <div className="lq-shell">
@@ -159,6 +199,23 @@ export function Shell({
 
       {/* ── Phone ───────────────────────────────────────────────────────── */}
       <header className="lq-topbar">
+        {/* THE LEADING CONTROL, before the mark and before any title. Every
+            destination that is not one of the five tabs is behind it, so it is
+            the first thing in the bar and the first thing in the tab order.
+            It needs no width rule of its own: `.lq-topbar` is hidden above
+            720px, and the hamburger goes with it. */}
+        <button
+          ref={menuRef}
+          type="button"
+          className="lq-iconbtn lq-topbar__menu"
+          onClick={() => setMenuOpen(true)}
+          aria-label={t("القائمة", "Menu")}
+          aria-expanded={menuOpen}
+          aria-haspopup="dialog"
+        >
+          <span className="lq-icon" data-icon="menu" aria-hidden="true" />
+        </button>
+
         {title ? (
           <span className="lq-topbar__title">{title}</span>
         ) : (
@@ -181,6 +238,17 @@ export function Shell({
           </Link>
         )}
       </header>
+
+      {/* A SIBLING of the bar, never a child of it. It portals itself out to
+          `document.body` from here; rendering it inside `.lq-topbar` would put
+          a fixed panel inside a `backdrop-filter`ed containing block, which is
+          the bug brands-menu.tsx documents at length. */}
+      <NavDrawer
+        open={menuOpen}
+        onClose={closeMenu}
+        triggerRef={menuRef}
+        isActive={activeHere}
+      />
 
       <main style={{ flex: 1 }}>{children}</main>
 
