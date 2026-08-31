@@ -30,3 +30,7 @@ Thumbs.db
 
 .vercel
 .env*
+
+# Agent worktrees. A full duplicate of this repo lands here; it is tooling
+# scratch, not project files, and must never be committed into itself.
+.claude/
