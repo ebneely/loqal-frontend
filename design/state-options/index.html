@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dead-end state — four candidates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200..700&family=Source+Code+Pro:wght@400..800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../src/app/tokens.css" />
+    <link rel="stylesheet" href="shell.css" />
+    <style>
+      body {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        block-size: 100svh;
+        background: var(--surface-sunken, #e4e1d9);
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        flex-wrap: wrap;
+        padding: var(--space-4) var(--gutter-md);
+        border-block-end: var(--border-width) solid var(--line-hair);
+        background: var(--paper);
+      }
+      .bar h1 {
+        margin: 0 var(--space-4) 0 0;
+        font-size: var(--text-sm);
+        font-weight: var(--weight-medium);
+        color: var(--text-title);
+      }
+      .tabs {
+        display: flex;
+        gap: var(--border-width);
+        border: var(--border-width) solid var(--line-hair);
+        background: var(--line-hair);
+        border-radius: var(--radius-md);
+        overflow: clip;
+      }
+      .tabs button {
+        min-block-size: 40px;
+        padding-inline: var(--space-4);
+        border: 0;
+        background: var(--paper);
+        color: var(--ink-2);
+        font: inherit;
+        font-size: var(--text-sm);
+        cursor: pointer;
+        transition: background var(--dur-fast) var(--ease);
+      }
+      .tabs button:hover {
+        background: var(--accent);
+      }
+      .tabs button[aria-selected="true"] {
+        background: var(--green);
+        color: var(--text-on-brand);
+      }
+      .tabs button:focus-visible {
+        outline: var(--focus-width) solid var(--green);
+        outline-offset: -3px;
+      }
+      .bar__end {
+        margin-inline-start: auto;
+        display: flex;
+        gap: var(--space-3);
+      }
+      .ghost {
+        min-block-size: 40px;
+        padding-inline: var(--space-4);
+        border: var(--border-width) solid var(--line-strong);
+        border-radius: var(--radius-md);
+        background: var(--surface-card);
+        color: var(--text-title);
+        font: inherit;
+        font-size: var(--text-sm);
+        cursor: pointer;
+      }
+      .ghost[aria-pressed="true"] {
+        border-color: var(--green-line);
+        background: var(--green-soft);
+        color: var(--state-good-fg);
+      }
+
+      .frame {
+        display: grid;
+        place-items: start center;
+        padding: var(--space-6) var(--gutter-md);
+        overflow: auto;
+      }
+      iframe {
+        inline-size: 100%;
+        max-inline-size: 100%;
+        block-size: 100%;
+        min-block-size: 900px;
+        border: var(--border-width) solid var(--line-hair);
+        border-radius: var(--radius-lg);
+        background: var(--paper);
+        box-shadow: var(--shadow-xs);
+      }
+      body[data-phone="true"] iframe {
+        max-inline-size: 390px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <h1>Dead end — four candidates</h1>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="bar__end">
+        <button class="ghost" id="phone" type="button" aria-pressed="false">
+          390px
+        </button>
+        <button class="ghost" id="replay" type="button">Replay</button>
+      </div>
+    </div>
+
+    <div class="frame">
+      <iframe id="view" title="Candidate" src="a-search.html"></iframe>
+    </div>
+
+    <script>
+      const OPTIONS = [
+        ["A · Not a dead end", "a-search.html"],
+        ["B · The way on", "b-teach.html"],
+        ["C · The shop window", "c-window.html"],
+        ["D · WebGL rail", "d-webgl.html"],
+      ];
+
+      const tabs = document.getElementById("tabs");
+      const view = document.getElementById("view");
+      let current = 0;
+
+      tabs.innerHTML = OPTIONS.map(
+        ([label], i) =>
+          `<button role="tab" type="button" aria-selected="${i === 0}" data-i="${i}">${label}</button>`,
+      ).join("");
+
+      const show = (i) => {
+        current = i;
+        view.src = OPTIONS[i][1];
+        for (const b of tabs.children)
+          b.ariaSelected = String(+b.dataset.i === i);
+        location.hash = OPTIONS[i][1].split("-")[0];
+      };
+
+      tabs.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (b) show(+b.dataset.i);
+      });
+      document
+        .getElementById("replay")
+        .addEventListener("click", () => show(current));
+      document.getElementById("phone").addEventListener("click", (e) => {
+        const on = e.currentTarget.ariaPressed !== "true";
+        e.currentTarget.ariaPressed = String(on);
+        document.body.dataset.phone = String(on);
+      });
+
+      const from = OPTIONS.findIndex(([, f]) =>
+        f.startsWith(location.hash.slice(1)),
+      );
+      if (location.hash && from >= 0) show(from);
+    </script>
+  </body>
+</html>

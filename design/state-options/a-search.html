@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A · The shelf is not empty</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200..700&family=Source+Code+Pro:wght@400..800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../src/app/tokens.css" />
+    <link rel="stylesheet" href="shell.css" />
+    <style>
+      /* ── The notice ─────────────────────────────────────────────────────────
+         Not a banner and not an alert. One hairline row in the reading column,
+         the same weight as the result count it replaces, because what happened
+         is a smaller fact than the eight bags underneath it. */
+      .notice {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: var(--space-4);
+        padding: var(--space-4) var(--space-5);
+        border: var(--border-width) solid var(--line-hair);
+        border-radius: var(--radius-lg);
+        background: var(--raise);
+        margin-block-end: var(--space-6);
+      }
+      .notice__ic {
+        inline-size: 18px;
+        block-size: 18px;
+        color: var(--ink-2);
+      }
+      .notice__say {
+        font-size: var(--text-sm);
+        font-weight: var(--weight-light);
+        color: var(--ink-2);
+      }
+      .notice__say b {
+        font-weight: var(--weight-medium);
+        color: var(--text-title);
+      }
+      .notice button {
+        min-block-size: 36px;
+        padding-inline: var(--space-4);
+        border: var(--border-width) solid var(--line-strong);
+        border-radius: var(--radius-md);
+        background: var(--surface-card);
+        color: var(--text-title);
+        font: inherit;
+        font-size: var(--text-sm);
+        cursor: pointer;
+      }
+      @container (max-width: 560px) {
+        .notice {
+          grid-template-columns: auto 1fr;
+        }
+        .notice button {
+          grid-column: 2;
+          justify-self: start;
+        }
+      }
+
+      .count {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-4);
+        padding-block-end: var(--space-4);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-light);
+        color: var(--text-muted);
+      }
+      .count b {
+        font-family: var(--numeric);
+        font-weight: var(--weight-figure);
+        font-variant-numeric: tabular-nums lining-nums;
+        color: var(--text-title);
+      }
+
+      /* Shared-hairline grid: one 1px background showing through 1px gaps. */
+      .pgrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: var(--border-width);
+        border: var(--border-width) solid var(--line-hair);
+        background: var(--line-hair);
+      }
+      .card {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--paper);
+        text-decoration: none;
+        color: inherit;
+        transition: background var(--dur-fast) var(--ease);
+      }
+      .card:hover {
+        background: var(--accent);
+      }
+      .well {
+        display: grid;
+        place-items: center;
+        aspect-ratio: var(--ratio-garment);
+        border: var(--border-width) solid var(--line-hair);
+        background: var(--field);
+      }
+      .well svg {
+        inline-size: 62%;
+        block-size: 62%;
+      }
+      .card__name {
+        font-size: var(--text-sm);
+        line-height: var(--leading-snug);
+        color: var(--text-title);
+      }
+      .card__shop {
+        font-size: var(--text-xs);
+        font-weight: var(--weight-light);
+        color: var(--text-muted);
+      }
+      .card__price {
+        font-family: var(--numeric);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-figure);
+        font-variant-numeric: tabular-nums lining-nums;
+        color: var(--price);
+      }
+
+      /* Results are already visible; the class only enriches the arrival. */
+      .card {
+        animation: rise var(--dur-slow) var(--slow) both;
+        animation-delay: calc(var(--i) * 40ms);
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          translate: 0 10px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="util">
+      <div class="wrap" style="padding: 0">
+        <span>Same-day delivery — Cairo &amp; Giza</span
+        ><span>Cash on delivery</span><span>14-day returns</span>
+      </div>
+    </div>
+
+    <header class="head">
+      <div class="wrap">
+        <span class="mark">loq<b>aaa</b>l</span>
+        <nav class="nav">
+          <span>Categories</span><span>Shops</span><span>Orders</span
+          ><span>Account</span><span>Bag</span>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap opt" style="container-type: inline-size">
+      <div class="search">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M16.5 16.5 21 21" />
+        </svg>
+        <span>Search for a piece or a shop…</span>
+      </div>
+
+      <div class="chipline">
+        <span>Category</span>
+        <button class="chip" type="button">
+          Bags <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <div class="notice" role="status">
+        <svg class="notice__ic art" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5.5" />
+          <path d="M12 7.6v.9" />
+        </svg>
+        <p class="notice__say">
+          Showing everything called <b>“Bags”</b>. This shop server matches on
+          the name, so a piece filed under Bags without the word in its title is
+          not here.
+        </p>
+        <button type="button">Browse the shelf instead</button>
+      </div>
+
+      <div class="count">
+        <p><b>8</b> pieces from <b>5</b> shops</p>
+        <p>Sort · Best match</p>
+      </div>
+
+      <div class="pgrid" id="grid"></div>
+
+      <p class="opt__note">
+        <b>A — it is not a dead end.</b> The 400 is caught, the category name is
+        re-run as the text query the server does answer, and the shopper gets
+        bags. The failure becomes one hairline row above real results instead of
+        a screen. Costs: the match is by name, so it is narrower than a real
+        category filter, and the notice has to say so without teaching her the
+        word “filter”. Nothing new is drawn and nothing new is loaded.
+      </p>
+    </main>
+
+    <script type="module">
+      import { PRODUCTS, egp } from "./mock.js";
+      import { garmentSvg } from "./garments.js";
+
+      document.getElementById("grid").innerHTML = PRODUCTS.map(
+        (p, i) => `
+        <a class="card" href="#" style="--i:${i}">
+          <span class="well">${garmentSvg(p.kind, "art")}</span>
+          <span class="card__name">${p.name}</span>
+          <span class="card__shop">${p.shop} · ${p.area}</span>
+          <span class="card__price">${egp(p.price)}</span>
+        </a>`,
+      ).join("");
+    </script>
+  </body>
+</html>
