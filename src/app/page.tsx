@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { fetchBrands, fetchBrandProducts, fetchCategories } from "@/lib/catalog";
+import { fetchBrands, fetchBrandProducts } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { Hero } from "@/components/hero";
 import { ShopCard } from "@/components/shop-card";
 import { ProductCard } from "@/components/product-card";
-import { Garment, categoryGarment } from "@/components/garment";
 import { EmptyState } from "@/components/state";
 import { ReloadButton } from "@/components/reload";
 
@@ -43,24 +42,21 @@ export default async function HomePage() {
   const locale = await getLocale();
 
   /**
-   * Both reads in parallel. Sequential awaits would serialise two independent
-   * queries and add the slower one's latency to the faster one for nothing —
-   * and this is the page a first-time visitor lands on.
+   * One read now, where there were two: the category list moved to the header,
+   * which fetches it itself and caches it under the same key.
    *
-   * `allSettled`, not `all`, so a failing category list does not blank the shop
-   * rail. But the failure is CARRIED, not swallowed: an earlier version mapped
-   * a rejected promise straight to `[]`, so an unreachable API rendered the
-   * "no shops yet" empty state — a total outage and a brand-new marketplace
-   * looked identical, on the one screen where the difference matters most.
+   * THE FAILURE IS CARRIED, NOT SWALLOWED. An earlier version mapped a rejected
+   * read straight to `[]`, so an unreachable API rendered the "no shops yet"
+   * empty state — a total outage and a brand-new marketplace looked identical,
+   * on the one screen where the difference matters most.
    */
-  const [categories, brands] = await Promise.allSettled([
-    fetchCategories(),
-    fetchBrands(1, 24),
-  ]);
+  const page = await fetchBrands(1, 24).then(
+    (result) => result.items,
+    () => null,
+  );
 
-  const cats = categories.status === "fulfilled" ? categories.value : [];
-  const shops = brands.status === "fulfilled" ? brands.value.items : [];
-  const shopsFailed = brands.status === "rejected";
+  const shops = page ?? [];
+  const shopsFailed = page === null;
 
   /**
    * The pieces, after the shops — a shopper who has just read four shop names
@@ -78,14 +74,18 @@ export default async function HomePage() {
    * round trip, against the fetch cache rather than the database.
    */
   const shopPicks = await Promise.allSettled(
-    shops.slice(0, 4).map((shop) => fetchBrandProducts(shop.slug, { page: 1, perPage: 4 }))
+    shops
+      .slice(0, 4)
+      .map((shop) => fetchBrandProducts(shop.slug, { page: 1, perPage: 4 })),
   );
 
   const pieces = shopPicks
     .flatMap((result, index) =>
       result.status === "fulfilled"
-        ? result.value.items.slice(0, 2).map((product) => ({ product, shop: shops[index] }))
-        : []
+        ? result.value.items
+            .slice(0, 2)
+            .map((product) => ({ product, shop: shops[index] }))
+        : [],
     )
     .slice(0, 8);
 
@@ -95,78 +95,12 @@ export default async function HomePage() {
     <Shell>
       <Hero locale={locale} />
 
-      {/* ── الأقسام ─────────────────────────────────────────────────────────
-          A RAIL at every width. This screen is the way in, not the index: the
-          rail says there are more categories than fit and hands the full set to
-          `/categories`, where the same drawings get a whole cell each.
-
-          Rendered only when there are categories — the outage distinction that
-          matters on this screen is the shops one below, which is the section a
-          shopper came for. */}
-      {cats.length > 0 ? (
-        <section className="lq-home__sec" aria-labelledby="home-cats">
-          <div className="lq-band lq-home__head">
-            <div className="lq-sec__head">
-              <div>
-                <h2 className="lq-sec__title" id="home-cats">
-                  {t("الأقسام", "Categories")}
-                </h2>
-                <p className="lq-eyebrow">
-                  {t(
-                    "اتفرّج على الرفوف حسب النوع.",
-                    "Browse the shelves by kind."
-                  )}
-                </p>
-              </div>
-              <Link className="lq-sec__more" href="/categories">
-                {t("كل الأقسام", "All categories")}
-              </Link>
-            </div>
-          </div>
-
-          {/* The same `.lq-tile` the category index uses, laid into a hairline
-              rail instead of a hairline grid. `categoryGarment` looks the
-              drawing up by slug rather than hashing it — a category is not an
-              unknown, and a category keeps the same drawing here and on
-              `/categories`.
-
-              EACH TILE IS A LINK TO ITS SHELF. `/v1/search/products` takes a
-              `category` slug as a filter and no longer requires a typed word,
-              so `/search?category=<slug>` opens the pieces in that category —
-              filter rail, sort and paging included — rather than the empty
-              search box it used to open before the API could answer the
-              question. Filtering by a parent brings its children with it, so a
-              broad tile is a broad shelf and not an empty one. */}
-          <div className="lq-crail lq-band">
-            {cats.map((category, index) => (
-              <div key={category.id}>
-                <Link
-                  href={`/search?category=${encodeURIComponent(category.slug)}`}
-                  className="lq-tile lq-rv"
-                  style={
-                    {
-                      /* Modulo, not the raw index: a rail shows about six cells
-                         at a time, and a straight stagger would leave the
-                         twelfth category sitting visible and unanimated for
-                         three-quarters of a second after it scrolls in. */
-                      "--lq-d": `${(index % 6) * 70}ms`,
-                    } as React.CSSProperties
-                  }
-                >
-                  <span className="lq-tile__art">
-                    <Garment className="lq-garment" kind={categoryGarment(category.slug)} />
-                  </span>
-                  <span className="lq-tile__name" data-bidi>
-                    {category.name[locale] ?? category.name.ar ?? category.name.en}
-                  </span>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* ── المحلات ───────────────────────────────────────────────────────── */}
+      {/* ── المحلات ─────────────────────────────────────────────────────────
+          THE FIRST SECTION UNDER THE HERO, and it was not. A rail of category
+          tiles sat here, which spent the top of the landing screen on a
+          taxonomy — and a shopper does not arrive wanting to be shown how the
+          catalogue is filed. The shelves are in the header now, on every page
+          rather than on this one, so this screen opens on the shops. */}
       <section className="lq-home__sec" aria-labelledby="home-shops">
         <div className="lq-band lq-home__head">
           <div className="lq-sec__head">
@@ -177,7 +111,7 @@ export default async function HomePage() {
               <p className="lq-eyebrow">
                 {t(
                   "محلات ليها عناوين حقيقية تقدر تعدّي عليها.",
-                  "Shops with real addresses you could walk to."
+                  "Shops with real addresses you could walk to.",
                 )}
               </p>
             </div>
@@ -205,13 +139,15 @@ export default async function HomePage() {
               seed="home-shops-down"
               title={t(
                 "مش قادرين نوصل للمحلات دلوقتي",
-                "We cannot reach the shops right now"
+                "We cannot reach the shops right now",
               )}
               body={t(
                 "المحلات فاتحة، إحنا اللي مش واصلين ليها في اللحظة دي.",
-                "The shops are open — we are the ones who cannot reach them this second."
+                "The shops are open — we are the ones who cannot reach them this second.",
               )}
-              actions={<ReloadButton>{t("حاول تاني", "Try again")}</ReloadButton>}
+              actions={
+                <ReloadButton>{t("حاول تاني", "Try again")}</ReloadButton>
+              }
             />
           </div>
         ) : shops.length === 0 ? (
@@ -223,7 +159,7 @@ export default async function HomePage() {
               title={t("لسه مفيش محل هنا", "No shops here yet")}
               body={t(
                 "المحلات اللي بتوصّل لمنطقتك هتظهر هنا أول ما تفتح.",
-                "Shops that deliver to your area show up here as they open."
+                "Shops that deliver to your area show up here as they open.",
               )}
               actions={
                 <Link className="lq-btn lq-btn--secondary" href="/categories">
@@ -244,14 +180,21 @@ export default async function HomePage() {
              out otherwise at checkout has been lied to by the one screen this
              product asks her to trust. The card renders each of those fields
              the day the API answers it, and not one release before. */
-          <div className="lq-shops lq-band" data-cols={Math.min(shops.length, 4)}>
+          <div
+            className="lq-shops lq-band"
+            data-cols={Math.min(shops.length, 4)}
+          >
             {shops.map((shop, index) => (
               /* The cell, so the card stretches to the tallest in the row: a
                  shop with a one-line description and one with a three-line one
                  would otherwise leave a band of bare paper under the shorter
                  card, inside a frame made of hairlines. */
               <div key={shop.id}>
-                <ShopCard shop={shop} locale={locale} delayMs={(index % 4) * 70} />
+                <ShopCard
+                  shop={shop}
+                  locale={locale}
+                  delayMs={(index % 4) * 70}
+                />
               </div>
             ))}
           </div>
@@ -273,7 +216,7 @@ export default async function HomePage() {
                 <p className="lq-eyebrow">
                   {t(
                     "من رفوف المحلات اللي فوق.",
-                    "From the shelves of the shops above."
+                    "From the shelves of the shops above.",
                   )}
                 </p>
               </div>
@@ -283,7 +226,10 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="lq-pgrid lq-band lq-pgrid--home" data-cols={Math.min(pieces.length, 4)}>
+          <div
+            className="lq-pgrid lq-band lq-pgrid--home"
+            data-cols={Math.min(pieces.length, 4)}
+          >
             {pieces.map(({ product, shop }, index) => (
               <ProductCard
                 key={product.id}
@@ -297,7 +243,6 @@ export default async function HomePage() {
           </div>
         </section>
       ) : null}
-
     </Shell>
   );
 }

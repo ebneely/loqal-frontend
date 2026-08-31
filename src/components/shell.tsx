@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { useBagCount } from "@/lib/cart";
 import { useLocale } from "@/lib/locale-context";
 import { BrandsMenu } from "@/components/brands-menu";
+import { CategoriesMenu } from "@/components/categories-menu";
 import { NavDrawer } from "@/components/nav-drawer";
 import { SiteFooter } from "@/components/site-footer";
 import { LocaleSwitch } from "@/components/locale-switch";
@@ -80,7 +81,10 @@ const TABS = [
  * components.css. It carries Arabic.
  */
 const CLAIMS = [
-  { ar: "توصيل في نفس اليوم — القاهرة والجيزة", en: "Same-day delivery — Cairo & Giza" },
+  {
+    ar: "توصيل في نفس اليوم — القاهرة والجيزة",
+    en: "Same-day delivery — Cairo & Giza",
+  },
   { ar: "الدفع عند الاستلام", en: "Cash on delivery" },
   { ar: "استبدال خلال 14 يوم", en: "14-day returns" },
 ] as const;
@@ -104,7 +108,8 @@ export function Shell({
   const pathname = usePathname();
   const bagCount = useBagCount();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
-  const label = (tab: (typeof TABS)[number]) => (locale === "ar" ? tab.ar : tab.en);
+  const label = (tab: (typeof TABS)[number]) =>
+    locale === "ar" ? tab.ar : tab.en;
   /** The search route owns a real input; the chrome must not add a second. */
   const onSearch = pathname.startsWith("/search");
 
@@ -122,7 +127,10 @@ export function Shell({
   const menuRef = useRef<HTMLButtonElement>(null);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   /** Passed to the drawer so its rows light the same way the tabs do. */
-  const activeHere = useCallback((href: string) => isActive(pathname, href), [pathname]);
+  const activeHere = useCallback(
+    (href: string) => isActive(pathname, href),
+    [pathname],
+  );
 
   return (
     <div className="lq-shell">
@@ -172,21 +180,35 @@ export function Shell({
           )}
 
           <nav className="lq-tools" aria-label={t("التنقل", "Navigation")}>
-            <Link href="/categories" aria-current={isActive(pathname, "/categories") ? "page" : undefined}>
-              {t("الأقسام", "Categories")}
-            </Link>
-
+            {/* Both are panels, and that is the point: الأقسام used to be a
+                plain link sitting beside a menu, which made two neighbours in
+                one row behave differently for no reason a shopper could see.
+                Each still points at its real route for a middle-click. */}
+            <CategoriesMenu />
             <BrandsMenu />
 
-            <Link href="/orders" aria-current={isActive(pathname, "/orders") ? "page" : undefined}>
+            <Link
+              href="/orders"
+              aria-current={isActive(pathname, "/orders") ? "page" : undefined}
+            >
               {t("أوردراتي", "Orders")}
             </Link>
-            <Link href="/account" aria-current={isActive(pathname, "/account") ? "page" : undefined}>
+            <Link
+              href="/account"
+              aria-current={isActive(pathname, "/account") ? "page" : undefined}
+            >
               {t("حسابي", "Account")}
             </Link>
-            <Link href="/bag" aria-current={isActive(pathname, "/bag") ? "page" : undefined}>
+            <Link
+              href="/bag"
+              aria-current={isActive(pathname, "/bag") ? "page" : undefined}
+            >
               {t("السلة", "Bag")}
-              {bagCount > 0 ? <span className="lq-cartn" data-num>{bagCount}</span> : null}
+              {bagCount > 0 ? (
+                <span className="lq-cartn" data-num>
+                  {bagCount}
+                </span>
+              ) : null}
             </Link>
 
             {/* Last in the row: a preference, not a destination. Desktop only —
@@ -265,7 +287,11 @@ export function Shell({
               aria-current={active ? "page" : undefined}
             >
               <span className="lq-tab__wrap">
-                <span className="lq-icon" data-icon={tab.icon} aria-hidden="true" />
+                <span
+                  className="lq-icon"
+                  data-icon={tab.icon}
+                  aria-hidden="true"
+                />
                 {tab.href === "/bag" && bagCount > 0 ? (
                   <span className="lq-cartn lq-tab__badge" data-num>
                     {bagCount}
