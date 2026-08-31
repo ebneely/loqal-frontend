@@ -77,58 +77,73 @@ export function CategoriesMenu() {
       label={locale === "ar" ? "الأقسام" : "Categories"}
       wide
     >
-      <div className="lq-mega__az" data-empty={groups.length === 0}>
-        {groups.length === 0 ? (
-          isPending ? (
-            <div className="lq-mega__wait" aria-hidden="true">
-              {[0, 1, 2, 3].map((i) => (
-                <span
-                  className="lq-skel"
-                  key={i}
-                  style={{ blockSize: "14px" }}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="lq-hint" role={isError ? "alert" : undefined}>
-              {isError
-                ? locale === "ar"
-                  ? "مش قادرين نوصل للأقسام دلوقتي."
-                  : "We cannot reach the categories right now."
-                : locale === "ar"
-                  ? "الأقسام هتظهر هنا أول ما تتفتح."
-                  : "Shelves show up here as they open."}
-            </p>
-          )
-        ) : null}
-
-        {groups.map(({ root, children }) => (
-          <div className="lq-mega__grp lq-catgrp" key={root.id}>
-            {/* The parent is a shelf too, and filtering by it brings its
-                children with it — so the heading is a link, not a label. */}
-            <Link className="lq-catgrp__head" href={shelf(root.slug)}>
-              <span className="lq-catgrp__art" aria-hidden="true">
-                <Garment
-                  className="lq-garment"
-                  kind={categoryGarment(root.slug)}
-                />
+      {groups.length === 0 ? (
+        isPending ? (
+          /* The tile's own shape, so nothing moves when the shelves land. */
+          <div className="lq-cats" aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <span className="lq-cat" key={i}>
+                <span className="lq-cat__main">
+                  <span className="lq-skel lq-cat__art" />
+                  <span
+                    className="lq-skel"
+                    style={{ blockSize: "13px", inlineSize: "62%" }}
+                  />
+                </span>
               </span>
-              <span data-bidi>{label(root)}</span>
-            </Link>
-            {children.map((child) => (
-              <Link key={child.id} href={shelf(child.slug)} data-bidi>
-                {label(child)}
-              </Link>
             ))}
           </div>
-        ))}
+        ) : (
+          <p className="lq-hint" role={isError ? "alert" : undefined}>
+            {isError
+              ? locale === "ar"
+                ? "مش قادرين نوصل للأقسام دلوقتي."
+                : "We cannot reach the categories right now."
+              : locale === "ar"
+                ? "الأقسام هتظهر هنا أول ما تتفتح."
+                : "Shelves show up here as they open."}
+          </p>
+        )
+      ) : (
+        <>
+          <div className="lq-cats">
+            {groups.map(({ root, children }) => (
+              <div className="lq-cat" key={root.id}>
+                {/* The drawing is the tile, not an icon beside a word. This
+                    panel is the way into the catalogue on every screen, and a
+                    32px glyph in a box reads as a bullet point — the same
+                    garment at tile size is what `/categories` shows and what
+                    makes a shelf recognisable before it is read. */}
+                <Link className="lq-cat__main" href={shelf(root.slug)}>
+                  <span className="lq-cat__art" aria-hidden="true">
+                    <Garment className="lq-garment" kind={categoryGarment(root.slug)} />
+                  </span>
+                  <span className="lq-cat__name" data-bidi>
+                    {label(root)}
+                  </span>
+                </Link>
+                {/* Only when there are any. Five headings with nothing under
+                    them is what a column-per-parent layout gave this taxonomy,
+                    which is five roots deep and one child wide. */}
+                {children.length > 0 ? (
+                  <span className="lq-cat__kids">
+                    {children.map((child) => (
+                      <Link key={child.id} href={shelf(child.slug)} data-bidi>
+                        {label(child)}
+                      </Link>
+                    ))}
+                  </span>
+                ) : null}
+              </div>
+            ))}
+          </div>
 
-        {groups.length > 0 ? (
           <Link className="lq-mega__all" href="/categories">
             {locale === "ar" ? "كل الأقسام" : "All categories"}
+            <span className="lq-icon" data-icon="chevron-right" aria-hidden="true" />
           </Link>
-        ) : null}
-      </div>
+        </>
+      )}
     </MegaMenu>
   );
 }
