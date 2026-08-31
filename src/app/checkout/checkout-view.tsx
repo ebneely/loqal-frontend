@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 import type { CartBrand, CartSummary } from "@loqal/contracts/cart.contract";
@@ -198,6 +198,35 @@ export function CheckoutView() {
   const [leaving, setLeaving] = useState(false);
   const busy = create.isPending || paymentLink.isPending || leaving;
 
+  /**
+   * Focus and scroll to the FIRST invalid field after a refused submit.
+   *
+   * The button sits under nine fields, so on a phone the field that refused
+   * can be screens away and a press that silently does nothing reads as a
+   * broken button. A counter rather than the errors object, so a second press
+   * with the same mistakes still moves the viewport — that press is the
+   * shopper asking "where?" again.
+   *
+   * An effect, because the `aria-invalid` marks only exist in the DOM after
+   * the re-render `setFieldErrors` triggers. The selector's three arms are the
+   * three shapes an error takes on this form: a marked input, the governorate
+   * trigger (a button, which cannot carry `aria-invalid` — see
+   * `GovernorateSelect`), and the delivery alert, which marks no control.
+   */
+  const formRef = useRef<HTMLFormElement>(null);
+  const [refusedAt, setRefusedAt] = useState(0);
+  useEffect(() => {
+    if (refusedAt === 0) return;
+    const target = formRef.current?.querySelector<HTMLElement>(
+      '[aria-invalid="true"], .lq-seltrigger[aria-describedby], .lq-hint--error'
+    );
+    if (!target) return;
+    if (target instanceof HTMLInputElement || target instanceof HTMLButtonElement) {
+      target.focus({ preventScroll: true });
+    }
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [refusedAt]);
+
   const title = t("إتمام الأوردر", "Checkout");
 
   if (isPending || sessionPending) {
@@ -339,9 +368,18 @@ export function CheckoutView() {
     /* The phone travels in the URL because the order screen reads the order
        with it — the number plus the phone IS the credential on the anonymous
        lookup, and a URL that carries both is one the shopper can reopen. Both
-       pages are noindex for exactly that reason. */
+       pages are noindex for exactly that reason.
+
+       WHICH phone is the API's decision, not a choice: checkout writes
+       `guestPhone = guest.phone ?? shippingAddress.phone`
+       (`order-checkout.service.ts`) and the lookup matches ONLY that column
+       (`order.repository.ts`'s `findForGuest`). So a guest opens the order
+       with their OWN number — the rider's number opens nothing for them — and
+       a signed-in shopper, who sends no `guest` block, opens it with the
+       delivery phone. Redirecting a guest with `values.phone` was a 404 on
+       their own order the moment the two numbers differed. */
     router.push(
-      `/orders/${encodeURIComponent(result.order.orderNumber)}?phone=${encodeURIComponent(values.phone)}`
+      `/orders/${encodeURIComponent(result.order.orderNumber)}?phone=${encodeURIComponent(anonymous ? values.guestPhone : values.phone)}`
     );
   };
 
@@ -351,7 +389,10 @@ export function CheckoutView() {
 
     const errors = validate();
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      setRefusedAt((tick) => tick + 1);
+      return;
+    }
     if (blocked.length > 0) return;
 
     const body: CreateOrderBody = {
@@ -385,6 +426,7 @@ export function CheckoutView() {
     const parsed = createOrderBodySchema.safeParse(body);
     if (!parsed.success) {
       setFieldErrors({ fullName: true });
+      setRefusedAt((tick) => tick + 1);
       return;
     }
 
@@ -402,7 +444,7 @@ export function CheckoutView() {
 
   return (
     <Shell title={title}>
-      <form method="post" className="lq-wrap lq-pad" onSubmit={submit} noValidate>
+      <form ref={formRef} method="post" className="lq-wrap lq-pad" onSubmit={submit} noValidate>
         <header className="lq-sec">
           <h1 className="lq-phead__title">{title}</h1>
           <p className="lq-prose">
@@ -510,10 +552,17 @@ export function CheckoutView() {
               autoComplete="tel"
               numeric
               placeholder="01000000000"
-              hint={t(
-                "ده كمان الرقم اللي بتفتح بيه الأوردر بعد كده.",
-                "This is also the number that opens the order later."
-              )}
+              /* True only for a signed-in shopper. For a guest the API keys the
+                 lookup to THEIR number (see `land`), and the guest section
+                 above already says so — this claim would contradict it. */
+              hint={
+                anonymous
+                  ? undefined
+                  : t(
+                      "ده كمان الرقم اللي بتفتح بيه الأوردر بعد كده.",
+                      "This is also the number that opens the order later."
+                    )
+              }
             />
 
             <GovernorateSelect
@@ -633,6 +682,18 @@ export function CheckoutView() {
         {create.isError ? <Failure error={create.error} locale={locale} /> : null}
 
         <div className="lq-sec">
+          {/* One summary beside the button, because the button is where the
+              eyes are when a press does nothing — the field that refused can
+              be screens above it on a phone. The per-field lines still carry
+              the specifics; this only says that there ARE some. */}
+          {Object.values(fieldErrors).some(Boolean) ? (
+            <p className="lq-hint lq-hint--error" role="alert">
+              {t(
+                "الأوردر لسه ماتبعتش — راجع الحقول المعلّمة فوق.",
+                "The order was not sent — check the marked fields above."
+              )}
+            </p>
+          ) : null}
           <button
             type="submit"
             className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
