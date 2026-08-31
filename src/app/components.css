@@ -727,7 +727,10 @@ html[data-greeted="1"] .lq-open{display:none}
 
 /* A chip that removes its own filter. The × is decorative — the accessible
    name carries "remove filter", because a lone × announces as nothing useful. */
-.lq-chip[data-removable="true"]{gap:var(--space-2);padding-inline-end:var(--space-2)}
+/* The label and its × sit side by side. `.lq-chip` is an inline-grid whose
+   default row flow stacks them, which put the × on a second line under the
+   word and made the chip a tall box. */
+.lq-chip[data-removable="true"]{grid-auto-flow:column;align-items:center;gap:var(--space-2);padding-inline-end:var(--space-2)}
 .lq-chip[data-removable="true"]:hover{border-color:var(--line-strong);background:var(--raise)}
 
 /* ── A hairline rail ──────────────────────────────────────────────────────── */

@@ -85,26 +85,42 @@
      is a `transform`, and keeping the two on separate properties lets the sway
      be removed without taking the lean with it. */
   rotate: 0deg;
-  animation: lq-sway 6.4s var(--ease-in-out) infinite;
+  animation:
+    lq-sway 6.4s var(--ease-in-out) infinite,
+    lq-drift 19s var(--ease-in-out) infinite;
 }
 /* Out of phase and out of tempo. Three hangers swinging in step is a
    metronome; the negative delays mean they are already scattered on the first
    frame, so nothing lines up even for a moment. */
 .lq-art__hang[data-sway="2"] {
   --sway: 3.2deg;
-  animation-duration: 7.6s;
-  animation-delay: -2.4s;
+  animation-duration: 7.6s, 23s;
+  animation-delay: -2.4s, -9s;
 }
 .lq-art__hang[data-sway="3"] {
   --sway: 1.8deg;
-  animation-duration: 5.6s;
-  animation-delay: -4.1s;
+  animation-duration: 5.6s, 17s;
+  animation-delay: -4.1s, -3s;
 }
 
+/* NOT A SINE. A pendulum driven at constant amplitude is a metronome, and a
+   metronome on a dead-end screen is a loading spinner with extra steps. This
+   is one push that decays over four swings and then gets pushed again, which
+   is what a rail in a shop with a door actually does. */
 @keyframes lq-sway {
   0%, 100% { rotate: 0deg; }
-  25% { rotate: var(--sway); }
-  75% { rotate: calc(var(--sway) * -1); }
+  12% { rotate: var(--sway); }
+  37% { rotate: calc(var(--sway) * -0.82); }
+  60% { rotate: calc(var(--sway) * 0.52); }
+  81% { rotate: calc(var(--sway) * -0.26); }
+}
+
+/* Along the rail, on `translate` so it composes with the swing on `rotate`.
+   Its period is prime to every sway duration, so the drawing never repeats a
+   pose it has already held. */
+@keyframes lq-drift {
+  0%, 100% { translate: calc(var(--wire) * -0.07) 0; }
+  50% { translate: calc(var(--wire) * 0.07) 0; }
 }
 
 .lq-art__wire {
@@ -137,12 +153,16 @@
   /* A beat behind the hanger it hangs from. Cloth has weight and arrives late;
      a garment welded to its hanger reads as a sticker. */
   transform-origin: 50% 12%;
-  animation: lq-drag 6.4s var(--ease-in-out) 260ms infinite;
+  animation: lq-drag 6.4s var(--ease-in-out) 320ms infinite;
 }
+/* The same shape as the swing, a fifth of the size and a beat behind it, so
+   the cloth trails the wire rather than keeping its own time. */
 @keyframes lq-drag {
   0%, 100% { rotate: 0deg; }
-  25% { rotate: -1.4deg; }
-  75% { rotate: 1.4deg; }
+  12% { rotate: -1.5deg; }
+  37% { rotate: 1.2deg; }
+  60% { rotate: -0.8deg; }
+  81% { rotate: 0.4deg; }
 }
 
 /* The lean. A static transform, so it is the drawing and not the animation:
@@ -153,6 +173,7 @@
   transform: rotate(-7deg);
   animation:
     lq-sway 6.4s var(--ease-in-out) 0s infinite,
+    lq-drift 19s var(--ease-in-out) 0s infinite,
     lq-slip 720ms var(--ease-in-out) 200ms both;
 }
 @keyframes lq-slip {
@@ -165,7 +186,7 @@
    That is the whole joke, told in two numbers. */
 .lq-art[data-art="slipped"] .lq-art__hang {
   --sway: 5.5deg;
-  animation-duration: 3.6s;
+  animation-duration: 3.6s, 19s;
 }
 
 /* The bare rail runs three hangers across it instead of one, so it gets a
@@ -213,6 +234,27 @@
   68% { rotate: -20deg; translate: 0 10%; }
   86% { rotate: -13deg; translate: 0 12.5%; }
   100% { rotate: -15deg; translate: 0 12%; opacity: 0.9; }
+}
+
+/* A state with nothing beside it gets the room that buys: half again the
+   drawing, and the whole measure rather than a results column. */
+.lq-state[data-size="page"] .lq-art {
+  --wire: clamp(72px, 12cqi, 108px);
+  inline-size: min(560px, 94%);
+}
+/* Three hangers and two gaps have to fit the 560px the page state gives them,
+   and still fit a 390px phone. That ceiling is lower than the single-hanger
+   one above it for no other reason. */
+.lq-state[data-size="page"] .lq-art[data-art="shelf"] {
+  --wire: clamp(46px, 9cqi, 80px);
+}
+.lq-state[data-size="page"] {
+  min-block-size: min(62svh, 560px);
+  align-content: center;
+  padding-block: clamp(32px, 8svh, 88px);
+}
+.lq-state[data-size="page"] .lq-state__title {
+  font-size: var(--text-xl);
 }
 
 /* ── The state around it ─────────────────────────────────────────────────────

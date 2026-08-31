@@ -152,6 +152,7 @@ export function EmptyState({
   note,
   actions,
   tone = "quiet",
+  size = "inline",
   role,
 }: {
   art: StateArtKind;
@@ -163,11 +164,13 @@ export function EmptyState({
   actions?: React.ReactNode;
   /** `loud` tints the drawing toward the signal colour. Failures only. */
   tone?: "quiet" | "loud";
+  /** `page` is a state that IS the screen, with no rail or column beside it. */
+  size?: "inline" | "page";
   /** `alert` on a failure, so a screen reader hears it without a reload. */
   role?: "alert" | "status";
 }) {
   return (
-    <div className="lq-state" data-tone={tone} role={role}>
+    <div className="lq-state" data-tone={tone} data-size={size} role={role}>
       <StateArt kind={art} seed={seed} />
       <div className="lq-state__say">
         <p className="lq-state__title">{title}</p>
