@@ -54,6 +54,67 @@ export function garmentFor(seed: string): GarmentKind {
   return GARMENT_KINDS[Math.abs(hash) % GARMENT_KINDS.length];
 }
 
+/**
+ * A CATEGORY IS NOT UNKNOWN, and hashing one was a bug.
+ *
+ * `garmentFor` above is right for a product, for the reason its own note gives:
+ * the API never says which garment a product is, so a stable arbitrary drawing
+ * is the honest answer. A category is the opposite case — "أحذية" IS a shoe —
+ * and running it through the same hash put a beanie on عبايات, a sock on شنط
+ * and a t-shirt on أحذية. Every tile on the shelf read as nonsense, on the one
+ * screen whose entire job is to say what these shops sell.
+ *
+ * So categories are looked up, not hashed. Keyed on the SLUG, which is the
+ * stable identifier — the name is bilingual free text an admin can edit, and a
+ * shop renaming a category must not silently change its drawing.
+ *
+ * The five seeded slugs, plus their parent, plus the identity mappings for
+ * every kind that shares a name with a drawing. Anything else falls through to
+ * `garmentFor`, so a category nobody anticipated still renders a garment rather
+ * than a blank cell.
+ */
+const CATEGORY_GARMENTS: Record<string, GarmentKind> = {
+  /* The live five, and the parent above them. */
+  clothes: "tee", // the broadest tile there is; the tee is the plainest drawing
+  /* No abaya drawing exists and one has not been invented. `dress` is the
+     closest silhouette in the set — full length, cut from the shoulder — and a
+     long dress standing in for an abaya is a near miss, where the hash's beanie
+     was simply wrong. It is the first drawing to add when there is one. */
+  abayas: "dress",
+  dresses: "dress",
+  tops: "shirt",
+  bags: "bag",
+  shoes: "shoe",
+
+  /* Identity: a slug that names one of the twelve drawings gets that drawing.
+     Both spellings where Egyptian shops use both. */
+  tees: "tee",
+  "t-shirts": "tee",
+  tshirts: "tee",
+  shirts: "shirt",
+  knitwear: "knit",
+  knits: "knit",
+  sweatshirts: "sweat",
+  hoodies: "sweat",
+  pants: "pants",
+  trousers: "pants",
+  shorts: "shorts",
+  jackets: "jacket",
+  coats: "jacket",
+  outerwear: "jacket",
+  caps: "cap",
+  hats: "cap",
+  socks: "socks",
+};
+
+/**
+ * The drawing for a category tile. Use this wherever a `Category` picks its
+ * art — never `garmentFor` directly, which is the products' function.
+ */
+export function categoryGarment(slug: string): GarmentKind {
+  return CATEGORY_GARMENTS[slug.trim().toLowerCase()] ?? garmentFor(slug);
+}
+
 const SHAPES: Record<GarmentKind, React.ReactNode> = {
   tee: (
     <path d="M40 26 L30 34 L22 52 L34 58 L38 50 L38 96 L82 96 L82 50 L86 58 L98 52 L90 34 L80 26 L70 26 Q60 38 50 26 Z" />

@@ -7,7 +7,9 @@ import { Shell } from "@/components/shell";
 import { Hero } from "@/components/hero";
 import { ShopCard } from "@/components/shop-card";
 import { ProductCard } from "@/components/product-card";
-import { Garment, garmentFor } from "@/components/garment";
+import { Garment, categoryGarment } from "@/components/garment";
+import { EmptyState } from "@/components/state";
+import { ReloadButton } from "@/components/reload";
 
 /**
  * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
@@ -65,11 +67,12 @@ export default async function HomePage() {
    * should be able to see what is actually on their shelves without choosing
    * one first.
    *
-   * FROM THE SHOPS THEMSELVES, not from search: `/v1/search/products` requires
-   * a query of at least one character, so there is no endpoint that lists the
-   * catalogue. Two pieces from each of the first four shops keeps one shop
-   * from filling the row, and `allSettled` keeps one unreachable shop from
-   * emptying it.
+   * FROM THE SHOPS THEMSELVES, not from search. `/v1/search/products` now
+   * takes a category with no query, but it still refuses a request that names
+   * neither — it is a search, not a catalogue dump — and there is no category
+   * that means "everything". Two pieces from each of the first four shops keeps
+   * one shop from filling the row, and `allSettled` keeps one unreachable shop
+   * from emptying it.
    *
    * Sequential after the brand read, because it needs the slugs. One extra
    * round trip, against the fetch cache rather than the database.
@@ -122,20 +125,24 @@ export default async function HomePage() {
           </div>
 
           {/* The same `.lq-tile` the category index uses, laid into a hairline
-              rail instead of a hairline grid. The kind is hashed off the slug,
-              so a category keeps the same drawing here and on `/categories`.
+              rail instead of a hairline grid. `categoryGarment` looks the
+              drawing up by slug rather than hashing it — a category is not an
+              unknown, and a category keeps the same drawing here and on
+              `/categories`.
 
-              NOT LINKS, for the reason spelled out at length on
-              `/categories`: the search API has no category filter and cannot
-              be given one from here, so `/search?category=<slug>` was a tile
-              that opened an empty search box. The rail names what the shops
-              sell; `كل الأقسام` above and the shops below are the ways in that
-              work. */}
+              EACH TILE IS A LINK TO ITS SHELF. `/v1/search/products` takes a
+              `category` slug as a filter and no longer requires a typed word,
+              so `/search?category=<slug>` opens the pieces in that category —
+              filter rail, sort and paging included — rather than the empty
+              search box it used to open before the API could answer the
+              question. Filtering by a parent brings its children with it, so a
+              broad tile is a broad shelf and not an empty one. */}
           <div className="lq-crail lq-band">
             {cats.map((category, index) => (
               <div key={category.id}>
-                <div
-                  className="lq-tile lq-tile--static lq-rv"
+                <Link
+                  href={`/search?category=${encodeURIComponent(category.slug)}`}
+                  className="lq-tile lq-rv"
                   style={
                     {
                       /* Modulo, not the raw index: a rail shows about six cells
@@ -147,12 +154,12 @@ export default async function HomePage() {
                   }
                 >
                   <span className="lq-tile__art">
-                    <Garment className="lq-garment" kind={garmentFor(category.slug)} />
+                    <Garment className="lq-garment" kind={categoryGarment(category.slug)} />
                   </span>
                   <span className="lq-tile__name" data-bidi>
                     {category.name[locale] ?? category.name.ar ?? category.name.en}
                   </span>
-                </div>
+                </Link>
               </div>
             ))}
           </div>
@@ -186,26 +193,44 @@ export default async function HomePage() {
         {shopsFailed ? (
           /*
             The API could not be reached. Says so plainly rather than pretending
-            the marketplace is empty — and names the retry, because this is a
-            page a shopper WILL reload.
+            the marketplace is empty — and carries the retry as a button, because
+            this is a page a shopper WILL reload and an instruction to refresh is
+            a button somebody decided not to build.
           */
           <div className="lq-wrap lq-pad">
-            <p className="lq-hint lq-hint--error" role="alert">
-              {t(
-                "مش قادرين نوصل للمحلات دلوقتي. حدّث الصفحة بعد شوية.",
-                "We cannot reach the shops right now. Reload in a moment."
+            <EmptyState
+              art="crooked"
+              tone="loud"
+              role="alert"
+              seed="home-shops-down"
+              title={t(
+                "مش قادرين نوصل للمحلات دلوقتي",
+                "We cannot reach the shops right now"
               )}
-            </p>
+              body={t(
+                "المحلات فاتحة، إحنا اللي مش واصلين ليها في اللحظة دي.",
+                "The shops are open — we are the ones who cannot reach them this second."
+              )}
+              actions={<ReloadButton>{t("حاول تاني", "Try again")}</ReloadButton>}
+            />
           </div>
         ) : shops.length === 0 ? (
           /* Describes what will appear, not the emptiness. */
           <div className="lq-wrap lq-pad">
-            <p className="lq-hint">
-              {t(
-                "المحلات اللي بتوصّل لمنطقتك هتظهر هنا.",
-                "Shops that deliver to your area show up here."
+            <EmptyState
+              art="shelf"
+              seed="home-shops-empty"
+              title={t("لسه مفيش محل هنا", "No shops here yet")}
+              body={t(
+                "المحلات اللي بتوصّل لمنطقتك هتظهر هنا أول ما تفتح.",
+                "Shops that deliver to your area show up here as they open."
               )}
-            </p>
+              actions={
+                <Link className="lq-btn lq-btn--secondary" href="/categories">
+                  {t("اتفرّج على الأقسام", "Browse the categories")}
+                </Link>
+              }
+            />
           </div>
         ) : (
           /* `ShopCard` — the one shop object, the same card `/shops` renders,

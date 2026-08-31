@@ -2,22 +2,37 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import type {
   SearchFacets,
   SearchResult,
   SearchSort,
 } from "@loqal/contracts/storefront.contract";
-import { searchProducts, queryKeys, type SearchFilters } from "@/lib/catalog";
+import {
+  fetchCategories,
+  searchProducts,
+  queryKeys,
+  type SearchFilters,
+} from "@/lib/catalog";
+import { ApiError } from "@/lib/api";
 import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
 import { Money, MoneyWas } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
+import { EmptyState } from "@/components/state";
 
 /**
  * Search, with the filter rail.
+ *
+ * TWO WAYS IN, AND A SEARCH NEEDS EITHER ONE. A typed word is the obvious one.
+ * The other is `?category=<slug>`, which is what every category tile on `/` and
+ * on `/categories` is now a link to: `/v1/search/products` takes `category` as
+ * a filter beside the brand and size ones, and `query` is optional as long as
+ * one of the two is there. So a tile opens the shelf it draws, with no word
+ * typed and nothing pre-filled in the box — and a shopper can then type on top
+ * of the category rather than replacing it.
  *
  * EVERY CONTROL HERE IS SERVED BY THE API. The rail used to be a paragraph
  * explaining that filters did not exist, because `/v1/search/products` took
@@ -102,7 +117,13 @@ const toggle = (list: string[] | undefined, value: string): string[] => {
     : [...current, value];
 };
 
-export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
+export function SearchView({
+  initialQuery = "",
+  initialCategory = "",
+}: {
+  initialQuery?: string;
+  initialCategory?: string;
+}) {
   const locale = useLocale();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
@@ -113,18 +134,68 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
    * mobile data pays for each round trip.
    */
   const [submitted, setSubmitted] = useState(initialQuery);
-  const [filters, setFilters] = useState<SearchFilters>({});
+  /**
+   * The category from the URL is SEEDED INTO THE FILTERS, not held beside them.
+   * It is one more thing narrowing the same result set, so it belongs in the
+   * same object — which is also what puts it in the query key, and what makes
+   * dropping it a `setFilters` like every other filter rather than a
+   * navigation.
+   */
+  const [filters, setFilters] = useState<SearchFilters>(
+    initialCategory ? { category: initialCategory } : {}
+  );
 
   const patch = (next: Partial<SearchFilters>) =>
     setFilters((current) => ({ ...current, ...next }));
+
+  /** Empty string, never undefined, so the query key is stable. */
+  const category = filters.category ?? "";
+  /** A search needs a word or a shelf. With neither there is nothing to ask. */
+  const asking = submitted.length > 0 || category.length > 0;
+
+  /**
+   * The category's NAME, for the line that says what is being filtered.
+   *
+   * A slug is an address, not a name: a shopper who tapped تيشيرتات must not be
+   * shown `tshirts` as the label for their own tap. `/v1/categories` is already
+   * fetched and cached by the tiles that got them here, so this is a cache hit
+   * in the ordinary case and a cheap list read otherwise — and when it fails or
+   * the slug is not in it, the slug itself is printed rather than nothing.
+   */
+  const categories = useQuery({
+    queryKey: queryKeys.categories(),
+    queryFn: fetchCategories,
+    enabled: category.length > 0,
+  });
+  const categoryName =
+    categories.data
+      ?.filter((entry) => entry.slug === category)
+      .map((entry) => entry.name[locale] ?? entry.name.ar ?? entry.name.en)[0] ?? category;
 
   const results = useInfiniteQuery({
     queryKey: queryKeys.search(submitted, 1, filters),
     queryFn: ({ pageParam }) => searchProducts(submitted, pageParam, 20, filters),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
-    enabled: submitted.length > 0,
+    enabled: asking,
   });
+
+  /**
+   * A 400 IS THE OLD API, NOT A BROKEN SCREEN.
+   *
+   * `category` is a parameter the search DTO only started accepting recently
+   * and the DTO is `.strict()`, so a storefront deployed in front of a backend
+   * that has not caught up gets a 400 for every tile tap. That is a specific,
+   * recoverable thing — the same search without the category still works — and
+   * it gets its own sentence and its own action rather than the generic "we
+   * cannot search right now", which would send a shopper away from a page that
+   * is one tap from working.
+   */
+  const staleApi =
+    results.isError &&
+    category.length > 0 &&
+    results.error instanceof ApiError &&
+    results.error.statusCode === 400;
 
   const pages = results.data?.pages ?? [];
   const items = pages.flatMap((page) => page.items);
@@ -147,12 +218,27 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
         facets.price)
   );
 
+  /**
+   * THE CATEGORY IS NOT COUNTED HERE and "مسح" does not remove it.
+   *
+   * This number drives the rail's clear-all and the "nothing matches these
+   * filters" wording, and the category is not one of the things a shopper
+   * ticked in that rail — it is the shelf they walked up to. Wiping it with the
+   * rest would empty the page of its subject on a tap meant to widen the
+   * results, so it has its own line, its own name and its own way out above the
+   * grid.
+   */
   const activeCount =
     (filters.brands?.length ?? 0) +
     (filters.sizes?.length ?? 0) +
     (filters.colors?.length ?? 0) +
     (filters.priceMin != null || filters.priceMax != null ? 1 : 0) +
     (filters.inStockOnly ? 1 : 0);
+
+  /** Everything the rail set, dropped; the shelf kept. */
+  const clearFilters = () => setFilters(category ? { category } : {});
+  /** The shelf, dropped; a typed word and the rail's own filters kept. */
+  const clearCategory = () => patch({ category: undefined });
 
   return (
     <Shell title={t("البحث", "Search")}>
@@ -177,7 +263,27 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
           </label>
         </form>
 
-        {submitted.length === 0 ? (
+        {/* WHICH SHELF, AND THE WAY OFF IT.
+            A filter a shopper cannot see is a filter they will blame the shop
+            for. This sits directly under the box, above everything it narrows,
+            and the × on it is the whole of "show me everything again". */}
+        {category ? (
+          <div className="lq-vp__row" style={{ paddingBlockEnd: "var(--space-3)" }}>
+            <span className="lq-hint">{t("القسم", "Category")}</span>
+            <button
+              type="button"
+              className="lq-chip"
+              data-removable="true"
+              onClick={clearCategory}
+            >
+              <span data-bidi>{categoryName}</span>
+              <span aria-hidden="true">×</span>
+              <span className="lq-vh">{t("شيل القسم", "Clear the category")}</span>
+            </button>
+          </div>
+        ) : null}
+
+        {!asking ? (
           /* The blank state has to carry the page on its own — before a query
              there are no results, no rail and no facets, and a single sentence
              left the whole screen a thin strip above the footer. It says how
@@ -232,7 +338,7 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
                   <button
                     type="button"
                     className="lq-sec__more"
-                    onClick={() => setFilters({})}
+                    onClick={clearFilters}
                   >
                     {t("مسح", "Clear")}
                   </button>
@@ -365,10 +471,15 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
                     ? t("بندوّر…", "Searching…")
                     : results.isError
                       ? ""
-                      : t(
-                          `${items.length} نتيجة لـ «${submitted}»`,
-                          `${items.length} results for “${submitted}”`
-                        )}
+                      : submitted.length > 0
+                        ? t(
+                            `${items.length} نتيجة لـ «${submitted}»`,
+                            `${items.length} results for “${submitted}”`
+                          )
+                        : t(
+                            `${items.length} قطعة في «${categoryName}»`,
+                            `${items.length} pieces in “${categoryName}”`
+                          )}
                 </p>
 
                 <SortSelect
@@ -384,25 +495,119 @@ export function SearchView({ initialQuery = "" }: { initialQuery?: string }) {
                 onRemove={(next) => setFilters(next)}
               />
 
-              {results.isError ? (
-                <p className="lq-hint lq-hint--error" role="alert">
-                  {t(
-                    "مش قادرين ندوّر دلوقتي. جرّب تاني.",
-                    "We cannot search right now. Try again."
+              {staleApi ? (
+                /* The one failure this screen can talk a shopper out of. The
+                   action drops the category and re-runs, which is a search
+                   that works on every build of the API. */
+                <EmptyState
+                  art="crooked"
+                  tone="loud"
+                  role="alert"
+                  seed="search-stale"
+                  title={t(
+                    "التصفّح بالقسم لسه مش شغّال على السيرفر ده",
+                    "This server cannot filter by category yet"
                   )}
-                </p>
+                  body={t(
+                    "القسم اللي اخترته اترفض. البحث بالاسم شغّال عادي — شيل القسم وجرّب.",
+                    "The category was refused. Searching by name still works — drop it and try."
+                  )}
+                  actions={
+                    <>
+                      <button
+                        type="button"
+                        className="lq-btn lq-btn--primary"
+                        onClick={clearCategory}
+                      >
+                        {t("شيل القسم", "Drop the category")}
+                      </button>
+                      <Link className="lq-btn lq-btn--secondary" href="/shops">
+                        {t("اتفرّج على المحلات", "Browse the shops")}
+                      </Link>
+                    </>
+                  }
+                />
+              ) : results.isError ? (
+                <EmptyState
+                  art="crooked"
+                  tone="loud"
+                  role="alert"
+                  seed="search-error"
+                  title={t("مش قادرين ندوّر دلوقتي", "We cannot search right now")}
+                  body={t(
+                    "الطلب مارجعش. مش مشكلة في اللي كتبته — جرّب تاني، وغالبًا هيرد.",
+                    "The request did not come back. Nothing is wrong with what you typed — try again, and it usually answers."
+                  )}
+                  actions={
+                    <button
+                      type="button"
+                      className="lq-btn lq-btn--primary"
+                      aria-busy={results.isFetching}
+                      onClick={() => results.refetch()}
+                    >
+                      {t("حاول تاني", "Try again")}
+                    </button>
+                  }
+                />
               ) : items.length === 0 && !results.isPending ? (
-                <p className="lq-prose">
-                  {activeCount > 0
-                    ? t(
-                        "مفيش نتيجة بالفلاتر دي. شيل فلتر أو اتنين وجرّب تاني.",
-                        "Nothing matches these filters. Drop one or two and try again."
-                      )
-                    : t(
-                        "مفيش نتيجة للكلمة دي. جرّب كلمة أقصر أو اسم المحل.",
-                        "Nothing matches that word. Try a shorter one, or a shop name."
-                      )}
-                </p>
+                /* Three different emptinesses, and they are not the same thing
+                   to a shopper: too many filters, a word that matched nothing,
+                   or a shelf that has nothing on it yet. Each one names its own
+                   way out, because "no results" with no next step is where a
+                   session ends. */
+                <EmptyState
+                  art="shelf"
+                  seed={category || submitted || "search-empty"}
+                  title={
+                    activeCount > 0
+                      ? t("الرف فاضي بالفلاتر دي", "Nothing on the rail with these filters")
+                      : submitted.length > 0
+                        ? t(
+                            `مفيش حاجة اسمها «${submitted}»`,
+                            `Nothing here called “${submitted}”`
+                          )
+                        : t(
+                            `مفيش قطع في «${categoryName}» لسه`,
+                            `Nothing in “${categoryName}” yet`
+                          )
+                  }
+                  body={
+                    activeCount > 0
+                      ? t(
+                          "شيل فلتر أو اتنين وهترجع تلاقي. الشروط دي مفيش قطعة مطابقة ليها دلوقتي.",
+                          "Drop one or two and the rail fills up again. Nothing in stock matches all of these at once."
+                        )
+                      : submitted.length > 0
+                        ? t(
+                            "جرّب كلمة أقصر، أو اسم المحل نفسه. البحث بيقارن الكلام مش بيحفظه.",
+                            "Try a shorter word, or the shop's own name. Search compares words rather than matching them."
+                          )
+                        : t(
+                            "القسم موجود، بس المحلات لسه محطّتش فيه حاجة. جرّب قسم تاني أو ادخل محل.",
+                            "The section is here, the shops have just not put anything on it yet. Try another one, or open a shop."
+                          )
+                  }
+                  actions={
+                    activeCount > 0 ? (
+                      <button
+                        type="button"
+                        className="lq-btn lq-btn--primary"
+                        onClick={clearFilters}
+                      >
+                        {t("شيل الفلاتر", "Clear the filters")}
+                      </button>
+                    ) : (
+                      <>
+                        <Link className="lq-btn lq-btn--primary" href="/categories">
+                          {t("كل الأقسام", "All categories")}
+                        </Link>
+                        <Link className="lq-btn lq-btn--secondary" href="/shops">
+                          {t("اتفرّج على المحلات", "Browse the shops")}
+                        </Link>
+                      </>
+                    )
+                  }
+                />
               ) : (
                 <div className="lq-pgrid">
                   {items.map((item, index) => (

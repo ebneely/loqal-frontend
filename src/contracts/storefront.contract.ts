@@ -220,7 +220,32 @@ export type SearchSort = z.infer<typeof searchSortSchema>;
 
 export const searchProductsQuerySchema = z
   .object({
-    query: z.string().trim().min(1).max(200),
+    /**
+     * OPTIONAL, and that is the whole of the category feature.
+     *
+     * `query` used to be required, which is why every category tile in the app
+     * was a dead end: there was no call that said "everything in تيشيرتات" and
+     * no honest text to search for one with. It is optional now, and the
+     * refine below holds the real rule — a search must ask for SOMETHING.
+     */
+    query: z.string().trim().min(1).max(200).optional(),
+    /**
+     * A Category SLUG, not an id. The slug is what the tile already carries and
+     * what a shopper can be handed in a link; an id in an address is a UUID
+     * nobody can read and nobody can type.
+     *
+     * Filtering by a parent includes its DESCENDANTS — Category is a tree, and
+     * a shopper who taps ملابس رجالي means the whole branch, not the handful of
+     * products somebody happened to file at the top level.
+     */
+    category: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(2)
+      .max(80)
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .optional(),
     page: z.coerce.number().int().min(1).default(1),
     perPage: z.coerce.number().int().min(1).max(50).default(20),
 
@@ -240,7 +265,16 @@ export const searchProductsQuerySchema = z
     inStockOnly: z.boolean().optional(),
     sort: searchSortSchema.optional(),
   })
-  .strict();
+  .strict()
+  /**
+   * At least one of the two. Both absent is not "everything" — the endpoint is
+   * a similarity query, not a catalogue dump, and answering it with the whole
+   * of every shop's stock is a table scan a tile tap should never buy.
+   */
+  .refine((value) => Boolean(value.query) || Boolean(value.category), {
+    message: "one of query or category is required",
+    path: ["query"],
+  });
 export type SearchProductsQuery = z.infer<typeof searchProductsQuerySchema>;
 
 /**

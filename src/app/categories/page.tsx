@@ -4,7 +4,9 @@ import Link from "next/link";
 import { fetchCategories } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
-import { Garment, garmentFor } from "@/components/garment";
+import { Garment, categoryGarment } from "@/components/garment";
+import { EmptyState } from "@/components/state";
+import { ReloadButton } from "@/components/reload";
 
 /**
  * الأقسام — the category index.
@@ -75,69 +77,88 @@ export default async function CategoriesPage() {
           {categories === null ? (
             /* Says the API is unreachable rather than pretending the shop has
                no categories. A total outage and an empty catalogue must not
-               look the same. */
-            <p className="lq-hint lq-hint--error" role="alert">
-              {locale === "ar"
-                ? "مش قادرين نوصل للأقسام دلوقتي. حدّث الصفحة بعد شوية."
-                : "We cannot reach the categories right now. Reload in a moment."}
-            </p>
+               look the same, which is why they get two different drawings: a
+               hanger hanging crooked, and a rail with nothing on it. */
+            <EmptyState
+              art="crooked"
+              tone="loud"
+              role="alert"
+              seed="categories-down"
+              title={
+                locale === "ar"
+                  ? "مش قادرين نوصل للأقسام دلوقتي"
+                  : "We cannot reach the categories right now"
+              }
+              body={
+                locale === "ar"
+                  ? "المشكلة عندنا مش عندك. الأقسام موجودة، إحنا اللي مش شايفينها في اللحظة دي."
+                  : "This one is on us, not on you. The sections are there; we just cannot read them this second."
+              }
+              actions={
+                <>
+                  <ReloadButton>{locale === "ar" ? "حاول تاني" : "Try again"}</ReloadButton>
+                  <Link className="lq-btn lq-btn--secondary" href="/shops">
+                    {locale === "ar" ? "اتفرّج على المحلات" : "Browse the shops"}
+                  </Link>
+                </>
+              }
+            />
           ) : categories.length === 0 ? (
-            <p className="lq-hint">
-              {locale === "ar"
-                ? "الأقسام هتظهر هنا أول ما المحلات تبدأ ترفع قطعها."
-                : "Categories show up here once shops start listing."}
-            </p>
+            <EmptyState
+              art="shelf"
+              seed="categories-empty"
+              title={locale === "ar" ? "لسه مفيش أقسام" : "No sections yet"}
+              body={
+                locale === "ar"
+                  ? "الأقسام هتظهر هنا أول ما المحلات تبدأ ترفع قطعها. لحد ما تيجي، المحلات نفسها مفتوحة."
+                  : "Sections show up here once shops start listing. Until they do, the shops themselves are open."
+              }
+              actions={
+                <Link className="lq-btn lq-btn--primary" href="/shops">
+                  {locale === "ar" ? "اتفرّج على المحلات" : "Browse the shops"}
+                </Link>
+              }
+            />
           ) : (
             <>
               {/*
-                THE TILES ARE NOT LINKS, and that is the honest answer rather
-                than a missing feature.
+                EVERY TILE OPENS ITS SHELF.
 
-                They used to point at `/search?category=<slug>`. Nothing reads
-                that parameter, because nothing CAN: `searchProductsQuerySchema`
-                is `.strict()` and accepts query, page, perPage, brands, sizes,
-                colors, price, sort and inStockOnly — there is no category
-                filter anywhere in the search API. Every tile was a dead end
-                that landed the shopper on an empty search box.
+                The destination is `/search?category=<slug>`, and the slug is
+                the whole of what the address carries — an id would be a UUID
+                nobody can read and the name would be free text that changes.
+                `/v1/search/products` takes `category` as a filter beside the
+                brand and size ones, and `query` is optional as long as one of
+                the two is present, so this is a real product listing with the
+                filter rail, the sort and the paging on it rather than a search
+                box with a word typed into it.
 
-                Running the category NAME as a text search was the other
-                candidate and it was rejected on the Arabic: search is trigram
-                similarity over the product name, and Egyptian category names
-                are broken plurals. "تيشيرتات" would find "تيشيرت", but
-                "بناطيل" shares almost no trigrams with "بنطلون" and "جواكت"
-                none with "جاكيت" — so half the tiles would look like the
-                category was empty. A filter that works for some categories and
-                silently reports nothing for the rest is worse than one that
-                says it is not here yet.
+                THE NAME IS NOT RUN AS A TEXT SEARCH, and that was the other
+                candidate. Search is trigram similarity over the product name
+                and Egyptian category names are broken plurals: "تيشيرتات" would
+                find "تيشيرت", but "بناطيل" shares almost no trigrams with
+                "بنطلون" and "جواكت" none with "جاكيت". Half the tiles would
+                have reported an empty category that is full. The filter reads
+                the category relation, so it is right for all twelve.
 
-                So the tiles stay as the answer to "what do these shops sell",
-                the note below says why they do not open, and it hands over the
-                two ways in that DO work today.
+                Filtering by a parent includes its DESCENDANTS. Category is a
+                tree, and a shopper who taps a broad tile means the branch.
               */}
-              <p className="lq-hint">
-                {locale === "ar"
-                  ? "التصفّح بالقسم لسه مش شغّال — البحث بيدوّر بأسماء القطع، مش بالأقسام. لحد ما ييجي، "
-                  : "Browsing by category is not live yet — search matches piece names, not categories. Until it is, "}
-                <Link href="/search">{locale === "ar" ? "دوّر بالاسم" : "search by name"}</Link>
-                {locale === "ar" ? " أو افتح " : " or open a "}
-                <Link href="/shops">{locale === "ar" ? "محل" : "shop"}</Link>
-                {locale === "ar" ? "." : "."}
-              </p>
-
               <div className="lq-tiles">
                 {categories.map((category, index) => (
-                  <div
+                  <Link
                     key={category.id}
-                    className="lq-tile lq-tile--static lq-rv"
+                    href={`/search?category=${encodeURIComponent(category.slug)}`}
+                    className="lq-tile lq-rv"
                     style={{ "--lq-d": `${(index % 4) * 70}ms` } as React.CSSProperties}
                   >
                     <span className="lq-tile__art">
-                      <Garment className="lq-garment" kind={garmentFor(category.slug)} />
+                      <Garment className="lq-garment" kind={categoryGarment(category.slug)} />
                     </span>
                     <span className="lq-tile__name" data-bidi>
                       {category.name[locale] ?? category.name.ar ?? category.name.en}
                     </span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </>

@@ -123,6 +123,12 @@ export function fetchProduct(brandSlug: string, productSlug: string) {
  * search is the same call with none of them set.
  */
 export type SearchFilters = {
+  /**
+   * A Category SLUG. It is a FILTER and not the query, which is what lets a
+   * category tile open results with no typed word at all — and what lets a
+   * shopper then type one on top of it without losing the category.
+   */
+  category?: string;
   brands?: string[];
   sizes?: string[];
   colors?: string[];
@@ -132,6 +138,15 @@ export type SearchFilters = {
   sort?: SearchSort;
 };
 
+/**
+ * `query` may be empty, and then it is NOT SENT.
+ *
+ * The endpoint takes a query, a category, or both. Sending `query=""` would be
+ * a 400 against the min(1) rather than an unfiltered search, so an empty term
+ * is dropped the same way an unset filter is — and a call with neither is a
+ * bug this function will not paper over, so it is left to fail loudly at the
+ * API rather than silently returning nothing here.
+ */
 export function searchProducts(
   query: string,
   page = 1,
@@ -143,7 +158,8 @@ export function searchProducts(
     // 400 rather than an ignored parameter. The same strictness is why every
     // filter below is omitted rather than sent empty when it is not set.
     query: {
-      query,
+      query: query.trim().length > 0 ? query : undefined,
+      category: filters.category || undefined,
       page,
       perPage,
       brands: filters.brands?.length ? filters.brands : undefined,
