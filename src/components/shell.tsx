@@ -200,10 +200,16 @@ export function Shell({
               {t("حسابي", "Account")}
             </Link>
             <Link
+              className="lq-bag"
               href="/bag"
+              aria-label={t("السلة", "Bag")}
               aria-current={isActive(pathname, "/bag") ? "page" : undefined}
             >
-              {t("السلة", "Bag")}
+              <span
+                className="lq-icon"
+                data-icon="shopping-bag"
+                aria-hidden="true"
+              />
               {bagCount > 0 ? (
                 <span className="lq-cartn" data-num>
                   {bagCount}

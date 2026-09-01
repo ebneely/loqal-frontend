@@ -481,6 +481,11 @@ html[data-greeted="1"] .lq-open{display:none}
 /* Green, because the cart count is a GO signal: something is waiting to be
    bought. It is the one always-on use of the accent in the chrome. */
 .lq-cartn{display:inline-grid;place-items:center;min-inline-size:20px;block-size:20px;padding-inline:5px;border-radius:var(--radius-full);background:var(--green);color:var(--text-on-brand);font-family:var(--font-mono);font-size:var(--text-2xs);font-weight:var(--weight-semibold);line-height:1}
+/* The bag is the one tool with no word: a basket is read faster than it is,
+   and the count sits on it rather than beside a label. */
+.lq-bag{gap:var(--space-1)}
+.lq-bag .lq-icon{inline-size:22px;block-size:22px}
+.lq-bag::after{content:none}
 /* SIZED HERE, and flex:none. This sits in `.lq-tools>a`, which is an
    inline-flex row: an SVG with only width/height ATTRIBUTES is a flex item with
    nothing stopping it shrinking, so it collapsed to a 1px sliver beside the

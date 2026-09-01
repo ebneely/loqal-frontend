@@ -59,17 +59,18 @@ const onClient = () => true;
 const onServer = () => false;
 
 /**
- * The destinations the tab bar cannot carry.
+ * The destinations the tab bar cannot carry, plus the two it can.
  *
- * Categories is here AND behind the Products tab, deliberately: the tab is the
- * way in to browsing and the drawer is the index of everything, and a drawer
- * that omitted الأقسام would be the one place a shopper looks for it and does
- * not find it.
+ * `/categories` appears here under the tab bar's own word — المنتجات — because
+ * one route may not answer to two names: a drawer calling it الأقسام while the
+ * tab beneath calls it المنتجات reads as two places, and a shopper who wants
+ * "products" looks in the drawer and decides there are none.
  */
 const PLACES = [
   { href: "/account", icon: "user", ar: "حسابي", en: "Account" },
-  { href: "/categories", icon: "shirt", ar: "الأقسام", en: "Categories" },
+  { href: "/categories", icon: "shirt", ar: "المنتجات", en: "Products" },
   { href: "/shops", icon: "store", ar: "المحلات", en: "Shops" },
+  { href: "/orders", icon: "package", ar: "أوردراتي", en: "Orders" },
 ] as const;
 
 /**
