@@ -35,7 +35,7 @@ import type { Locale } from "@/lib/locale";
  * is two words of Latin script — Arabic joins, so a second letter lifted out
  * of the middle of a word is a different glyph than the one the reader sees.
  */
-function initialsOf(name: string): string {
+export function initialsOf(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return "";
 

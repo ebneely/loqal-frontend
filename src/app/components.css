@@ -483,8 +483,14 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-cartn{display:inline-grid;place-items:center;min-inline-size:20px;block-size:20px;padding-inline:5px;border-radius:var(--radius-full);background:var(--green);color:var(--text-on-brand);font-family:var(--font-mono);font-size:var(--text-2xs);font-weight:var(--weight-semibold);line-height:1}
 /* The bag is the one tool with no word: a basket is read faster than it is,
    and the count sits on it rather than beside a label. */
-.lq-bag{gap:var(--space-1)}
-.lq-bag .lq-icon{inline-size:22px;block-size:22px}
+.lq-bag{gap:var(--space-2)}
+/* Bigger than the row's own icons and bigger than the count beside it: a
+   wordless target has to read as one, and at 22px it was smaller than its own
+   badge. */
+/* Sized through font-size, not inline-size: the mask is 1em and its rule is
+   unlayered, so it wins any width set from in here whatever the specificity. */
+.lq-bag .lq-icon{font-size:26px;color:var(--ink)}
+.lq-bag:hover .lq-icon{color:var(--green)}
 .lq-bag::after{content:none}
 /* SIZED HERE, and flex:none. This sits in `.lq-tools>a`, which is an
    inline-flex row: an SVG with only width/height ATTRIBUTES is a flex item with
@@ -561,6 +567,16 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-catrail__art,.lq-catrail__name,.lq-catrail__in{transition:opacity var(--dur-base) var(--ease)}
 .lq-catrail__art{display:grid;place-items:center;inline-size:clamp(72px,8cqi,96px);block-size:clamp(72px,8cqi,96px)}
 .lq-catrail__art svg{inline-size:100%;block-size:100%}
+/* A shop's sign, where a category has a drawing: its own logo, or its initials
+   until it has one. Framed, because a brand-supplied logo arrives at any
+   proportion and an unframed one would sit at a different size in every cell. */
+/* A rounded square, not a circle: brand logos arrive square and with their own
+   ground, and a circle crops the corners off every one of them. Same shape the
+   shop cards give a sign. */
+.lq-catrail__sign{border:var(--border-width) solid var(--line);border-radius:var(--radius-md);background:var(--field);overflow:hidden}
+.lq-catrail__sign img{inline-size:100%;block-size:100%;object-fit:contain}
+.lq-catrail__sign b{font-size:var(--text-xl);font-weight:var(--weight-medium);color:var(--ink-2)}
+.lq-catrail__item:hover .lq-catrail__sign,.lq-catrail__item:focus-visible .lq-catrail__sign{border-color:var(--green-line);background:var(--green-soft)}
 .lq-catrail__name{font-size:var(--text-sm);text-align:center;line-height:var(--leading-snug)}
 .lq-catrail__in{font-size:var(--text-2xs);font-weight:var(--weight-light);color:var(--ink-3)}
 /* The suuupply move: the one under the pointer fills and lifts, the rest step

@@ -1,196 +1,109 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import type { PublicBrand } from "@loqal/contracts/storefront.contract";
 import { fetchBrands, queryKeys } from "@/lib/catalog";
 import { useLocale } from "@/lib/locale-context";
-import { Garment, garmentFor } from "@/components/garment";
+import { initialsOf } from "@/components/shop-card";
 import { MegaMenu } from "@/components/mega-menu";
 
 /**
- * The brands mega-menu: an A–Z index of every shop, with a feature pane that
- * follows whichever shop the pointer or the keyboard is on.
+ * المحلات, as the rail of shops it is.
  *
- * The panel itself — the portal, the hover timing, `inert`, one-open-at-a-time
- * — is `mega-menu.tsx`, and the reasons it is built that way are documented
- * there. What is left here is the index and the pane.
+ * The A–Z index it replaced was built for an alphabet and given five shops, so
+ * the panel was a row of headings over an empty field with a feature pane
+ * stranded at one edge. A shop is a place, and the thing that identifies a
+ * place is its own sign — so each shop carries its logo, or its initials while
+ * it has none, at the size the shop cards use.
  *
- * The feature pane is the one place this diverges upward from the reference
- * (suuupply.com), which parks a static product image beside its index. A
- * marketplace index is a list of *places*, and the pane is where the place gets
- * to be one. What it can say is currently thin — see the note on `Feature`.
+ * ONE PAGE OF SHOPS. `/v1/brands` is paged and this shows page 1; an index
+ * that silently omitted page 2 would be wrong, so when the shop count outgrows
+ * a page this needs its own endpoint rather than a bigger `perPage`.
  */
-
-/** Latin initial, or `#` for a shop whose name starts in Arabic or a digit. */
-const initialOf = (name: string) => {
-  const first = name.trim().charAt(0);
-  return /[A-Za-z]/.test(first) ? first.toUpperCase() : "#";
-};
-
-function Feature({ brand }: { brand: PublicBrand }) {
-  const locale = useLocale();
-
-  /**
-   * BACKEND GAP, and it is the one that matters most on this surface.
-   *
-   * `publicBrandSchema` carries id, slug, name, logoUrl, coverUrl and
-   * description. It does NOT carry the neighbourhood, the street, the opening
-   * hours or a piece count — the four things `design/`'s version of this pane
-   * showed, and the four things PRODUCT.md calls the product's premise. That
-   * mockup had them because `design/app.js` invented them in a hardcoded array.
-   *
-   * So the pane renders what the API can answer and says nothing where it
-   * cannot. It does not print a placeholder neighbourhood: a location a shopper
-   * cannot walk to is worse than no location, and this is the exact screen
-   * where the difference is the product.
-   */
-  const description =
-    brand.description?.[locale] ??
-    brand.description?.ar ??
-    brand.description?.en ??
-    null;
-
-  return (
-    <>
-      <span className="lq-mega__pic">
-        <Garment className="lq-garment" kind={garmentFor(brand.slug)} />
-      </span>
-      <span className="lq-mega__nm" data-bidi>
-        {brand.name}
-      </span>
-      {brand.isPromoted ? (
-        <span className="lq-badge lq-badge--tint lq-mega__tag">
-          {locale === "ar" ? "مموّل" : "Promoted"}
-        </span>
-      ) : null}
-      {description ? (
-        <span className="lq-mega__hd" data-bidi>
-          {description}
-        </span>
-      ) : null}
-      <span className="lq-mega__rw">
-        {locale === "ar" ? "افتح المحل" : "Open the shop"}
-      </span>
-    </>
-  );
-}
-
 export function BrandsMenu() {
   const locale = useLocale();
-  const [featured, setFeatured] = useState<PublicBrand | null>(null);
 
-  /**
-   * The same query key and the same endpoint the home page uses, so opening the
-   * menu on `/` costs nothing: TanStack serves it from cache.
-   *
-   * One page of shops, not all of them. `/v1/brands` is paged and the menu
-   * shows page 1 — an A-Z index that silently omits page 2 would be wrong, so
-   * when the shop count outgrows a page this needs a dedicated index endpoint
-   * rather than a bigger `perPage`.
-   */
   const { data, isPending, isError } = useQuery({
     queryKey: queryKeys.brands(1),
     queryFn: () => fetchBrands(1, 24),
     staleTime: 5 * 60 * 1000,
   });
 
-  const brands = useMemo(() => data?.items ?? [], [data]);
-
-  /** Grouped once per list, not per render of a group. */
-  const groups = useMemo(() => {
-    const map = new Map<string, PublicBrand[]>();
-    for (const brand of brands) {
-      const key = initialOf(brand.name);
-      const bucket = map.get(key);
-      if (bucket) bucket.push(brand);
-      else map.set(key, [brand]);
-    }
-    /** `#` sorts last: a Latin index that opens on a non-Latin bucket reads as
-        broken, and Arabic-named shops are the exception here, not the rule. */
-    return [...map.entries()].sort(([a], [b]) =>
-      a === "#" ? 1 : b === "#" ? -1 : a.localeCompare(b),
+  /* Promoted first — placement Loqal sold is placement Loqal shows — then by
+     name, so the order is a decision rather than whatever the page returned. */
+  const shops = useMemo(() => {
+    const items = data?.items ?? [];
+    return [...items].sort(
+      (a, b) =>
+        Number(b.isPromoted) - Number(a.isPromoted) || a.name.localeCompare(b.name),
     );
-  }, [brands]);
-
-  /** The pane is never empty while the panel is open. */
-  const shown = featured ?? brands[0] ?? null;
+  }, [data]);
 
   return (
     <MegaMenu
       id="shops"
       href="/shops"
       label={locale === "ar" ? "المحلات" : "Shops"}
+      wide
     >
-      <div className="lq-mega__az" data-empty={groups.length === 0}>
-        {data && data.total > 0 ? (
-          <div className="lq-mega__head">
-            <span>{locale === "ar" ? "المحلات" : "Shops"}</span>
-            <span data-num>
-              {" · "}
-              {data.total}
-            </span>
+      {shops.length === 0 ? (
+        isPending ? (
+          <div className="lq-catrail" aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <span className="lq-catrail__item" key={i}>
+                <span className="lq-skel lq-catrail__art" />
+                <span className="lq-skel" style={{ blockSize: "12px", inlineSize: "60%" }} />
+              </span>
+            ))}
           </div>
-        ) : null}
-        {/* The panel used to render an empty band when the read failed or had
-            not landed: a pale strip, a scrim over the page and no word about
-            why. Loading is a skeleton, and an empty list says which of the two
-            it is. */}
-        {groups.length === 0 ? (
-          isPending ? (
-            <div className="lq-mega__wait" aria-hidden="true">
-              {[0, 1, 2, 3].map((i) => (
-                <span
-                  className="lq-skel"
-                  key={i}
-                  style={{ blockSize: "14px" }}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="lq-hint" role={isError ? "alert" : undefined}>
-              {isError
-                ? locale === "ar"
-                  ? "مش قادرين نوصل للمحلات دلوقتي."
-                  : "We cannot reach the shops right now."
-                : locale === "ar"
-                  ? "المحلات هتظهر هنا أول ما تفتح."
-                  : "Shops show up here as they open."}
-            </p>
-          )
-        ) : null}
-
-        {groups.map(([letter, items]) => (
-          <div className="lq-mega__grp" key={letter}>
-            <span className="lq-mega__ltr">{letter}</span>
-            {items.map((brand) => (
+        ) : (
+          <p className="lq-hint" role={isError ? "alert" : undefined}>
+            {isError
+              ? locale === "ar"
+                ? "مش قادرين نوصل للمحلات دلوقتي."
+                : "We cannot reach the shops right now."
+              : locale === "ar"
+                ? "المحلات هتظهر هنا أول ما تفتح."
+                : "Shops show up here as they open."}
+          </p>
+        )
+      ) : (
+        <>
+          <div className="lq-catrail">
+            {shops.map((shop, index) => (
               <Link
-                key={brand.id}
-                href={`/shop/${brand.slug}`}
-                data-bidi
-                /**
-                 * Pointer AND keyboard both drive the pane. `design/`'s version
-                 * listened for `mouseover` only, so tabbing through the index
-                 * left the pane frozen on whichever shop the mouse had last
-                 * grazed — the feature is invisible to a keyboard.
-                 */
-                onMouseEnter={() => setFeatured(brand)}
-                onFocus={() => setFeatured(brand)}
+                key={shop.id}
+                className="lq-catrail__item"
+                href={`/shop/${shop.slug}`}
+                style={{ "--lq-d": `${index * 45}ms` } as React.CSSProperties}
               >
-                {brand.name}
+                <span className="lq-catrail__art lq-catrail__sign" aria-hidden="true">
+                  {shop.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={shop.logoUrl} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <b>{initialsOf(shop.name)}</b>
+                  )}
+                </span>
+                <span className="lq-catrail__name" data-bidi>
+                  {shop.name}
+                </span>
+                {shop.isPromoted ? (
+                  <span className="lq-catrail__in">
+                    {locale === "ar" ? "مموّل" : "Promoted"}
+                  </span>
+                ) : null}
               </Link>
             ))}
           </div>
-        ))}
-      </div>
 
-      {shown ? (
-        <Link className="lq-mega__feat" href={`/shop/${shown.slug}`}>
-          <Feature brand={shown} />
-        </Link>
-      ) : null}
+          <Link className="lq-mega__all" href="/shops">
+            {locale === "ar" ? "كل المحلات" : "All shops"}
+          </Link>
+        </>
+      )}
     </MegaMenu>
   );
 }

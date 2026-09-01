@@ -207,7 +207,7 @@ export function Shell({
             >
               <span
                 className="lq-icon"
-                data-icon="shopping-bag"
+                data-icon="shopping-cart"
                 aria-hidden="true"
               />
               {bagCount > 0 ? (
