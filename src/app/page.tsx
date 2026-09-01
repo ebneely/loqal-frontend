@@ -51,11 +51,11 @@ export default async function HomePage() {
    * on the one screen where the difference matters most.
    */
   const page = await fetchBrands(1, 24).then(
-    (result) => result.items,
+    (result) => result,
     () => null,
   );
 
-  const shops = page ?? [];
+  const shops = page?.items ?? [];
   const shopsFailed = page === null;
 
   /**
@@ -107,6 +107,12 @@ export default async function HomePage() {
             <div>
               <h2 className="lq-sec__title" id="home-shops">
                 {t("المحلات", "Shops")}
+                {page && page.total > 0 ? (
+                  <span className="lq-sec__count" data-num>
+                    {" · "}
+                    {page.total}
+                  </span>
+                ) : null}
               </h2>
               <p className="lq-eyebrow">
                 {t(

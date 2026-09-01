@@ -60,18 +60,21 @@ export default async function CategoriesPage() {
         <section className="lq-sec">
           <div className="lq-sec__head">
             <div>
-              <h1 className="lq-phead__title">{locale === "ar" ? "الأقسام" : "Categories"}</h1>
+              <h1 className="lq-phead__title">
+                {locale === "ar" ? "الأقسام" : "Categories"}
+                {categories && categories.length > 0 ? (
+                  <span className="lq-sec__count" data-num>
+                    {" · "}
+                    {categories.length}
+                  </span>
+                ) : null}
+              </h1>
               <p className="lq-eyebrow">
                 {locale === "ar"
                   ? "كل قطعة على رف في محل — مش في مخزن."
                   : "Every piece is on a shelf in a shop, not in a warehouse."}
               </p>
             </div>
-            {categories && categories.length > 0 ? (
-              <span className="lq-hint" data-num>
-                {categories.length}
-              </span>
-            ) : null}
           </div>
 
           {categories === null ? (

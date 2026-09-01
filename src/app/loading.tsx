@@ -21,8 +21,9 @@ import { Shell } from "@/components/shell";
  * cells are the same hairline grid the real one uses, so nothing reflows.
  */
 
-/** Eight, which fills two rows on a phone and two on a desktop. */
-const CELLS = Array.from({ length: 8 }, (_, index) => index);
+/* Twelve, because the grid runs 2, 3 or 4 across and 12 leaves no track
+   bare — an empty track in a shared-hairline grid paints as a grey panel. */
+const CELLS = Array.from({ length: 12 }, (_, index) => index);
 
 export default function Loading() {
   return (

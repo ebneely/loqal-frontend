@@ -797,6 +797,19 @@ export function SearchView({
                     )
                   }
                 />
+              ) : results.isPending ? (
+                <div className="lq-pgrid" aria-hidden="true">
+                  {Array.from({ length: 12 }, (_, index) => (
+                    <span key={index} className="lq-recover__skel">
+                      <span className="lq-skel lq-recover__skelart" />
+                      <span className="lq-skel lq-recover__skelline" />
+                      <span
+                        className="lq-skel lq-recover__skelline"
+                        data-short="true"
+                      />
+                    </span>
+                  ))}
+                </div>
               ) : (
                 <div className="lq-pgrid">
                   {items.map((item, index) => (

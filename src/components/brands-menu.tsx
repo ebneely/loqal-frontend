@@ -61,6 +61,11 @@ function Feature({ brand }: { brand: PublicBrand }) {
       <span className="lq-mega__nm" data-bidi>
         {brand.name}
       </span>
+      {brand.isPromoted ? (
+        <span className="lq-badge lq-badge--tint lq-mega__tag">
+          {locale === "ar" ? "مموّل" : "Promoted"}
+        </span>
+      ) : null}
       {description ? (
         <span className="lq-mega__hd" data-bidi>
           {description}
@@ -120,6 +125,15 @@ export function BrandsMenu() {
       label={locale === "ar" ? "المحلات" : "Shops"}
     >
       <div className="lq-mega__az" data-empty={groups.length === 0}>
+        {data && data.total > 0 ? (
+          <div className="lq-mega__head">
+            <span>{locale === "ar" ? "المحلات" : "Shops"}</span>
+            <span data-num>
+              {" · "}
+              {data.total}
+            </span>
+          </div>
+        ) : null}
         {/* The panel used to render an empty band when the read failed or had
             not landed: a pale strip, a scrim over the page and no word about
             why. Loading is a skeleton, and an empty list says which of the two

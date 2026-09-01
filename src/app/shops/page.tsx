@@ -63,18 +63,21 @@ export default async function ShopsPage() {
         <section className="lq-sec">
           <div className="lq-sec__head">
             <div>
-              <h1 className="lq-phead__title">{locale === "ar" ? "المحلات" : "Shops"}</h1>
+              <h1 className="lq-phead__title">
+                {locale === "ar" ? "المحلات" : "Shops"}
+                {page && page.total > 0 ? (
+                  <span className="lq-sec__count" data-num>
+                    {" · "}
+                    {page.total}
+                  </span>
+                ) : null}
+              </h1>
               <p className="lq-eyebrow">
                 {locale === "ar"
                   ? "محلات ليها عناوين حقيقية تقدر تعدّي عليها."
                   : "Shops with real addresses you could walk to."}
               </p>
             </div>
-            {page && page.total > 0 ? (
-              <span className="lq-hint" data-num>
-                {page.total}
-              </span>
-            ) : null}
           </div>
 
           {page === null ? (

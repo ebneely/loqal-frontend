@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { fetchBrands, queryKeys } from "@/lib/catalog";
 import { useLocale } from "@/lib/locale-context";
+import { CLAIMS } from "@/components/shell";
 import { Wordmark } from "@/components/wordmark";
 
 /**
@@ -140,6 +141,24 @@ export function SiteFooter() {
 
   return (
     <footer className="lq-foot">
+      {/* The utility strip's claims again, where the page ends — the same
+          facts, one source, so the two bands cannot drift apart. */}
+      <div className="lq-foot__facts">
+        {CLAIMS.map((claim) => (
+          <span key={claim.en}>{t(claim.ar, claim.en)}</span>
+        ))}
+        <a
+          href="https://wa.me/201559959890"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t("واتساب", "WhatsApp")}{" "}
+          <span data-num dir="ltr">
+            wa.me/201559959890
+          </span>
+        </a>
+      </div>
+
       <div className="lq-foot__cols">
         <div>
           <h3>{t("المحلات", "Shops")}</h3>

@@ -113,6 +113,13 @@ export function ShopCard({
             <span className="lq-shopcard__initials">{initialsOf(shop.name)}</span>
           )}
         </span>
+        {shop.isPromoted ? (
+          <span className="lq-shopcard__promo">
+            <span className="lq-badge lq-badge--tint">
+              {locale === "ar" ? "مموّل" : "Promoted"}
+            </span>
+          </span>
+        ) : null}
       </span>
 
       <span className="lq-shopcard__body">

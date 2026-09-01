@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import type { PublicCategory } from "@loqal/contracts/storefront.contract";
@@ -11,33 +11,18 @@ import { Garment, categoryGarment } from "@/components/garment";
 import { MegaMenu } from "@/components/mega-menu";
 
 /**
- * الأقسام, as a panel rather than a destination.
+ * الأقسام, as a panel rather than a destination — the same shape as the shops
+ * menu beside it: an index on one side, a feature pane on the other that
+ * follows whichever shelf the pointer or the keyboard is on. Two neighbours in
+ * one header behaving alike is the point.
  *
- * This used to be a plain link beside المحلات, with the shelves themselves laid
- * out in a rail halfway down the home page. Two problems with that. The rail
- * was the first thing under the hero on the screen a shopper lands on, which
- * spent the top of the page on a taxonomy rather than on shops and pieces; and
- * الأقسام in the header behaved differently from المحلات next to it, which is
- * the inconsistency PRODUCT.md calls out — the same visual vocabulary screen to
- * screen is a virtue.
- *
- * So the shelves moved into the chrome, where they are reachable from every
- * page instead of from one, and the two header entries now behave alike.
- *
- * THE TREE IS THE LAYOUT. `/v1/categories` answers a flat list carrying
- * `parentId`, and a flat panel would throw that away: a top-level shelf and one
- * of its own drawers would sit side by side as equals. Parents are the columns
- * and their children are the list under each — which is what the nesting is
- * for, and it is the same shape as the A–Z index next door.
+ * Parents head their group with their children beneath; both are links,
+ * because filtering by a parent brings its children with it.
  */
 export function CategoriesMenu() {
   const locale = useLocale();
+  const [featured, setFeatured] = useState<PublicCategory | null>(null);
 
-  /**
-   * The same key `/categories` and the search view already use, so opening this
-   * is a cache hit on most pages. `staleTime` matches the brands menu: a
-   * taxonomy does not move during a session.
-   */
   const { data, isPending, isError } = useQuery({
     queryKey: queryKeys.categories(),
     queryFn: fetchCategories,
@@ -47,12 +32,8 @@ export function CategoriesMenu() {
   const groups = useMemo(() => {
     const all = data ?? [];
     const roots = all.filter((entry) => entry.parentId === null);
-    /**
-     * A category whose parent is not in the list stands as its own root rather
-     * than vanishing. The list is paged nowhere today, but a child orphaned by
-     * a future filter would otherwise be unreachable from this panel — and a
-     * shelf that exists and cannot be opened is worse than an untidy column.
-     */
+    /* A category whose parent is missing from the list stands as its own root
+       rather than becoming unreachable. */
     const known = new Set(roots.map((entry) => entry.id));
     const orphans = all.filter(
       (entry) => entry.parentId !== null && !known.has(entry.parentId),
@@ -66,84 +47,97 @@ export function CategoriesMenu() {
   const label = (entry: PublicCategory) =>
     entry.name[locale] ?? entry.name.ar ?? entry.name.en;
 
-  /** Every tile and every row opens the shelf, not a landing page for it. */
-  const shelf = (slug: string) =>
-    `/search?category=${encodeURIComponent(slug)}`;
+  const shelf = (slug: string) => `/search?category=${encodeURIComponent(slug)}`;
+
+  /* The pane is never empty while the panel is open. */
+  const shown = featured ?? groups[0]?.root ?? null;
+  const shownChildren = shown
+    ? (groups.find((group) => group.root.id === shown.id)?.children ??
+      groups.find((group) =>
+        group.children.some((child) => child.id === shown.id),
+      )?.children ??
+      [])
+    : [];
 
   return (
     <MegaMenu
       id="categories"
       href="/categories"
       label={locale === "ar" ? "الأقسام" : "Categories"}
-      wide
     >
-      {groups.length === 0 ? (
-        isPending ? (
-          /* The tile's own shape, so nothing moves when the shelves land. */
-          <div className="lq-cats" aria-hidden="true">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <span className="lq-cat" key={i}>
-                <span className="lq-cat__main">
-                  <span className="lq-skel lq-cat__art" />
-                  <span
-                    className="lq-skel"
-                    style={{ blockSize: "13px", inlineSize: "62%" }}
-                  />
-                </span>
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="lq-hint" role={isError ? "alert" : undefined}>
-            {isError
-              ? locale === "ar"
-                ? "مش قادرين نوصل للأقسام دلوقتي."
-                : "We cannot reach the categories right now."
-              : locale === "ar"
-                ? "الأقسام هتظهر هنا أول ما تتفتح."
-                : "Shelves show up here as they open."}
-          </p>
-        )
-      ) : (
-        <>
-          <div className="lq-cats">
-            {groups.map(({ root, children }) => (
-              <div className="lq-cat" key={root.id}>
-                {/* The drawing is the tile, not an icon beside a word. This
-                    panel is the way into the catalogue on every screen, and a
-                    32px glyph in a box reads as a bullet point — the same
-                    garment at tile size is what `/categories` shows and what
-                    makes a shelf recognisable before it is read. */}
-                <Link className="lq-cat__main" href={shelf(root.slug)}>
-                  <span className="lq-cat__art" aria-hidden="true">
-                    <Garment className="lq-garment" kind={categoryGarment(root.slug)} />
-                  </span>
-                  <span className="lq-cat__name" data-bidi>
-                    {label(root)}
-                  </span>
-                </Link>
-                {/* Only when there are any. Five headings with nothing under
-                    them is what a column-per-parent layout gave this taxonomy,
-                    which is five roots deep and one child wide. */}
-                {children.length > 0 ? (
-                  <span className="lq-cat__kids">
-                    {children.map((child) => (
-                      <Link key={child.id} href={shelf(child.slug)} data-bidi>
-                        {label(child)}
-                      </Link>
-                    ))}
-                  </span>
-                ) : null}
-              </div>
-            ))}
-          </div>
+      <div className="lq-mega__az" data-empty={groups.length === 0}>
+        {groups.length === 0 ? (
+          isPending ? (
+            <div className="lq-mega__wait" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <span className="lq-skel" key={i} style={{ blockSize: "14px" }} />
+              ))}
+            </div>
+          ) : (
+            <p className="lq-hint" role={isError ? "alert" : undefined}>
+              {isError
+                ? locale === "ar"
+                  ? "مش قادرين نوصل للأقسام دلوقتي."
+                  : "We cannot reach the categories right now."
+                : locale === "ar"
+                  ? "الأقسام هتظهر هنا أول ما تتفتح."
+                  : "Shelves show up here as they open."}
+            </p>
+          )
+        ) : null}
 
-          <Link className="lq-mega__all" href="/categories">
-            {locale === "ar" ? "كل الأقسام" : "All categories"}
-            <span className="lq-icon" data-icon="chevron-right" aria-hidden="true" />
-          </Link>
-        </>
-      )}
+        {groups.map(({ root, children }) => (
+          <div className="lq-mega__grp" key={root.id}>
+            <Link
+              className="lq-mega__cat"
+              href={shelf(root.slug)}
+              data-bidi
+              onMouseEnter={() => setFeatured(root)}
+              onFocus={() => setFeatured(root)}
+            >
+              {label(root)}
+            </Link>
+            {children.map((child) => (
+              <Link
+                key={child.id}
+                href={shelf(child.slug)}
+                data-bidi
+                onMouseEnter={() => setFeatured(child)}
+                onFocus={() => setFeatured(child)}
+              >
+                {label(child)}
+              </Link>
+            ))}
+          </div>
+        ))}
+
+        {groups.length > 0 ? (
+          <div className="lq-mega__grp">
+            <Link className="lq-mega__all" href="/categories">
+              {locale === "ar" ? "كل الأقسام" : "All categories"}
+            </Link>
+          </div>
+        ) : null}
+      </div>
+
+      {shown ? (
+        <Link className="lq-mega__feat" href={shelf(shown.slug)}>
+          <span className="lq-mega__pic">
+            <Garment className="lq-garment" kind={categoryGarment(shown.slug)} />
+          </span>
+          <span className="lq-mega__nm" data-bidi>
+            {label(shown)}
+          </span>
+          {shownChildren.length > 0 ? (
+            <span className="lq-mega__hd" data-bidi>
+              {shownChildren.map((child) => label(child)).join(" · ")}
+            </span>
+          ) : null}
+          <span className="lq-mega__rw">
+            {locale === "ar" ? "افتح الرف" : "Open the shelf"}
+          </span>
+        </Link>
+      ) : null}
     </MegaMenu>
   );
 }

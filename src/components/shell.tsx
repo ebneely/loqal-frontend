@@ -80,7 +80,7 @@ const TABS = [
  * NO tracking and NO uppercase on this strip — see `.lq-util` in
  * components.css. It carries Arabic.
  */
-const CLAIMS = [
+export const CLAIMS = [
   {
     ar: "توصيل في نفس اليوم — القاهرة والجيزة",
     en: "Same-day delivery — Cairo & Giza",
