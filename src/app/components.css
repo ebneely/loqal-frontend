@@ -303,6 +303,11 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-pay__body{flex:1;min-inline-size:0}
 .lq-pay__title{font-size:var(--text-base);font-weight:var(--weight-medium);color:var(--text-title)}
 .lq-pay__note{font-size:var(--text-xs);color:var(--text-muted)}
+/* An option the server will refuse. NOT an opacity fade: text colour is never
+   set with opacity in this system, so the row loses its lift and its title
+   steps back to muted instead. The note beside it says why. */
+.lq-pay[disabled]{background:var(--raise);box-shadow:none;cursor:not-allowed}
+.lq-pay[disabled] .lq-pay__title{color:var(--text-muted)}
 
 /* ── TopBar ───────────────────────────────────────────────────────────────── */
 /* The phone bar. The desktop header is .lq-head below — two elements rather
@@ -364,6 +369,25 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-actionbar{position:sticky;inset-block-end:var(--tabbar-height);z-index:var(--z-actionbar);display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--gutter-phone);padding-block-end:calc(var(--space-3) + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-block-start:var(--border-width) solid var(--line);box-shadow:var(--shadow-bar)}
 .lq-actionbar__info{display:flex;flex-direction:column;gap:2px;min-inline-size:0}
 .lq-actionbar__label{font-size:var(--text-xs);color:var(--text-muted)}
+
+/* ── Checkout stages ──────────────────────────────────────────────────────── */
+/* The stepper is `.lq-steps`, unchanged — see StatusRail. Only the three things
+   the vocabulary did not already have are here: a shop's card on the middle
+   stage, a reviewed line on the last one, and the stage's own nav row. The card
+   is `.lq-card` and takes none of its colours from here — head and body are
+   parted by the same 1px --line as everything else.
+   `.lq-ckbar` is `.lq-actionbar` gated to the width where the tab bar it offsets
+   itself against exists; `.lq-cksubmit` is the in-flow button it stands in for. */
+.lq-ckshop{overflow:hidden}
+.lq-ckshop__head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-block-end:var(--border-width) solid var(--line)}
+.lq-ckshop__head>:first-child{min-inline-size:0;overflow-wrap:break-word}
+.lq-ckshop__body{display:grid;gap:var(--space-2);padding:var(--space-3) var(--space-4)}
+.lq-ckrow{display:grid;grid-template-columns:1fr auto;gap:var(--space-3);align-items:start;padding:var(--space-3);border:var(--border-width) solid var(--line);border-radius:var(--radius-md);background:var(--surface-card)}
+.lq-ckrow__val{display:block;margin-block-start:2px;font-size:var(--text-sm);line-height:var(--leading-normal);color:var(--text-body);overflow-wrap:break-word}
+.lq-cknav{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3)}
+.lq-cknav__end{margin-inline-start:auto}
+.lq-ckbar{display:none;margin-inline:calc(-1 * var(--gutter-phone))}
+@container (max-width:719px){.lq-ckbar{display:flex}.lq-cksubmit{display:none}}
 
 /* ── ChatBubble ───────────────────────────────────────────────────────────── */
 .lq-bub{border-radius:var(--radius-lg);max-inline-size:78%;padding:10px 14px;font-size:var(--text-base);line-height:var(--leading-snug);box-shadow:var(--shadow-xs);animation:lq-rise var(--dur-slow) var(--ease-out)}
