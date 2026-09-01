@@ -372,6 +372,9 @@
      design/ has the same three layers in the same order for the same reason:
      scrim 38, panel 39, header 40. A scrim must never cover its own trigger. */
   --z-scrim: 35;
+  /* Above the scrim, or a select's own click-away layer covers its options and
+     every choice closes the menu instead of choosing. */
+  --z-popover: 36;
   --z-sheet: 60;
   --z-grain: 100; /* the paper grain sits over everything, pointer-events:none */
 }
