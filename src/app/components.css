@@ -543,10 +543,46 @@ html[data-greeted="1"] .lq-open{display:none}
    The shops menu's own shape: a grouped index and a feature pane that follows
    the pointer. A parent heads its group and is a link like its children —
    filtering by it brings them along. */
-.lq-mega__cat{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--ink);padding-block-end:var(--space-1);border-block-end:var(--border-width) solid var(--line);transition:color var(--dur-fast) var(--ease)}
-.lq-mega__cat:hover,.lq-mega__cat:focus-visible{color:var(--green)}
 .lq-mega__all{font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2);border-block-end:var(--border-width) solid currentColor;align-self:start;transition:color var(--dur-fast) var(--ease)}
 .lq-mega__all:hover{color:var(--ink)}
+
+/* ── The category rail ─────────────────────────────────────────────────────
+   Six shelves could not fill a grid built for an alphabet of shops, so most
+   of that panel was empty stone. The shelves are drawings here, in one rail:
+   the garment is what a shopper recognises before reading the word, and it is
+   the same line art the tiles and the wells already use. */
+.lq-mega[data-wide]{grid-template-columns:1fr;gap:var(--space-6);align-content:start}
+.lq-catrail{display:flex;gap:1px;background:var(--line);border:var(--border-width) solid var(--line);overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none}
+.lq-catrail::-webkit-scrollbar{display:none}
+/* Grows to fill the rail and never shrinks: a few shelves share the width
+   instead of leaving a bare grey panel where the seam colour shows through,
+   and many of them overflow into the scroll rather than being squeezed. */
+.lq-catrail__item{flex:1 0 clamp(126px,13cqi,168px);display:grid;justify-items:center;align-content:start;gap:var(--space-2);padding:var(--space-6) var(--space-3);background:var(--paper);scroll-snap-align:start;color:var(--ink)}
+.lq-catrail__art,.lq-catrail__name,.lq-catrail__in{transition:opacity var(--dur-base) var(--ease)}
+.lq-catrail__art{display:grid;place-items:center;inline-size:clamp(72px,8cqi,96px);block-size:clamp(72px,8cqi,96px)}
+.lq-catrail__art svg{inline-size:100%;block-size:100%}
+.lq-catrail__name{font-size:var(--text-sm);text-align:center;line-height:var(--leading-snug)}
+.lq-catrail__in{font-size:var(--text-2xs);font-weight:var(--weight-light);color:var(--ink-3)}
+/* The suuupply move: the one under the pointer fills and lifts, the rest step
+   back. Colour arrives only on the hovered drawing, so the rail is line art at
+   rest and never a page of tinted shapes. */
+.lq-catrail__item .lq-garment{transition:translate var(--dur-settle) var(--slow)}
+.lq-catrail__item .lq-garment path,.lq-catrail__item .lq-garment rect{transition:fill var(--dur-base) var(--ease)}
+/* The CONTENTS step back, never the cell: the rail's own background is the
+   seam colour, so fading a cell lets that grey through and the shelf turns
+   muddy instead of quiet. */
+.lq-catrail:hover .lq-catrail__item:not(:hover)>*,.lq-catrail:focus-within .lq-catrail__item:not(:focus-within)>*{opacity:.5}
+/* No background change on hover: the panel is already --raise, so lifting the
+   cell to it would dissolve the shelf into the panel behind it. The fill, the
+   rise and the green word are the whole answer. */
+.lq-catrail__item:hover .lq-garment,.lq-catrail__item:focus-visible .lq-garment{translate:0 -7px}
+.lq-catrail__item:hover .lq-garment path,.lq-catrail__item:focus-visible .lq-garment path,.lq-catrail__item:hover .lq-garment rect,.lq-catrail__item:focus-visible .lq-garment rect{fill:var(--green-soft)}
+.lq-catrail__item:hover .lq-catrail__name,.lq-catrail__item:focus-visible .lq-catrail__name{color:var(--green)}
+/* Dealt across the rail as the panel opens, so it arrives as a shelf being
+   laid out rather than a block appearing. */
+.lq-mega[data-open="true"] .lq-catrail__item{animation:lq-deal var(--dur-slow) var(--slow) both;animation-delay:var(--lq-d,0ms)}
+@keyframes lq-deal{from{opacity:0;translate:0 12px}}
+@media (prefers-reduced-motion:reduce){.lq-mega[data-open="true"] .lq-catrail__item{animation:none}}
 
 /* ── Footer ───────────────────────────────────────────────────────────────── */
 .lq-foot{background:var(--surface-ink);color:var(--text-on-ink)}
