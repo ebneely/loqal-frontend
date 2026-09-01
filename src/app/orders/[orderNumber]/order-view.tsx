@@ -26,7 +26,7 @@ import { useLocale } from "@/lib/locale-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shell } from "@/components/shell";
 import { Money } from "@/components/money";
-import { StatusPill } from "@/components/status-pill";
+import { StatusPill, StatusRail } from "@/components/status-pill";
 import { Garment, garmentFor } from "@/components/garment";
 import { deliveryLabel } from "@/components/delivery-picker";
 
@@ -215,9 +215,15 @@ function Loaded({
         <header className="lq-sec">
           <div className="lq-sec__head">
             <div style={STACK}>
-              <h1 className="lq-phead__title">
-                {t("الأوردر", "Order")} <span data-num>{order.orderNumber}</span>
-              </h1>
+              <div className="lq-onum">
+                <h1 className="lq-phead__title">
+                  {t("الأوردر", "Order")}{" "}
+                  <span className="lq-onum__no" data-num>
+                    {order.orderNumber}
+                  </span>
+                </h1>
+                <CopyOrderNumber value={order.orderNumber} locale={locale} />
+              </div>
               <p className="lq-hint">
                 <span data-num>{formatDate(order.placedAt, locale)}</span>
                 {order.deliveryMethod ? (
@@ -401,6 +407,8 @@ function ShopHalf({
         {/* THE ONE MAP. No screen invents a status word or a tone. */}
         <StatusPill status={half.status} locale={locale} />
       </div>
+
+      <StatusRail status={half.status} locale={locale} />
 
       {/* The consequence of the status, which the pill deliberately does not
           carry — one line, and only where there is something to say. */}
@@ -935,6 +943,43 @@ function ReturnRequest({
 /* ══════════════════════════════════════════════════════════════════════════
    Small parts.
    ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * The order number is what a shopper reads out on the phone, so it copies in
+ * one tap. The confirmation is a word beside the button, announced politely.
+ */
+function CopyOrderNumber({ value, locale }: { value: string; locale: Locale }) {
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        className="lq-iconbtn lq-iconbtn--outline"
+        aria-label={t("انسخ رقم الأوردر", "Copy the order number")}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2400);
+          } catch {
+            // Clipboard refused — the number is still selectable text above.
+          }
+        }}
+      >
+        <span
+          className="lq-icon"
+          data-icon={copied ? "check" : "copy"}
+          aria-hidden="true"
+        />
+      </button>
+      <span className="lq-onum__done" role="status">
+        {copied ? t("اتنسخ", "Copied") : ""}
+      </span>
+    </>
+  );
+}
 
 /**
  * What the shopper can expect next.

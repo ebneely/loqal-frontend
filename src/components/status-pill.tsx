@@ -87,3 +87,52 @@ export function StatusPill({
     </span>
   );
 }
+
+const FORWARD: BrandOrderStatus[] = [
+  "PENDING_BRAND",
+  "CONFIRMED",
+  "PACKED",
+  "HANDED_OVER",
+  "DELIVERED",
+];
+
+export function StatusRail({
+  status,
+  locale,
+}: {
+  status: BrandOrderStatus;
+  locale: Locale;
+}) {
+  const gated = status === "PENDING_VERIFICATION" || status === "PENDING_PAYMENT";
+  const steps = gated ? [status, ...FORWARD] : FORWARD;
+  const index = steps.indexOf(status);
+  // Off the forward path — cancelled, failed, a return — the pill and its
+  // sentence carry the state; a progress rail under them would contradict it.
+  if (index === -1) return null;
+
+  return (
+    <ol
+      className="lq-steps"
+      aria-label={locale === "ar" ? "مراحل النص ده" : "This half's stages"}
+    >
+      {steps.map((step, at) => (
+        <li
+          key={step}
+          className="lq-steps__step"
+          // A delivered half is finished — its last step rests instead of pulsing.
+          data-state={
+            at < index || (at === index && status === "DELIVERED")
+              ? "done"
+              : at === index
+                ? "now"
+                : "next"
+          }
+          aria-current={at === index ? "step" : undefined}
+        >
+          <i className="lq-steps__dot" aria-hidden="true" />
+          <span className="lq-steps__name">{statusLabel(step, locale)}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
