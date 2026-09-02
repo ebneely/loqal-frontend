@@ -659,13 +659,19 @@ html[data-greeted="1"] .lq-open{display:none}
    line down the screen rim where there is nothing beside it to separate — the
    board closes them top and bottom and leaves the sides open. A rail is inset
    by --pad and DOES keep its full frame; that is `.lq-rail`. */
-.lq-tiles,.lq-cells{display:grid;gap:1px;background:var(--line);border-block:var(--border-width) solid var(--line)}
-.lq-tiles{grid-template-columns:repeat(2,1fr)}
-.lq-cells{grid-template-columns:1fr}
+.lq-tiles{display:grid;gap:1px;background:var(--line);border-block:var(--border-width) solid var(--line);grid-template-columns:repeat(2,1fr)}
+/* Paper, and the seam is drawn by the cells themselves — see `.lq-cells>*`.
+   `overflow-x:clip` with `overflow-y:visible` keeps that ring off the two
+   inline edges, which stay open, without clipping the reveal. */
+.lq-cells{display:grid;gap:1px;background:var(--paper);border-block:var(--border-width) solid var(--line);grid-template-columns:1fr;overflow-x:clip;overflow-y:visible}
 @container (min-width:520px){.lq-cells{grid-template-columns:repeat(2,1fr)}}
 @container (min-width:720px){.lq-tiles{grid-template-columns:repeat(4,1fr)}.lq-cells{grid-template-columns:repeat(3,1fr)}}
 @container (min-width:1024px){.lq-tiles{grid-template-columns:repeat(6,1fr)}}
-.lq-tiles>*,.lq-cells>*{background:var(--paper)}
+.lq-tiles>*{background:var(--paper)}
+/* A ring rather than a coloured grid showing through the gaps: two adjacent
+   rings meet inside the 1px gap and read as one hairline, and a last row with
+   fewer cards than columns leaves paper instead of a bare grey panel. */
+.lq-cells>*{background:var(--paper);box-shadow:0 0 0 var(--border-width) var(--line)}
 
 /* A category: the drawing IS the content, so it gets the cell. */
 .lq-tile{display:flex;flex-direction:column;align-items:center;gap:10px;padding:var(--space-5) var(--space-2);transition:background var(--dur-fast) var(--ease)}
@@ -684,50 +690,61 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-tile__name{font-size:var(--text-sm);font-weight:var(--weight-light);text-align:center}
 
 /* ── Shop card ────────────────────────────────────────────────────────────── */
-/* The SIGN is the point of this card. The name set large and faded across the
-   top is how it sits over a real shopfront, and on this product a shop name is
-   not a seller label -- it is a place the shopper could walk to. */
+/* The SHOP'S OWN PHOTOGRAPHS are the point of this card: a 16:10 band, because
+   a shopfront is a wide thing and a portrait well ate the section, then the
+   plate, then five slots saying how much of its gallery the shop has filled. */
 .lq-shopcard{display:flex;flex-direction:column;transition:background var(--dur-fast) var(--ease)}
 .lq-shopcard:hover{background:var(--raise)}
-/* 96px and the name set bottom-start, not a 16:9 well with it centred. The
-   board draws it this way and it is the better read: the card is a shopfront
-   seen along the street, not a photograph of one taken square on. */
-.lq-shopcard__sign{position:relative;block-size:132px;background:var(--raise);border-block-end:var(--border-width) solid var(--line);overflow:hidden;transition:background var(--dur-fast) var(--ease)}
-.lq-shopcard:hover .lq-shopcard__sign{background:var(--paper)}
-/* aria-hidden in the markup: the accessible name is the real one below, and a
-   screen reader should not read the shop twice. */
-/* A LOGO OR INITIALS, centred — not the shop name set huge and faded behind
-   the card. That treatment cropped every name longer than the card ("Paymob
-   Test Bra") and put unreadable 12%-opacity text where a shopfront sign goes. */
-.lq-shopcard__logo{position:absolute;inset:0;display:grid;place-items:center;padding:var(--space-4)}
+.lq-shopcard__gal{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--field)}
+.lq-shopcard__shot{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover;opacity:0;transition:opacity var(--dur-slow) var(--ease)}
+.lq-shopcard__shot[data-on]{opacity:1}
+.lq-shopcard__gal[data-none]{display:grid;place-items:center}
+.lq-shopcard__mark{font-family:var(--font-display);font-size:var(--text-2xl);font-weight:var(--weight-bold);letter-spacing:0;line-height:1;color:var(--ink-3)}
+/* The logo rides the corner of the photo on a stone notch, never over it, so
+   it is never read against whatever the photograph happens to be there. */
+.lq-shopcard__logo{position:absolute;z-index:2;inset-block-end:0;inset-inline-start:0;inline-size:clamp(40px,28%,52px);aspect-ratio:1;display:grid;place-items:center;padding:var(--space-2);background:var(--paper);border-block-start:var(--border-width) solid var(--line);border-inline-end:var(--border-width) solid var(--line);border-start-end-radius:var(--radius-md);overflow:hidden}
 .lq-shopcard__logo img{max-inline-size:100%;max-block-size:100%;object-fit:contain}
-.lq-shopcard__initials{display:grid;place-items:center;inline-size:68px;block-size:68px;border:var(--border-width) solid var(--line);border-radius:var(--radius-md);background:var(--paper);font-family:var(--font-display);font-size:var(--text-xl);font-weight:var(--weight-bold);letter-spacing:0;line-height:1;color:var(--ink-2);transition:border-color var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
-.lq-shopcard:hover .lq-shopcard__initials{border-color:var(--green-line);color:var(--green)}
-/* The sign grows very slightly as the card is entered — design/'s
-   `.shopcard:hover .sign .nm`. It scales from the edge it is anchored to, or it
-   would drift away from the corner it is pinned in.
-
-   THE ONE MIRRORED PAIR IN THE STYLESHEET, and only because there is no logical
-   `transform-origin`: `inset-inline-start` puts the word on the right in Arabic
-   and the left in English, and the origin has to follow it. Everything else in
-   this file mirrors itself through logical properties. */
-.lq-shopcard__word{transform-origin:left bottom}
-[dir="rtl"] .lq-shopcard__word{transform-origin:right bottom}
-.lq-shopcard:hover .lq-shopcard__word{scale:1.05;opacity:0.18}
-/* The open/closed flag. Its own box rather than .lq-pill: it sits ON the sign,
-   so it needs the paper ground and the hairline to stay readable over the
-   wordmark behind it. */
-.lq-shopcard__state{position:absolute;inset-block-start:var(--space-2);inset-inline-start:var(--space-2);display:inline-flex;align-items:center;gap:0.35rem;padding:0.2rem 0.45rem;background:var(--paper);border:var(--border-width) solid var(--line);border-radius:var(--radius-sm);font-size:var(--text-2xs);line-height:1.4;color:var(--ink)}
+.lq-shopcard__initials{font-family:var(--font-display);font-size:var(--text-lg);font-weight:var(--weight-bold);letter-spacing:0;line-height:1;color:var(--ink-2);transition:color var(--dur-fast) var(--ease)}
+.lq-shopcard:hover .lq-shopcard__initials{color:var(--green)}
+/* One tick per photo, filling as the set advances. */
+.lq-shopcard__ticks{position:absolute;z-index:2;inset-block-start:var(--space-2);inset-inline:var(--space-2);display:flex;gap:3px;opacity:0;transition:opacity var(--dur-fast) var(--ease)}
+.lq-shopcard:hover .lq-shopcard__ticks{opacity:1}
+.lq-shopcard__tick{flex:1;min-inline-size:0;block-size:2px;border-radius:var(--radius-full);background:color-mix(in oklab,var(--paper) 50%,transparent);overflow:hidden}
+.lq-shopcard__tick i{display:block;block-size:100%;inline-size:0;background:var(--paper)}
+.lq-shopcard__tick[data-done] i{inline-size:100%}
+.lq-shopcard__tick[data-run] i{animation:lq-tick 1150ms linear forwards}
+@keyframes lq-tick{from{inline-size:0}to{inline-size:100%}}
+/* The open/closed flag. Its own box rather than .lq-pill: it sits ON the
+   photograph, so it needs the paper ground and the hairline to stay readable.
+   It steps down on hover to leave the ticks their line. */
+.lq-shopcard__state{position:absolute;z-index:2;inset-block-start:var(--space-2);inset-inline-start:var(--space-2);display:inline-flex;align-items:center;gap:0.35rem;padding:0.2rem 0.45rem;background:var(--paper);border:var(--border-width) solid var(--line);border-radius:var(--radius-sm);font-size:var(--text-2xs);line-height:1.4;color:var(--ink);transition:inset-block-start var(--dur-base) var(--slow)}
 .lq-shopcard__state[data-open="false"]{color:var(--ink-2)}
-.lq-shopcard__promo{position:absolute;inset-block-start:var(--space-2);inset-inline-end:var(--space-2)}
+.lq-shopcard__promo{position:absolute;z-index:2;inset-block-start:var(--space-2);inset-inline-end:var(--space-2);transition:inset-block-start var(--dur-base) var(--slow)}
+.lq-shopcard:hover .lq-shopcard__state,.lq-shopcard:hover .lq-shopcard__promo{inset-block-start:var(--space-5)}
 /* Pulses, so "open" reads as a live fact rather than a printed one. Stops
    under prefers-reduced-motion with everything else, via the blanket rule in
    globals.css. */
 .lq-shopcard__dot{inline-size:6px;block-size:6px;border-radius:var(--radius-full);background:var(--green);flex:none;animation:lq-pulse 2.6s var(--ease) infinite}
-.lq-shopcard__body{display:flex;flex-direction:column;gap:var(--space-1);padding:var(--space-4)}
-.lq-shopcard__name{font-size:var(--text-base);font-weight:var(--weight-regular)}
-.lq-shopcard__place{font-size:var(--text-sm);font-weight:var(--weight-light);line-height:var(--leading-normal);color:var(--ink-2)}
+.lq-shopcard__plate{display:flex;flex-direction:column;gap:var(--space-1);padding:var(--space-3) var(--space-4) var(--space-2)}
+.lq-shopcard__name{font-size:var(--text-base);font-weight:var(--weight-regular);letter-spacing:-0.01em}
+.lq-shopcard__place{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;font-size:var(--text-sm);font-weight:var(--weight-light);line-height:var(--leading-snug);color:var(--ink-2)}
+/* Wraps rather than shrinks: at two cards across a 360px screen the three
+   figures do not fit on one line, and a cut fee is a wrong fee. */
+.lq-shopcard__fig{display:flex;flex-wrap:wrap;column-gap:var(--space-4);row-gap:var(--space-2);margin-block-start:var(--space-1)}
+.lq-shopcard__figure{display:grid;gap:1px;min-inline-size:0}
+.lq-shopcard__figkey{font-size:var(--text-2xs);font-weight:var(--weight-light);line-height:1.3;color:var(--ink-3);white-space:nowrap}
+.lq-shopcard__figval{font-size:var(--text-sm);line-height:1.25;white-space:nowrap}
+.lq-shopcard__figval small{margin-inline-start:2px;font-family:var(--font-sans);font-size:var(--text-2xs);font-weight:var(--weight-light);color:var(--ink-3)}
 .lq-shopcard__foot{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-block-start:var(--space-2);font-size:var(--text-xs);color:var(--ink-2)}
+.lq-shopcard__go{margin-block-start:var(--space-1);font-size:var(--text-xs);color:var(--green);opacity:0;translate:0 4px;transition:opacity var(--dur-fast) var(--ease),translate var(--dur-base) var(--slow)}
+.lq-shopcard:hover .lq-shopcard__go{opacity:1;translate:0 0}
+/* `margin-block-start:auto` so the strip sits on the foot of the card and a
+   short description does not leave it floating mid-cell. */
+.lq-shopcard__strip{display:flex;gap:2px;margin-block-start:auto;padding:0 var(--space-4) var(--space-3)}
+.lq-shopcard__thumb{flex:1;min-inline-size:0;aspect-ratio:1;display:grid;place-items:center;overflow:hidden;border:var(--border-width) solid var(--line);border-radius:var(--radius-sm);background:var(--field);opacity:0.55;transition:opacity var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+.lq-shopcard__thumb img{inline-size:100%;block-size:100%;object-fit:cover}
+.lq-shopcard__thumb[data-on]{opacity:1;border-color:var(--green)}
+.lq-shopcard__thumb[data-empty]{font-family:var(--font-mono);font-size:var(--text-2xs);color:var(--ink-3)}
 
 /* ── List row ─────────────────────────────────────────────────────────────── */
 /* A destination in a hairline list: an /account setting, a way out of the 404,
@@ -966,26 +983,25 @@ html[data-greeted="1"] .lq-open{display:none}
    `.lq-crail` shared these rules until the category rail left the home page for
    the header. Its rules went with the markup rather than staying as a selector
    nothing matches. */
-.lq-shops{display:flex;gap:1px;background:var(--line);border-block:var(--border-width) solid var(--line);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.lq-shops{display:flex;gap:1px;background:var(--paper);border-block:var(--border-width) solid var(--line);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .lq-shops::-webkit-scrollbar{display:none}
 /* display:grid so a short card still fills its cell rather than leaving bare
    paper inside a frame made of hairlines. */
-.lq-shops>*{display:grid;flex:none;scroll-snap-align:start;background:var(--paper)}
+.lq-shops>*{display:grid;flex:none;scroll-snap-align:start;background:var(--paper);box-shadow:0 0 0 var(--border-width) var(--line)}
 /* An EXPLICIT width per cell. flex:none with no basis sizes each cell to its
    content, so a two-word shop name and a five-word one come out different
    widths in the same hairline row and the rhythm falls apart. */
 .lq-shops>*{inline-size:240px}
 @container (min-width:1024px){
-  /* The rail stops being a rail. overflow:visible so the grid can never keep a
-     stale scroll offset from the phone layout. */
-  /* `fit-content`, and one rule per count. The hairline is the grid's OWN
-     background, so a box wider than its cells paints a bare grey panel where
-     the marketplace has not got a fourth shop yet — and 1fr tracks stretched
-     three shops across the whole screen.
+  /* The rail stops being a rail. Not scrollable any more, so it can never keep
+     a stale scroll offset from the phone layout; `overflow-y:visible` keeps the
+     reveal from being cut at the block edges.
+     `fit-content`, and one rule per count, so the tracks are never wider than
+     the shops that exist — the seam itself is drawn by the cells.
      Written out rather than repeat(var(--n)): repeat() takes an integer, and a
      var() or min() in the count makes the whole declaration invalid and
      silently dropped. */
-  .lq-shops{display:grid;inline-size:fit-content;max-inline-size:100%;overflow:visible;
+  .lq-shops{display:grid;inline-size:fit-content;max-inline-size:100%;overflow-x:clip;overflow-y:visible;
     grid-template-columns:repeat(4,minmax(0,320px))}
   .lq-shops[data-cols="1"]{grid-template-columns:minmax(0,320px)}
   .lq-shops[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,320px))}
@@ -1107,7 +1123,6 @@ html[data-greeted="1"] .lq-open{display:none}
      track with paper and nothing else moves. Under 720 every one of these
      grids is exactly two tracks, so at most one cell can ever be missing. */
   .lq-tiles:has(> :last-child:nth-child(odd))::after,
-  .lq-cells:has(> :last-child:nth-child(odd))::after,
   .lq-pgrid:not(.lq-pgrid--home):has(> :last-child:nth-child(odd))::after{
     content:"";background:var(--paper)}
 

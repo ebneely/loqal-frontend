@@ -148,6 +148,16 @@ export const publicBrandSchema = z
     // fresh one, and it is what the dashboard plane speaks in.
     logoMediaId: z.string().uuid().nullable(),
     coverMediaId: z.string().uuid().nullable(),
+
+    /**
+     * The shop's gallery, resolved and ordered, up to five.
+     *
+     * DEFAULTED, NEVER REQUIRED. The deployed API does not send this key yet,
+     * and the schema is `.strict()`: required, it would blank every shop
+     * surface the moment this ships ahead of the backend — the same failure
+     * `facets` is defaulted to avoid. A card falls back to `coverUrl`.
+     */
+    images: z.array(z.string().url()).default([]),
     deliveryFee: moneySchema.nullable(),
     minimumOrderValue: moneySchema.nullable(),
     returnWindowDays: z.number().int(),

@@ -13,10 +13,16 @@ export default function Loading() {
           <div className="lq-cells">
             {CELLS.map((cell) => (
               <div key={cell}>
-                <span className="lq-skel" style={{ display: "block", blockSize: 132, borderRadius: 0 }} />
-                <div style={{ display: "grid", gap: "var(--space-2)", padding: "var(--space-4)" }}>
+                <span className="lq-skel" style={{ display: "block", aspectRatio: "16 / 10", borderRadius: 0 }} />
+                <div style={{ display: "grid", gap: "var(--space-2)", padding: "var(--space-3) var(--space-4) var(--space-2)" }}>
                   <span className="lq-skel" style={{ blockSize: 16, inlineSize: "60%" }} />
                   <span className="lq-skel" style={{ blockSize: 14, inlineSize: "85%" }} />
+                  <span className="lq-skel" style={{ blockSize: 26, inlineSize: "70%" }} />
+                </div>
+                <div style={{ display: "flex", gap: 2, padding: "0 var(--space-4) var(--space-3)" }}>
+                  {[0, 1, 2, 3, 4].map((slot) => (
+                    <span key={slot} className="lq-skel" style={{ flex: 1, aspectRatio: 1 }} />
+                  ))}
                 </div>
               </div>
             ))}

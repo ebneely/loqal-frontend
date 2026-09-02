@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout — four layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200..700&family=Source+Code+Pro:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEBE5;--raise:#F5F4F0;--field:#F7F6F3;
+  --line:#CFCBC0;--line-ink:#B3AEA1;
+  --ink:#14130F;--ink2:#605F5A;--ink3:#757470;
+  --green:#007950;--green-hover:#00623F;--green-soft:#DDEBE3;--green-line:#A8C9B8;
+  --signal:#C8102E;--signal-soft:#F7E3E5;
+  --wait-fg:#6B5310;--wait-bg:#F2EBD8;--wait-line:#DCCC9E;
+  --ease:cubic-bezier(.16,1,.3,1);--slow:cubic-bezier(.22,1,.36,1);
+  --mono:"Source Code Pro",ui-monospace,monospace;
+  --r:10px;--rl:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#E4E1D9;color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+[dir=ltr] body{font-family:"Readex Pro",system-ui,sans-serif}
+
+/* ── chooser bar ─────────────────────────────────────────── */
+.bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;background:var(--paper);border-bottom:1px solid var(--line)}
+.bar h1{margin:0;font-size:13px;font-weight:500;color:var(--ink2)}
+.tabs{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:clip}
+.tabs button{min-height:38px;padding:0 14px;border:0;background:var(--paper);color:var(--ink2);font:inherit;font-size:13px;cursor:pointer;transition:background .14s,color .14s}
+.tabs button:hover{background:var(--raise)}
+.tabs button[aria-selected=true]{background:var(--green);color:#fff}
+.bar .end{margin-inline-start:auto;display:flex;gap:8px}
+.gh{min-height:38px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--raise);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.gh[aria-pressed=true]{background:var(--green-soft);border-color:var(--green-line);color:var(--green)}
+
+.stage{padding:22px 20px 60px;display:grid;place-items:start center}
+.opt{display:none;width:min(1120px,100%)}
+.opt[data-on]{display:block}
+body[data-phone] .opt{width:400px}
+.note{margin:16px 0 0;font-size:12.5px;font-weight:300;color:var(--ink3);line-height:1.6}
+.note b{font-weight:500;color:var(--ink2)}
+
+/* ── page chrome ─────────────────────────────────────────── */
+.chrome{background:var(--paper);border:1px solid var(--line);border-radius:var(--rl);overflow:clip}
+.chead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.mark{font-size:20px;font-weight:700;letter-spacing:-.03em}
+.mark b{color:var(--green);font-weight:inherit}
+.secure{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-weight:300}
+.body{padding:20px}
+body[data-phone] .body{padding:14px}
+
+/* ── stepper ─────────────────────────────────────────────── */
+.steps{display:flex;align-items:flex-start;padding:18px 20px 20px;background:var(--raise);border-bottom:1px solid var(--line)}
+.step{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+.step::before{content:"";position:absolute;top:15px;inset-inline-start:-50%;inset-inline-end:50%;height:2px;background:var(--line)}
+.step:first-child::before{content:none}
+.step[data-s=done]::before,.step[data-s=now]::before{background:var(--green-line)}
+.dot{position:relative;z-index:1;width:32px;height:32px;border-radius:999px;display:grid;place-items:center;border:1.5px solid var(--line);background:var(--paper);font:600 13px var(--mono);color:var(--ink3);transition:all .3s var(--ease)}
+.step[data-s=done] .dot{border-color:var(--green);background:var(--green);color:#fff}
+.step[data-s=now] .dot{border-color:var(--green);background:var(--paper);color:var(--green);box-shadow:0 0 0 4px var(--green-soft)}
+.slab{font-size:12.5px;font-weight:300;color:var(--ink3);text-align:center;line-height:1.3}
+.step[data-s=now] .slab{color:var(--ink);font-weight:500}
+.step[data-s=done] .slab{color:var(--ink2)}
+body[data-phone] .slab{font-size:11px}
+
+/* ── layout ──────────────────────────────────────────────── */
+.cols{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+body[data-phone] .cols{grid-template-columns:1fr}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--rl);padding:18px}
+.panel+.panel{margin-top:12px}
+.ptitle{margin:0 0 3px;font-size:16px;font-weight:500;letter-spacing:-.01em}
+.psub{margin:0 0 14px;font-size:12.5px;font-weight:300;color:var(--ink2)}
+
+/* ── fields ──────────────────────────────────────────────── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+body[data-phone] .grid2{grid-template-columns:1fr}
+.f{display:grid;gap:5px;margin-bottom:12px}
+.f label{font-size:12.5px;font-weight:500;color:var(--ink2)}
+.f label span{font-weight:300;color:var(--ink3)}
+.f input,.f textarea,.f .sel{min-height:46px;padding:0 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--field);color:var(--ink);font:inherit;font-size:14.5px;transition:border-color .14s,box-shadow .14s}
+.f textarea{padding:11px 13px;min-height:74px;resize:vertical;font-size:14px}
+.f input:focus,.f textarea:focus{outline:0;border-color:var(--line-ink);box-shadow:0 0 0 3px rgba(0,121,80,.22)}
+.f input::placeholder,.f textarea::placeholder{color:var(--ink3);font-weight:300}
+.sel{display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--ink3);font-weight:300}
+.hint{font-size:11.5px;font-weight:300;color:var(--ink3)}
+
+/* ── choice rows ─────────────────────────────────────────── */
+.choices{display:grid;gap:9px}
+.ch{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:start;padding:13px;border:1px solid var(--line);border-radius:var(--r);background:var(--field);cursor:pointer;text-align:start;font:inherit;transition:border-color .14s,background .14s,box-shadow .14s,translate .14s}
+.ch:hover{background:var(--raise);border-color:var(--line-ink)}
+.ch[aria-checked=true]{border-color:var(--green);background:var(--green-soft);box-shadow:2px 2px 0 var(--green-line)}
+.ch:active{translate:2px 2px;box-shadow:none}
+.ch[disabled]{opacity:.45;cursor:not-allowed;background:var(--raise)}
+.ch[disabled]:hover{border-color:var(--line)}
+.radio{width:19px;height:19px;border-radius:999px;border:1.5px solid var(--line-ink);background:var(--paper);margin-top:2px;display:grid;place-items:center;flex:none}
+.ch[aria-checked=true] .radio{border-color:var(--green)}
+.ch[aria-checked=true] .radio::after{content:"";width:9px;height:9px;border-radius:999px;background:var(--green)}
+.chname{font-size:14.5px;font-weight:500;line-height:1.35}
+.chnote{font-size:12px;font-weight:300;color:var(--ink2);line-height:1.5;margin-top:2px}
+.chend{font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap;color:var(--ink)}
+.tagwait{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:600;background:var(--wait-bg);border:1px solid var(--wait-line);color:var(--wait-fg)}
+
+/* ── summary ─────────────────────────────────────────────── */
+.sum{background:var(--paper);border:1px solid var(--line);border-radius:var(--rl);padding:16px;position:sticky;top:78px}
+.sumh{margin:0 0 12px;font-size:14px;font-weight:500}
+.shop{padding:11px 0;border-top:1px solid var(--line)}
+.shop:first-of-type{border-top:0;padding-top:0}
+.shopn{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:500}
+.shopn em{font-style:normal;font-size:11px;font-weight:300;color:var(--ink3)}
+.li{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:300;color:var(--ink2);margin-top:6px}
+.li span:last-child{font-family:var(--mono);font-size:12px;white-space:nowrap}
+.tot{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;display:grid;gap:7px}
+.tr{display:flex;justify-content:space-between;font-size:13px;font-weight:300;color:var(--ink2)}
+.tr b{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink)}
+.tr.big{font-size:15px;font-weight:500;color:var(--ink);padding-top:7px;border-top:1px solid var(--line);margin-top:2px}
+.tr.big b{font-size:19px}
+
+/* ── buttons ─────────────────────────────────────────────── */
+.acts{display:flex;gap:10px;margin-top:16px;align-items:center}
+.btn{min-height:50px;padding:0 26px;border:0;border-radius:var(--r);background:var(--green);color:#fff;font:inherit;font-size:15px;font-weight:500;cursor:pointer;box-shadow:2px 2px 0 var(--green-line);transition:background .14s,translate .14s,box-shadow .14s;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn:hover{background:var(--green-hover)}
+.btn:active{translate:2px 2px;box-shadow:none}
+.btn.block{width:100%}
+.btn.ghost{background:var(--raise);color:var(--ink);border:1px solid var(--line);box-shadow:2px 2px 0 var(--line)}
+.btn.ghost:hover{background:var(--field)}
+.link{background:none;border:0;font:inherit;font-size:13px;color:var(--green);cursor:pointer;padding:6px;font-weight:500}
+.back{background:none;border:0;font:inherit;font-size:13.5px;color:var(--ink2);cursor:pointer;padding:8px 4px}
+.back:hover{color:var(--ink)}
+
+/* ── accordion (B) ───────────────────────────────────────── */
+.acc{border:1px solid var(--line);border-radius:var(--rl);background:var(--paper);overflow:clip}
+.acc+.acc{margin-top:10px}
+.acch{display:flex;align-items:center;gap:12px;width:100%;padding:16px 18px;background:none;border:0;font:inherit;text-align:start;cursor:pointer}
+.acc[data-state=now] .acch{cursor:default}
+.accn{width:28px;height:28px;border-radius:999px;display:grid;place-items:center;border:1.5px solid var(--line);font:600 12px var(--mono);color:var(--ink3);flex:none}
+.acc[data-state=done] .accn{background:var(--green);border-color:var(--green);color:#fff}
+.acc[data-state=now] .accn{border-color:var(--green);color:var(--green);box-shadow:0 0 0 4px var(--green-soft)}
+.acct{flex:1;min-width:0}
+.acct strong{display:block;font-size:14.5px;font-weight:500}
+.acct em{display:block;font-style:normal;font-size:12.5px;font-weight:300;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.accb{padding:0 18px 18px;border-top:1px solid var(--line);margin-top:2px;padding-top:16px}
+.acc[data-state=todo] .acch{opacity:.55}
+
+/* ── per-shop cards (C) ──────────────────────────────────── */
+.shopcard{border:1px solid var(--line);border-radius:var(--rl);background:var(--paper);overflow:clip}
+.shopcard+.shopcard{margin-top:12px}
+.schead{display:flex;align-items:center;gap:11px;padding:14px 16px;background:var(--raise);border-bottom:1px solid var(--line)}
+.slogo{width:38px;height:38px;border-radius:999px;border:1px solid var(--line);background:var(--paper);display:grid;place-items:center;font:600 12px var(--mono);color:var(--ink2);flex:none}
+.scname{flex:1;min-width:0}
+.scname strong{display:block;font-size:14.5px;font-weight:500}
+.scname em{font-style:normal;font-size:11.5px;font-weight:300;color:var(--ink3)}
+.scbody{padding:14px 16px}
+.pill{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;background:var(--green-soft);border:1px solid var(--green-line);color:var(--green);white-space:nowrap}
+
+/* ── mobile bottom bar (D) ───────────────────────────────── */
+.mbar{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -2px 0 rgba(20,19,15,.04)}
+.mbar .mt{flex:1;min-width:0}
+.mbar .mt em{display:block;font-style:normal;font-size:11px;font-weight:300;color:var(--ink3)}
+.mbar .mt strong{font-family:var(--mono);font-size:18px;font-weight:600}
+.thin{height:3px;background:var(--line);position:relative;overflow:hidden}
+.thin i{position:absolute;inset-block:0;inset-inline-start:0;background:var(--green);transition:inline-size .5s var(--ease)}
+.mhead{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.mhead .mstep{font:600 11px var(--mono);color:var(--ink3);letter-spacing:.06em}
+.mhead strong{font-size:15px;font-weight:500}
+
+.review{display:grid;gap:10px}
+.rrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:13px;border:1px solid var(--line);border-radius:var(--r);background:var(--field)}
+.rrow .k{font-size:11.5px;font-weight:300;color:var(--ink3)}
+.rrow .v{font-size:14px;font-weight:400;margin-top:2px;line-height:1.45}
+.fade{animation:fade .32s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>Checkout — four layouts</h1>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="end">
+    <button class="gh" id="lang">EN</button>
+    <button class="gh" id="phone" aria-pressed="false">400px</button>
+  </div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+const SHOPS=[
+  {n:"نفرتاري",ne:"Nefertari",a:"الزمالك",ae:"Zamalek",ini:"NF",items:[["عباية كتان",1,1450],["إيشارب حرير",2,320]],fee:45,eta:"النهارده",etae:"Today"},
+  {n:"بيت القطن",ne:"Beit El Kotn",a:"المعادي",ae:"Maadi",ini:"BK",items:[["قميص قطن",1,680]],fee:40,eta:"بكرة",etae:"Tomorrow"}
+];
+const money=n=>n.toLocaleString("en-US");
+let AR=true;
+const T=(ar,en)=>AR?ar:en;
+const sub=()=>SHOPS.reduce((s,x)=>s+x.items.reduce((a,[,q,p])=>a+q*p,0),0);
+const fees=()=>SHOPS.reduce((s,x)=>s+x.fee,0);
+const total=()=>sub()+fees();
+
+/* ── shared fragments ─────────────────────────────────────── */
+const addressFields=()=>`
+  <div class="grid2">
+    <div class="f"><label>${T("الاسم","Full name")}</label><input placeholder="${T("كريم محرم","Karim Moharam")}"></div>
+    <div class="f"><label>${T("الموبايل","Mobile")}</label><input placeholder="01xxxxxxxxx" dir="ltr" style="font-family:var(--mono)"></div>
+  </div>
+  <div class="f"><label>${T("المحافظة","Governorate")}</label><div class="sel">${T("اختار المحافظة","Choose a governorate")}<span>⌄</span></div></div>
+  <div class="f"><label>${T("العنوان","Street address")}</label><input placeholder="${T("١٢ شارع شجرة الدر، الدور ٣، شقة ٧","12 Shagaret El Dor St, floor 3, apt 7")}"></div>
+  <div class="f"><label>${T("ملاحظات للمندوب","Notes for the rider")} <span>· ${T("اختياري","optional")}</span></label><textarea placeholder="${T("الجرس مش شغال، اتصل لما توصل","Bell is broken, call when you arrive")}"></textarea></div>`;
+
+const deliveryChoices=()=>`
+  <div class="choices" role="radiogroup">
+    <button class="ch" role="radio" aria-checked="true" onclick="pickDelivery(this,'brand')">
+      <span class="radio"></span>
+      <span><span class="chname">${T("مندوب المحل","The shop's own rider")}</span>
+      <span class="chnote">${T("كل محل بيبعت مندوبه. تقدر تدفع كاش عند الاستلام.","Each shop sends its own rider. You can pay cash on handover.")}</span></span>
+      <span class="chend">${money(fees())} ${T("ج.م","EGP")}</span>
+    </button>
+    <button class="ch" role="radio" aria-checked="false" onclick="pickDelivery(this,'ship')">
+      <span class="radio"></span>
+      <span><span class="chname">${T("شركة شحن","Shipping company")}</span>
+      <span class="chnote">${T("بتستلم من الشحن. الدفع بيبقى مقدّم بس.","A courier delivers. Prepaid only.")}</span>
+      <span class="tagwait">${T("لسه مش متاح","Not live yet")}</span></span>
+      <span class="chend">—</span>
+    </button>
+  </div>`;
+
+const PAY=[
+  {k:"cash",ar:"كاش عند الاستلام",en:"Cash on delivery",arn:"بتدفع للمندوب وهو بيسلّمك. كل محل بياخد فلوس نصّه.",enn:"You pay the rider on handover. Each shop collects its own half.",cod:true},
+  {k:"card",ar:"كارت",en:"Card",arn:"هتتحوّل لصفحة الدفع وترجع على الأوردر.",enn:"You are sent to the payment page and come back."},
+  {k:"valu",ar:"فاليو — تقسيط",en:"ValU — instalments",arn:"هتظبط التقسيط عند فاليو وترجع.",enn:"Set up instalments at ValU and come back."},
+  {k:"wallet",ar:"محفظة موبايل",en:"Mobile wallet",arn:"الأوردر بيتسجّل، والتحويل بيتظبط مع المحل.",enn:"The order is placed; the transfer is settled with the shop."},
+  {k:"insta",ar:"إنستاباي",en:"InstaPay",arn:"الأوردر بيتسجّل، والتحويل بيتظبط مع المحل.",enn:"The order is placed; the transfer is settled with the shop."}
+];
+const payChoices=()=>`
+  <div class="choices" role="radiogroup">${PAY.map((p,i)=>`
+    <button class="ch" role="radio" aria-checked="${i===0}" onclick="pickPay(this)">
+      <span class="radio"></span>
+      <span><span class="chname">${T(p.ar,p.en)}</span><span class="chnote">${T(p.arn,p.enn)}</span></span>
+    </button>`).join("")}
+  </div>`;
+
+const summary=(sticky=true)=>`
+  <aside class="sum" ${sticky?"":'style="position:static"'}>
+    <p class="sumh">${T("الأوردر","Your order")} · ${SHOPS.length} ${T("محلات","shops")}</p>
+    ${SHOPS.map(s=>`
+      <div class="shop">
+        <div class="shopn"><span>${T(s.n,s.ne)}</span><em>${T(s.a,s.ae)}</em></div>
+        ${s.items.map(([n,q,p])=>`<div class="li"><span>${n} × ${q}</span><span>${money(q*p)}</span></div>`).join("")}
+        <div class="li"><span>${T("توصيل","Delivery")} · ${T(s.eta,s.etae)}</span><span>${money(s.fee)}</span></div>
+      </div>`).join("")}
+    <div class="tot">
+      <div class="tr"><span>${T("المجموع","Subtotal")}</span><b>${money(sub())}</b></div>
+      <div class="tr"><span>${T("التوصيل","Delivery")}</span><b>${money(fees())}</b></div>
+      <div class="tr big"><span>${T("الإجمالي","Total")}</span><b>${money(total())} ${T("ج.م","EGP")}</b></div>
+    </div>
+  </aside>`;
+
+const reviewRows=()=>`
+  <div class="review">
+    <div class="rrow"><div><div class="k">${T("التوصيل لـ","Delivering to")}</div><div class="v">كريم محرم · 01001234567<br>١٢ شارع شجرة الدر، الزمالك، القاهرة</div></div><button class="link">${T("تعديل","Edit")}</button></div>
+    <div class="rrow"><div><div class="k">${T("طريقة التوصيل","Delivery")}</div><div class="v">${T("مندوب المحل — كل محل لوحده","The shop's own rider — each shop separately")}</div></div><button class="link">${T("تعديل","Edit")}</button></div>
+    <div class="rrow"><div><div class="k">${T("الدفع","Payment")}</div><div class="v">${T("كاش عند الاستلام","Cash on delivery")}</div></div><button class="link">${T("تعديل","Edit")}</button></div>
+  </div>`;
+
+const chrome=inner=>`<div class="chrome">
+  <div class="chead"><span class="mark">loq<b>aaa</b>l</span><span class="secure">🔒 ${T("دفع آمن","Secure checkout")}</span></div>
+  ${inner}</div>`;
+
+/* ── A · classic stepper ──────────────────────────────────── */
+const STEPS=[["التوصيل","Delivery"],["الدفع","Payment"],["المراجعة","Review"]];
+let aStep=0;
+function stepper(cur){return `<div class="steps">${STEPS.map((s,i)=>`
+  <div class="step" data-s="${i<cur?"done":i===cur?"now":"todo"}">
+    <span class="dot">${i<cur?"✓":i+1}</span><span class="slab">${T(s[0],s[1])}</span>
+  </div>`).join("")}</div>`}
+function renderA(){
+  const b=[
+    `<div class="panel"><h2 class="ptitle">${T("التوصيل لفين","Where it goes")}</h2><p class="psub">${T("العنوان ده اللي المندوب هيروحه.","This is the address the rider goes to.")}</p>${addressFields()}</div>
+     <div class="panel"><h2 class="ptitle">${T("طريقة التوصيل","How it gets there")}</h2><p class="psub">${T("ده بيحدد طرق الدفع المتاحة.","This decides which payments are available.")}</p>${deliveryChoices()}</div>`,
+    `<div class="panel"><h2 class="ptitle">${T("الدفع","Payment")}</h2><p class="psub">${T("اخترت مندوب المحل، فالكاش متاح.","You chose the shop's rider, so cash is available.")}</p>${payChoices()}</div>`,
+    `<div class="panel"><h2 class="ptitle">${T("راجع وأكّد","Review and place")}</h2><p class="psub">${T("كل محل هيأكد الأوردر من على الرف قبل ما يجهّزه.","Each shop confirms against its shelf before packing.")}</p>${reviewRows()}</div>`
+  ][aStep];
+  const last=aStep===2;
+  return chrome(stepper(aStep)+`<div class="body"><div class="cols"><div class="fade">${b}
+    <div class="acts">${aStep?`<button class="back" onclick="aStep--;draw()">‹ ${T("رجوع","Back")}</button>`:""}
+    <button class="btn" style="margin-inline-start:auto" onclick="${last?"":"aStep++;draw()"}">${last?T("أكّد الأوردر","Place the order"):T("كمّل","Continue")} ›</button></div>
+  </div>${summary()}</div></div>`);
+}
+
+/* ── B · accordion ────────────────────────────────────────── */
+let bStep=0;
+const bSummaries=()=>[T("كريم محرم · ١٢ شارع شجرة الدر، الزمالك","Karim Moharam · 12 Shagaret El Dor, Zamalek"),T("مندوب المحل · 85 ج.م","The shop's rider · 85 EGP"),T("كاش عند الاستلام","Cash on delivery")];
+function renderB(){
+  const secs=[
+    [T("التوصيل لفين","Where it goes"),addressFields()+deliveryChoices()],
+    [T("الدفع","Payment"),payChoices()],
+    [T("راجع وأكّد","Review and place"),reviewRows()]
+  ];
+  return chrome(`<div class="body"><div class="cols"><div>
+    ${secs.map((s,i)=>{
+      const st=i<bStep?"done":i===bStep?"now":"todo";
+      return `<div class="acc" data-state="${st}">
+        <button class="acch" ${st==="done"?`onclick="bStep=${i};draw()"`:""}>
+          <span class="accn">${st==="done"?"✓":i+1}</span>
+          <span class="acct"><strong>${s[0]}</strong>${st==="done"?`<em>${bSummaries()[i]}</em>`:""}</span>
+          ${st==="done"?`<span class="link">${T("تعديل","Edit")}</span>`:""}
+        </button>
+        ${st==="now"?`<div class="accb fade">${s[1]}
+          <div class="acts"><button class="btn block" onclick="${i===2?"":`bStep=${i+1};draw()`}">${i===2?T("أكّد الأوردر","Place the order"):T("كمّل","Continue")}</button></div>
+        </div>`:""}
+      </div>`}).join("")}
+  </div>${summary()}</div></div>`);
+}
+
+/* ── C · per-shop ─────────────────────────────────────────── */
+let cStep=0;
+function renderC(){
+  const b=[
+    `<div class="panel"><h2 class="ptitle">${T("التوصيل لفين","Where it goes")}</h2><p class="psub">${T("عنوان واحد لكل المحلات.","One address for every shop.")}</p>${addressFields()}</div>`,
+    `<p class="psub" style="margin:0 0 12px">${T("أوردرك من محلين. كل محل بيجهّز ويوصّل نصّه لوحده.","Your order is from two shops. Each packs and delivers its own half.")}</p>
+     ${SHOPS.map(s=>`<div class="shopcard">
+        <div class="schead"><span class="slogo">${s.ini}</span>
+          <span class="scname"><strong>${T(s.n,s.ne)}</strong><em>${T(s.a,s.ae)} · ${s.items.length} ${T("قطع","pieces")}</em></span>
+          <span class="pill">${T(s.eta,s.etae)}</span></div>
+        <div class="scbody">${deliveryChoices()}</div></div>`).join("")}`,
+    `<div class="panel"><h2 class="ptitle">${T("الدفع","Payment")}</h2><p class="psub">${T("كل محل بيحصّل نصّه لوحده.","Each shop collects for its own half.")}</p>${payChoices()}</div>
+     <div class="panel">${reviewRows()}</div>`
+  ][cStep];
+  const CS=[["التوصيل","Delivery"],["المحلات","The shops"],["الدفع","Pay"]];
+  const last=cStep===2;
+  return chrome(`<div class="steps">${CS.map((s,i)=>`<div class="step" data-s="${i<cStep?"done":i===cStep?"now":"todo"}"><span class="dot">${i<cStep?"✓":i+1}</span><span class="slab">${T(s[0],s[1])}</span></div>`).join("")}</div>
+  <div class="body"><div class="cols"><div class="fade">${b}
+    <div class="acts">${cStep?`<button class="back" onclick="cStep--;draw()">‹ ${T("رجوع","Back")}</button>`:""}
+    <button class="btn" style="margin-inline-start:auto" onclick="${last?"":"cStep++;draw()"}">${last?T("أكّد الأوردر","Place the order"):T("كمّل","Continue")} ›</button></div>
+  </div>${summary()}</div></div>`);
+}
+
+/* ── D · phone-first ──────────────────────────────────────── */
+let dStep=0;
+function renderD(){
+  const titles=[[T("التوصيل لفين","Where it goes")],[T("طريقة التوصيل","How it gets there")],[T("الدفع","Payment")],[T("راجع وأكّد","Review")]];
+  const b=[addressFields(),deliveryChoices(),payChoices(),reviewRows()+`<div style="margin-top:12px">${summary(false)}</div>`][dStep];
+  const last=dStep===3;
+  return chrome(`<div class="thin"><i style="inline-size:${(dStep+1)/4*100}%"></i></div>
+  <div class="mhead">${dStep?`<button class="back" onclick="dStep--;draw()" style="padding:0">‹</button>`:""}
+    <span class="mstep">${dStep+1}/4</span><strong>${titles[dStep]}</strong></div>
+  <div class="body fade">${b}</div>
+  <div class="mbar"><span class="mt"><em>${T("الإجمالي","Total")}</em><strong>${money(total())} ${T("ج.م","EGP")}</strong></span>
+    <button class="btn" onclick="${last?"":"dStep++;draw()"}">${last?T("أكّد","Place"):T("كمّل","Continue")} ›</button></div>`);
+}
+
+/* ── chooser ──────────────────────────────────────────────── */
+const OPTS=[
+  ["A · Stepper",renderA,`<b>A — the classic stepper.</b> Three numbered stages across the top, form on one side and a sticky order summary on the other. What every shopper has seen before, which is the argument for it: nothing to learn. Delivery comes before payment on purpose — the choice of rider decides whether cash is even offered, so the page filters instead of refusing at the end.`],
+  ["B · Accordion",renderB,`<b>B — one page, one stage open.</b> Nothing navigates: finished stages fold up into a single line you can reopen, so a shopper can always see what they already typed and fix it without losing their place. Fewer ways to get lost than A, and on a phone it never scrolls a half-filled form off-screen. My recommendation.`],
+  ["C · Per-shop",renderC,`<b>C — the shops are the middle step.</b> Loqal's basket is not one order, it is one per shop, each with its own rider, fee and day. This is the only layout that says so: step two gives every shop its own card. Honest about the product and slower to fill in — worth it when a basket really does span two shops, heavy when it does not.`],
+  ["D · Phone-first",renderD,`<b>D — four short screens.</b> One question per screen, a hairline progress bar, and the total pinned to the bottom beside the button. Built for the thumb, since most of your traffic is a phone on mobile data. On desktop it reads a little sparse — it would pair with A or B for wide screens.`]
+];
+const tabs=document.getElementById("tabs"),stage=document.getElementById("stage");
+let cur=0;
+tabs.innerHTML=OPTS.map(([l],i)=>`<button role="tab" aria-selected="${!i}" data-i="${i}">${l}</button>`).join("");
+tabs.onclick=e=>{const b=e.target.closest("button");if(!b)return;cur=+b.dataset.i;for(const x of tabs.children)x.ariaSelected=String(+x.dataset.i===cur);draw()};
+document.getElementById("lang").onclick=e=>{AR=!AR;document.documentElement.lang=AR?"ar":"en";document.documentElement.dir=AR?"rtl":"ltr";e.target.textContent=AR?"EN":"عربي";draw()};
+document.getElementById("phone").onclick=e=>{const on=e.target.ariaPressed!=="true";e.target.ariaPressed=String(on);document.body.toggleAttribute("data-phone",on);draw()};
+function draw(){stage.innerHTML=`<section class="opt" data-on>${OPTS[cur][1]()}<p class="note">${OPTS[cur][2]}</p></section>`}
+function pickDelivery(el){[...el.parentElement.children].forEach(c=>c.ariaChecked="false");el.ariaChecked="true"}
+function pickPay(el){[...el.parentElement.children].forEach(c=>c.ariaChecked="false");el.ariaChecked="true"}
+draw();
+</script>
+</body>
+</html>
