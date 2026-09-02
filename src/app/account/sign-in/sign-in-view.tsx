@@ -2,57 +2,179 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { signIn } from "@/lib/auth-client";
+import { authClient, signIn } from "@/lib/auth-client";
+import { EMAIL_ONLY, authMethodsKey, fetchAuthMethods } from "@/lib/auth-methods";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
 
 /**
- * Signing in.
+ * Signing in — a number, then six digits.
  *
- * NOTHING IN THE APP CALLED `signIn` BEFORE THIS. `auth-client.ts` exported it,
- * `account-view.tsx` rendered a guest state and a sign-out button, and there
- * was no route between the two — a shopper could sign OUT and never back IN.
- * That is the gap this closes, and it is the whole scope of the screen.
+ * A phone is the credential an Egyptian shopper already has, and it is already
+ * half of how this product works: a guest order is opened with its number and
+ * the phone that placed it. So the phone route leads, Google sits under it, and
+ * email and password — the route brand staff and admins use — is a toggle
+ * rather than the front door.
  *
- * ── Why email and password, and not the phone-and-code flow ─────────────────
+ * WHAT IS DRAWN IS WHAT THE DEPLOYMENT HAS. `/v1/auth/methods` answers three
+ * booleans: Google is mounted only where both halves of its credential are set,
+ * and the phone code only where a WhatsApp gateway credential exists (or in
+ * development, where the code goes to the API's log). This screen renders what
+ * that says and nothing else — a button that cannot work is worse than a button
+ * that is not there. If the call itself fails, it falls back to email and
+ * password, which is the one route always mounted.
  *
- * The reference board opens with a phone number and a six-digit code, which is
- * the right shape for this product: most Loqal shoppers check out as guests and
- * a phone is the credential they already use. It is NOT built here, because
- * `authClient` carries only `inferAdditionalFields` — there is no phone-number
- * or OTP plugin on the client, and adding one is a server change too (the
- * plugin has to be enabled on the Better Auth instance in the Nest backend,
- * which owns the user table for the whole platform). Building a code screen
- * against a plugin that is not installed would be a form that cannot submit.
+ * THE INK PANEL IS DESKTOP ONLY. It carries the three reasons to have an
+ * account, which is the honest answer to "why am I being asked to do this" —
+ * and on a phone it would be 300px of dark between the shopper and the form,
+ * so a container query drops it.
  *
- * So this is Better Auth's email and password, which IS installed, and the
- * screen says plainly that the phone route is coming rather than pretending
- * the choice was a preference.
- *
- * ── The guest is not pushed through here ────────────────────────────────────
- *
- * Buying does not require an account: the bag, checkout and the order lookup
- * all work for a guest, and the design system's own note is that the order
- * number plus the phone IS the credential. So this screen offers to continue
- * as a guest, and does it as a real link out rather than as small print.
+ * THE GUEST EXIT STAYS. Buying never required an account, and letting somebody
+ * build one to find that out is the deceit this screen has always refused.
  */
+
+/** Egyptian mobiles are ten digits after +20, and the API refuses anything else. */
+const DIGITS = 10;
+const CODE_LENGTH = 6;
+/** Long enough that resending is a decision, short enough not to strand anyone. */
+const RESEND_SECONDS = 45;
+
+type Step = "number" | "code";
+type Mode = "phone" | "email";
+
+/** `10 0000 0000` — the grouping Egyptians read a mobile in. */
+function groupDigits(digits: string): string {
+  const parts = [digits.slice(0, 2), digits.slice(2, 6), digits.slice(6, 10)];
+  return parts.filter(Boolean).join(" ");
+}
+
 export function SignInView() {
   const locale = useLocale();
   const router = useRouter();
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+
   const emailId = useId();
   const passwordId = useId();
   const errorId = useId();
+  const phoneId = useId();
 
+  const { data: methods = EMAIL_ONLY } = useQuery({
+    queryKey: authMethodsKey,
+    queryFn: fetchAuthMethods,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [prefersEmail, setPrefersEmail] = useState(false);
+  const [step, setStep] = useState<Step>("number");
+  const [digits, setDigits] = useState("");
+  const [code, setCode] = useState<string[]>(() => Array<string>(CODE_LENGTH).fill(""));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [left, setLeft] = useState(0);
 
-  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const boxes = useRef<(HTMLInputElement | null)[]>([]);
+  const phoneNumber = `+20${digits}`;
 
-  const submit = async (event: React.FormEvent) => {
+  /**
+   * DERIVED, never stored. The first render answers EMAIL_ONLY — the query has
+   * not come back yet — and a mode held in state would latch that fallback and
+   * stay on email even after the API says the phone route exists. Only the
+   * shopper's own toggle is state.
+   */
+  const mode: Mode = methods.phoneOtp && !prefersEmail ? "phone" : "email";
+
+  useEffect(() => {
+    if (left <= 0) return;
+    const timer = window.setInterval(() => setLeft((n) => n - 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [left]);
+
+  /**
+   * `refresh` before `replace`, so the server components that read the session
+   * re-render with it. Without the refresh the shopper lands on an account
+   * screen still rendering its guest state.
+   *
+   * `replace`, not `push`: back out of the account screen should reach wherever
+   * they were shopping, not the form they just cleared.
+   */
+  const land = () => {
+    router.refresh();
+    router.replace("/account");
+  };
+
+  const unreachable = () =>
+    t(
+      "مش قادرين نوصل للسيرفر دلوقتي. حاول تاني بعد شوية.",
+      "We cannot reach the server right now. Try again in a moment."
+    );
+
+  const sendCode = async () => {
+    if (pending || digits.length < DIGITS) return;
+    setError(null);
+    setPending(true);
+
+    try {
+      const result = await authClient.phoneNumber.sendOtp({ phoneNumber });
+
+      if (result.error) {
+        setError(
+          result.error.message ??
+            t("مش قادرين نبعت الكود للرقم ده.", "We cannot send a code to that number.")
+        );
+        setPending(false);
+        return;
+      }
+
+      setCode(Array<string>(CODE_LENGTH).fill(""));
+      setStep("code");
+      setLeft(RESEND_SECONDS);
+      setPending(false);
+      window.setTimeout(() => boxes.current[0]?.focus(), 60);
+    } catch {
+      setError(unreachable());
+      setPending(false);
+    }
+  };
+
+  /**
+   * Verifying is not a button. Six digits typed or pasted IS the submit — a
+   * confirm button under a full code is a step that exists only to be pressed.
+   */
+  const verify = async (full: string) => {
+    if (pending) return;
+    setError(null);
+    setPending(true);
+
+    try {
+      const result = await authClient.phoneNumber.verify({
+        phoneNumber,
+        code: full,
+      });
+
+      if (result.error) {
+        setError(
+          result.error.message ??
+            t("الكود مش مظبوط. جرّب تاني.", "That code is not right. Try again.")
+        );
+        setCode(Array<string>(CODE_LENGTH).fill(""));
+        setPending(false);
+        boxes.current[0]?.focus();
+        return;
+      }
+
+      land();
+    } catch {
+      setError(unreachable());
+      setPending(false);
+    }
+  };
+
+  const submitEmail = async (event: React.FormEvent) => {
     event.preventDefault();
     if (pending) return;
 
@@ -80,135 +202,353 @@ export function SignInView() {
         return;
       }
 
-      /**
-       * `refresh` before `replace`, so the server components that read the
-       * session re-render with it. Without the refresh the shopper lands on an
-       * account screen still rendering its guest state.
-       *
-       * `replace`, not `push`: back out of the account screen should reach
-       * wherever they were shopping, not the form they just cleared.
-       */
-      router.refresh();
-      router.replace("/account");
+      land();
     } catch {
-      setError(
-        t(
-          "مش قادرين نوصل للسيرفر دلوقتي. حاول تاني بعد شوية.",
-          "We cannot reach the server right now. Try again in a moment."
-        )
-      );
+      setError(unreachable());
       setPending(false);
     }
   };
 
+  const withGoogle = async () => {
+    setError(null);
+    try {
+      await signIn.social({ provider: "google", callbackURL: "/account" });
+    } catch {
+      setError(unreachable());
+    }
+  };
+
+  /** One box: type forward, backspace back, and a pasted code fills all six. */
+  const onCodeChange = (index: number, raw: string) => {
+    const digit = raw.replace(/\D/g, "");
+    if (digit.length > 1) {
+      const spread = digit.slice(0, CODE_LENGTH).split("");
+      const next = Array<string>(CODE_LENGTH).fill("");
+      spread.forEach((value, at) => (next[at] = value));
+      setCode(next);
+      boxes.current[Math.min(spread.length, CODE_LENGTH - 1)]?.focus();
+      if (spread.length === CODE_LENGTH) void verify(next.join(""));
+      return;
+    }
+
+    const next = [...code];
+    next[index] = digit;
+    setCode(next);
+    if (digit && index < CODE_LENGTH - 1) boxes.current[index + 1]?.focus();
+
+    const full = next.join("");
+    if (full.length === CODE_LENGTH && !full.includes("")) void verify(full);
+  };
+
+  const error_ = error ? (
+    /* Inserted rather than hidden-then-shown: role="alert" on a node that
+       ARRIVES is announced; a hidden alert is dropped from the tree between. */
+    <p id={errorId} className="lq-hint lq-hint--error" role="alert">
+      {error}
+    </p>
+  ) : null;
+
   return (
     <Shell title={t("الدخول", "Sign in")}>
       <div className="lq-wrap lq-pad">
-        <section className="lq-sec">
-          <div className="lq-sec__head">
-            <div>
-              <h1 className="lq-phead__title">{t("ادخل على حسابك", "Sign in")}</h1>
-              <p className="lq-eyebrow">
-                {t(
-                  "الحساب بيخلّي عناوينك وأوردراتك محفوظة.",
-                  "An account keeps your addresses and your orders in one place."
+        <section className="lq-signin lq-rv">
+          <div className="lq-signin__form">
+            {step === "number" ? (
+              <>
+                <h1 className="lq-signin__title">{t("ادخل على حسابك", "Sign in")}</h1>
+                <p className="lq-signin__lede">
+                  {methods.phoneOtp && mode === "phone"
+                    ? t(
+                        "رقمك، وبعدين كود من ٦ أرقام. من غير باسورد تنساه.",
+                        "Your number, then a six-digit code. No password to forget."
+                      )
+                    : t(
+                        "الحساب بيخلّي عناوينك وأوردراتك محفوظة.",
+                        "An account keeps your addresses and your orders in one place."
+                      )}
+                </p>
+
+                {methods.phoneOtp && mode === "phone" ? (
+                  <div className="lq-signin__block">
+                    <label className="lq-label" htmlFor={phoneId}>
+                      {t("رقم الموبايل", "Mobile number")}
+                    </label>
+                    {/* The country code is not editable: this product delivers
+                        to Cairo and Giza, and the API refuses anything that is
+                        not an Egyptian mobile. A free country field would be a
+                        way to fail. */}
+                    <div className="lq-phone">
+                      {/* LTR always: under RTL the browser reorders "+20" to
+                          "20+", which is a different thing to read. */}
+                      <span className="lq-phone__cc" dir="ltr">
+                        +20
+                      </span>
+                      <input
+                        id={phoneId}
+                        className="lq-phone__input"
+                        inputMode="numeric"
+                        autoComplete="tel-national"
+                        dir="ltr"
+                        placeholder="10 0000 0000"
+                        value={groupDigits(digits)}
+                        onChange={(event) => {
+                          setDigits(event.target.value.replace(/\D/g, "").slice(0, DIGITS));
+                          if (error) setError(null);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") void sendCode();
+                        }}
+                        aria-invalid={error !== null}
+                        aria-describedby={error ? errorId : undefined}
+                      />
+                    </div>
+                    <p className="lq-hint">
+                      {t(
+                        "بنبعت الكود على واتساب، ولو مَوصلش بنبعته SMS.",
+                        "We send the code on WhatsApp, and by SMS if WhatsApp does not reach you."
+                      )}
+                    </p>
+
+                    {error_}
+
+                    <button
+                      type="button"
+                      className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                      onClick={() => void sendCode()}
+                      disabled={digits.length < DIGITS || pending}
+                    >
+                      {pending
+                        ? t("بنبعت الكود", "Sending the code")
+                        : t("ابعت الكود", "Send the code")}
+                    </button>
+                  </div>
+                ) : (
+                  <form method="post" onSubmit={submitEmail} className="lq-signin__block" noValidate>
+                    <div className="lq-field">
+                      <label className="lq-label" htmlFor={emailId}>
+                        {t("الإيميل", "Email")}
+                      </label>
+                      <input
+                        id={emailId}
+                        className="lq-input"
+                        type="email"
+                        autoComplete="email"
+                        inputMode="email"
+                        dir="ltr"
+                        value={email}
+                        onChange={(event) => {
+                          setEmail(event.target.value);
+                          if (error) setError(null);
+                        }}
+                        aria-invalid={error !== null}
+                        aria-describedby={error ? errorId : undefined}
+                      />
+                    </div>
+
+                    <div className="lq-field">
+                      <label className="lq-label" htmlFor={passwordId}>
+                        {t("الباسورد", "Password")}
+                      </label>
+                      <input
+                        id={passwordId}
+                        className="lq-input"
+                        type="password"
+                        autoComplete="current-password"
+                        dir="ltr"
+                        value={password}
+                        onChange={(event) => {
+                          setPassword(event.target.value);
+                          if (error) setError(null);
+                        }}
+                        aria-invalid={error !== null}
+                        aria-describedby={error ? errorId : undefined}
+                      />
+                    </div>
+
+                    {error_}
+
+                    <button
+                      type="submit"
+                      className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                      aria-disabled={pending}
+                    >
+                      {pending ? t("بندخّلك", "Signing you in") : t("ادخل", "Sign in")}
+                    </button>
+                  </form>
                 )}
-              </p>
-            </div>
+
+                {methods.google || methods.phoneOtp ? (
+                  <div className="lq-or">
+                    <span>{t("أو", "or")}</span>
+                  </div>
+                ) : null}
+
+                {methods.google ? (
+                  <button
+                    type="button"
+                    className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
+                    onClick={() => void withGoogle()}
+                  >
+                    {/* Google's own mark, drawn rather than fetched: the CSP
+                        allows no third-party images and a coloured G is what
+                        makes the button recognisable at a glance. */}
+                    <svg className="lq-signin__g" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        fill="#4285F4"
+                        d="M21.6 12.2c0-.7-.06-1.4-.18-2.05H12v3.88h5.4a4.6 4.6 0 0 1-2 3.03v2.5h3.23c1.89-1.74 2.97-4.3 2.97-7.36Z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 22c2.7 0 4.96-.9 6.62-2.44l-3.23-2.5c-.9.6-2.05.96-3.39.96-2.6 0-4.8-1.76-5.59-4.12H3.07v2.58A10 10 0 0 0 12 22Z"
+                      />
+                      <path fill="#FBBC05" d="M6.41 13.9a6 6 0 0 1 0-3.8V7.52H3.07a10 10 0 0 0 0 8.96l3.34-2.58Z" />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.98c1.47 0 2.79.5 3.83 1.5l2.86-2.86C16.95 2.99 14.7 2 12 2A10 10 0 0 0 3.07 7.52l3.34 2.58C7.2 7.74 9.4 5.98 12 5.98Z"
+                      />
+                    </svg>
+                    {t("كمّل بجوجل", "Continue with Google")}
+                  </button>
+                ) : null}
+
+                {methods.phoneOtp ? (
+                  <button
+                    type="button"
+                    className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
+                    onClick={() => {
+                      setPrefersEmail((current) => !current);
+                      setError(null);
+                    }}
+                  >
+                    {mode === "phone"
+                      ? t("بالإيميل والباسورد", "Use email and password")
+                      : t("برقم الموبايل", "Use a mobile number")}
+                  </button>
+                ) : null}
+
+                <hr className="lq-rule" />
+
+                {/* Buying never required an account, and saying so is better
+                    than letting somebody build one to find that out. */}
+                <p className="lq-prose">
+                  {t(
+                    "مش لازم حساب عشان تطلب. تقدر تشتري كضيف وتتابع الأوردر برقمه ورقم موبايلك.",
+                    "You do not need an account to order. You can buy as a guest and follow the order by its number and your phone."
+                  )}
+                </p>
+                <Link className="lq-btn lq-btn--secondary lq-btn--block" href="/">
+                  {t("كمّل كضيف", "Continue as a guest")}
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="lq-signin__back"
+                  onClick={() => {
+                    setStep("number");
+                    setError(null);
+                  }}
+                >
+                  <span className="lq-icon" data-icon="arrow-left" aria-hidden="true" />
+                  {t("غيّر الرقم", "Change the number")}
+                </button>
+
+                <h1 className="lq-signin__title">{t("اكتب الكود", "Enter the code")}</h1>
+                <p className="lq-signin__lede">
+                  {t("اتبعت لـ", "Sent to")}{" "}
+                  <b className="lq-signin__num" dir="ltr">
+                    +20 {groupDigits(digits)}
+                  </b>
+                </p>
+
+                {/* One field per digit, LTR always: a six-digit code is a
+                    number, and mirroring it in Arabic would reverse it. */}
+                <div className="lq-code" dir="ltr">
+                  {code.map((value, index) => (
+                    <input
+                      key={index}
+                      ref={(node) => {
+                        boxes.current[index] = node;
+                      }}
+                      className="lq-code__box"
+                      inputMode="numeric"
+                      autoComplete={index === 0 ? "one-time-code" : "off"}
+                      maxLength={CODE_LENGTH}
+                      value={value}
+                      data-filled={value ? "true" : undefined}
+                      disabled={pending}
+                      aria-label={`${index + 1}`}
+                      onChange={(event) => onCodeChange(index, event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Backspace" && !value && index > 0) {
+                          boxes.current[index - 1]?.focus();
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {error_}
+
+                {pending ? (
+                  <p className="lq-hint" role="status">
+                    {t("بنتأكد…", "Checking…")}
+                  </p>
+                ) : null}
+
+                <button
+                  type="button"
+                  className="lq-btn lq-btn--secondary lq-btn--block"
+                  onClick={() => void sendCode()}
+                  disabled={left > 0 || pending}
+                >
+                  {left > 0
+                    ? t(`ابعته تاني بعد ${left} ثانية`, `Send it again in ${left}s`)
+                    : t("ابعت الكود تاني", "Send the code again")}
+                </button>
+              </>
+            )}
           </div>
 
-          <hr className="lq-rule" />
-
-          <form method="post" onSubmit={submit} className="lq-sec" noValidate>
-            <div className="lq-field">
-              <label className="lq-label" htmlFor={emailId}>
-                {t("الإيميل", "Email")}
-              </label>
-              <input
-                id={emailId}
-                className="lq-input"
-                type="email"
-                autoComplete="email"
-                inputMode="email"
-                dir="ltr"
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  if (error) setError(null);
-                }}
-                aria-invalid={error !== null}
-                aria-describedby={error ? errorId : undefined}
-              />
-            </div>
-
-            <div className="lq-field">
-              <label className="lq-label" htmlFor={passwordId}>
-                {t("الباسورد", "Password")}
-              </label>
-              <input
-                id={passwordId}
-                className="lq-input"
-                type="password"
-                autoComplete="current-password"
-                dir="ltr"
-                value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  if (error) setError(null);
-                }}
-                aria-invalid={error !== null}
-                aria-describedby={error ? errorId : undefined}
-              />
-            </div>
-
-            {/* Inserted rather than hidden-then-shown: role="alert" on a node
-                that ARRIVES is announced; a hidden alert is dropped from the
-                accessibility tree in between. */}
-            {error ? (
-              <p id={errorId} className="lq-hint lq-hint--error" role="alert">
-                {error}
+          <aside className="lq-signin__art" aria-hidden="true">
+            <span className="lq-signin__rings" />
+            <div>
+              <span className="lq-eyebrow lq-signin__brand">loqaaal</span>
+              <p className="lq-signin__pitch">
+                {t("محلات منطقتك، في شنطة واحدة.", "Your neighbourhood shops, in one basket.")}
               </p>
-            ) : null}
-
-            <button
-              type="submit"
-              className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
-              aria-disabled={pending}
-            >
-              {pending ? t("بندخّلك", "Signing you in") : t("ادخل", "Sign in")}
-            </button>
-          </form>
-
-          <hr className="lq-rule" />
-
-          {/* Buying never required an account, and saying so is better than
-              letting somebody build one to find that out. */}
-          <p className="lq-prose">
-            {t(
-              "مش لازم حساب عشان تطلب. تقدر تشتري كضيف وتتابع الأوردر برقمه ورقم موبايلك.",
-              "You do not need an account to order. You can buy as a guest and follow the order by its number and your phone."
-            )}
-          </p>
-          <Link className="lq-btn lq-btn--secondary lq-btn--block" href="/">
-            {t("كمّل كضيف", "Continue as a guest")}
-          </Link>
-
-          {/*
-            BACKEND GAP, stated rather than left as a missing button.
-
-            The phone-and-code flow is what this product wants — a phone is the
-            credential an Egyptian shopper already has, and it is what the
-            reference board opens with. It needs Better Auth's phone-number/OTP
-            plugin enabled on the Nest instance that owns the user table, and
-            then declared on `authClient`. Neither is done, so the screen does
-            not draw a code field it cannot submit.
-          */}
-          <p className="lq-hint">
-            {t(
-              "الدخول برقم الموبايل وكود لسه مش شغال.",
-              "Signing in with a phone number and a code is not live yet."
-            )}
-          </p>
+            </div>
+            <ul className="lq-signin__points">
+              <li>
+                <span className="lq-icon" data-icon="truck" />
+                {t(
+                  "توصيل في نفس اليوم في القاهرة والجيزة — المحل بيحجز المندوب بنفسه.",
+                  "Same-day delivery in Cairo and Giza — the shop books its own rider."
+                )}
+              </li>
+              <li>
+                <span className="lq-icon" data-icon="map-pin" />
+                {t(
+                  "العناوين محفوظة، فالأوردر الجاي بضغطتين.",
+                  "Addresses kept, so the next order is two taps."
+                )}
+              </li>
+              <li>
+                <span className="lq-icon" data-icon="package" />
+                {t(
+                  "كل الأوردرات في مكان واحد، من أي محل.",
+                  "Every order in one place, whichever shop it came from."
+                )}
+              </li>
+            </ul>
+            <span className="lq-signin__pay">
+              {t(
+                "كاش عند الاستلام · بطاقة · فاليو · إنستاباي",
+                "Cash on delivery · card · Valu · InstaPay"
+              )}
+            </span>
+          </aside>
         </section>
       </div>
     </Shell>

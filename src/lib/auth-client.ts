@@ -16,7 +16,10 @@
  * origin never reaches the browser bundle.
  */
 import { createAuthClient } from "better-auth/react";
-import { inferAdditionalFields } from "better-auth/client/plugins";
+import {
+  inferAdditionalFields,
+  phoneNumberClient,
+} from "better-auth/client/plugins";
 
 /**
  * The three columns the backend adds to Better Auth's user table.
@@ -28,6 +31,13 @@ import { inferAdditionalFields } from "better-auth/client/plugins";
 export const authClient = createAuthClient({
   basePath: "/api/auth",
   plugins: [
+    /**
+     * The phone route: `sendOtp` then `verify`, both on the backend's own Better
+     * Auth instance. Whether this deployment can actually deliver a code is a
+     * separate question, answered by /v1/auth/methods — the client plugin only
+     * gives the screen the two calls to make.
+     */
+    phoneNumberClient(),
     inferAdditionalFields({
       user: {
         role: { type: "string", input: false },

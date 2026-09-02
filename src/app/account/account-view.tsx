@@ -204,11 +204,13 @@ export function AccountView() {
       : "Orders and addresses are kept on this account.",
     signOut: ar ? "تسجيل الخروج" : "Sign out",
     signIn: ar ? "ادخل على حسابك" : "Sign in",
-    /* Named as what is missing, not as "coming soon". Email sign-in works now;
-       it is the PHONE route that does not, so the sentence says which. */
-    noSignIn: ar
-      ? "الدخول برقم الموبايل وكود لسه مش شغّال. دلوقتي الدخول بالإيميل."
-      : "Signing in with a phone and a code is not live yet. For now it is email.",
+    /* The phone route is live now (Better Auth's phone-number plugin on the
+       API), so this no longer says it is not. What the ways in actually are is
+       the sign-in screen's own question — it asks /v1/auth/methods and draws
+       only what this deployment has. */
+    howIn: ar
+      ? "برقم الموبايل وكود، أو بالإيميل."
+      : "With a mobile number and a code, or with email.",
     orders: ar ? "الأوردرات" : "Orders",
     ordersBody: ar
       ? "افتح أوردرك برقمه ورقم الموبايل اللي طلبت بيه. الرقمين مع بعض هما المفتاح، فمفيش حد تاني يقدر يفتحه."
@@ -349,7 +351,7 @@ export function AccountView() {
                           {t.signOut}
                         </button>
                       ) : (
-                        <Link className="lq-btn" href="/account/sign-in">
+                        <Link className="lq-btn lq-btn--primary" href="/account/sign-in">
                           {t.signIn}
                         </Link>
                       )}
@@ -358,7 +360,7 @@ export function AccountView() {
                       </Link>
                     </div>
 
-                    {session?.user ? null : <p className="lq-prose">{t.noSignIn}</p>}
+                    {session?.user ? null : <p className="lq-prose">{t.howIn}</p>}
                   </>
                 )}
               </div>
