@@ -55,7 +55,8 @@ const CODE_LENGTH = 6;
 const RESEND_SECONDS = 45;
 
 type Step = "number" | "code";
-type Mode = "phone" | "email";
+/** The three ways in, in the order this product prefers them. */
+type Door = "phone" | "email" | "password";
 
 /** `10 0000 0000` — the grouping Egyptians read a mobile in. */
 function groupDigits(digits: string): string {
@@ -108,7 +109,7 @@ export function SignInView() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const [prefersEmail, setPrefersEmail] = useState(false);
+  const [chosen, setChosen] = useState<Door | null>(null);
   const [step, setStep] = useState<Step>("number");
   const [digits, setDigits] = useState("");
   const [code, setCode] = useState<string[]>(() => Array<string>(CODE_LENGTH).fill(""));
@@ -135,12 +136,19 @@ export function SignInView() {
   const back = safeNext(params.get("next")) ?? "/account";
 
   /**
-   * DERIVED, never stored. The first render answers EMAIL_ONLY — the query has
-   * not come back yet — and a mode held in state would latch that fallback and
-   * stay on email even after the API says the phone route exists. Only the
-   * shopper's own toggle is state.
+   * WHICH DOOR IS OPEN, derived rather than stored until the shopper picks one.
+   *
+   * The first render answers EMAIL_ONLY — the query has not come back yet — and
+   * a door held in state from that moment would latch the fallback and stay on
+   * the password form even after the API says the phone route exists. So the
+   * default follows the answer, and only an explicit choice is state.
+   *
+   * The order is the ranking: a phone is the credential an Egyptian shopper
+   * already has, an email code is the fallback, and the password form is for
+   * brand staff and admins, who are issued credentials and know to look for it.
    */
-  const mode: Mode = methods.phoneOtp && !prefersEmail ? "phone" : "email";
+  const door: Door =
+    chosen ?? (methods.phoneOtp ? "phone" : methods.emailOtp ? "email" : "password");
 
   useEffect(() => {
     if (left <= 0) return;
@@ -167,18 +175,37 @@ export function SignInView() {
       "We cannot reach the server right now. Try again in a moment."
     );
 
+  /** Whether the field the shopper is filling in is ready to be sent to. */
+  const ready = door === "phone" ? digits.length === DIGITS : email.includes("@");
+
+  /**
+   * ONE SEND FOR BOTH CODES. The phone and the email route differ by one call
+   * and one sentence; giving each its own handler is how the two drift into
+   * different retry rules and different error copy.
+   */
   const sendCode = async () => {
-    if (pending || digits.length < DIGITS) return;
+    if (pending || !ready) return;
     setError(null);
     setPending(true);
 
     try {
-      const result = await authClient.phoneNumber.sendOtp({ phoneNumber });
+      const result =
+        door === "phone"
+          ? await authClient.phoneNumber.sendOtp({ phoneNumber })
+          : await authClient.emailOtp.sendVerificationOtp({
+              email: email.trim(),
+              type: "sign-in",
+            });
 
       if (result.error) {
         setError(
           result.error.message ??
-            t("مش قادرين نبعت الكود للرقم ده.", "We cannot send a code to that number.")
+            (door === "phone"
+              ? t("مش قادرين نبعت الكود للرقم ده.", "We cannot send a code to that number.")
+              : t(
+                  "مش قادرين نبعت الكود للإيميل ده.",
+                  "We cannot send a code to that address."
+                ))
         );
         setPending(false);
         return;
@@ -205,10 +232,10 @@ export function SignInView() {
     setPending(true);
 
     try {
-      const result = await authClient.phoneNumber.verify({
-        phoneNumber,
-        code: full,
-      });
+      const result =
+        door === "phone"
+          ? await authClient.phoneNumber.verify({ phoneNumber, code: full })
+          : await signIn.emailOtp({ email: email.trim(), otp: full });
 
       if (result.error) {
         setError(
@@ -326,18 +353,23 @@ export function SignInView() {
               <>
                 <h1 className="lq-signin__title">{t("ادخل على حسابك", "Sign in")}</h1>
                 <p className="lq-signin__lede">
-                  {methods.phoneOtp && mode === "phone"
+                  {door === "phone"
                     ? t(
                         "رقمك، وبعدين كود من ٦ أرقام. من غير باسورد تنساه.",
                         "Your number, then a six-digit code. No password to forget."
                       )
-                    : t(
-                        "الحساب بيخلّي عناوينك وأوردراتك محفوظة.",
-                        "An account keeps your addresses and your orders in one place."
-                      )}
+                    : door === "email"
+                      ? t(
+                          "إيميلك، وبعدين كود من ٦ أرقام. من غير باسورد تنساه.",
+                          "Your email, then a six-digit code. No password to forget."
+                        )
+                      : t(
+                          "الدخول بالباسورد لأصحاب المحلات وفريق loqaaal.",
+                          "The password route is for shop owners and the loqaaal team."
+                        )}
                 </p>
 
-                {methods.phoneOtp && mode === "phone" ? (
+                {door === "phone" ? (
                   <div className="lq-signin__block">
                     <label className="lq-label" htmlFor={phoneId}>
                       {t("رقم الموبايل", "Mobile number")}
@@ -384,7 +416,54 @@ export function SignInView() {
                       type="button"
                       className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
                       onClick={() => void sendCode()}
-                      disabled={digits.length < DIGITS || pending}
+                      disabled={!ready || pending}
+                    >
+                      {pending
+                        ? t("بنبعت الكود", "Sending the code")
+                        : t("ابعت الكود", "Send the code")}
+                    </button>
+                  </div>
+                ) : door === "email" ? (
+                  /* The same two steps as the phone route, with an address in
+                     place of a number — and no password field anywhere on it. */
+                  <div className="lq-signin__block">
+                    <div className="lq-field">
+                      <label className="lq-label" htmlFor={emailId}>
+                        {t("الإيميل", "Email")}
+                      </label>
+                      <input
+                        id={emailId}
+                        className="lq-input"
+                        type="email"
+                        autoComplete="email"
+                        inputMode="email"
+                        dir="ltr"
+                        value={email}
+                        onChange={(event) => {
+                          setEmail(event.target.value);
+                          if (error) setError(null);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") void sendCode();
+                        }}
+                        aria-invalid={error !== null}
+                        aria-describedby={error ? errorId : undefined}
+                      />
+                    </div>
+                    <p className="lq-hint">
+                      {t(
+                        "هنبعتلك كود على الإيميل ده. لو عندك أوردرات كضيف بنفس الإيميل، هتلاقيها في حسابك.",
+                        "We email a code to that address. Guest orders placed with the same email gather in the account."
+                      )}
+                    </p>
+
+                    {error_}
+
+                    <button
+                      type="button"
+                      className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                      onClick={() => void sendCode()}
+                      disabled={!ready || pending}
                     >
                       {pending
                         ? t("بنبعت الكود", "Sending the code")
@@ -446,7 +525,8 @@ export function SignInView() {
                   </form>
                 )}
 
-                {methods.google || methods.phoneOtp ? (
+                {methods.google || (door !== "phone" && methods.phoneOtp) ||
+                (door !== "email" && methods.emailOtp) ? (
                   <div className="lq-or">
                     <span>{t("أو", "or")}</span>
                   </div>
@@ -480,18 +560,31 @@ export function SignInView() {
                   </button>
                 ) : null}
 
-                {methods.phoneOtp ? (
+                {/* The other doors this deployment has, never the one already
+                    open. A button that reloads the screen you are on is noise. */}
+                {door !== "phone" && methods.phoneOtp ? (
                   <button
                     type="button"
                     className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
                     onClick={() => {
-                      setPrefersEmail((current) => !current);
+                      setChosen("phone");
                       setError(null);
                     }}
                   >
-                    {mode === "phone"
-                      ? t("بالإيميل والباسورد", "Use email and password")
-                      : t("برقم الموبايل", "Use a mobile number")}
+                    {t("برقم الموبايل", "Use a mobile number")}
+                  </button>
+                ) : null}
+
+                {door !== "email" && methods.emailOtp ? (
+                  <button
+                    type="button"
+                    className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
+                    onClick={() => {
+                      setChosen("email");
+                      setError(null);
+                    }}
+                  >
+                    {t("بكود على الإيميل", "Use an email code")}
                   </button>
                 ) : null}
 
@@ -512,6 +605,26 @@ export function SignInView() {
                 <Link className="lq-btn lq-btn--secondary lq-btn--block" href={back}>
                   {t("كمّل كضيف", "Continue as a guest")}
                 </Link>
+
+                {/* THE PASSWORD ROUTE, DEMOTED TO A LINE OF TEXT.
+                    It is how brand staff and admins sign in — they are issued
+                    credentials and know to look for it — and it is the way in
+                    if both code routes are down. It is not what a shopper
+                    should be offered first: a password is a second thing to
+                    invent at the moment they wanted to buy a shirt, and
+                    resetting one needs email that works. */}
+                {door !== "password" && (methods.phoneOtp || methods.emailOtp) ? (
+                  <button
+                    type="button"
+                    className="lq-signin__staff"
+                    onClick={() => {
+                      setChosen("password");
+                      setError(null);
+                    }}
+                  >
+                    {t("عندك باسورد؟ ادخل بيه", "Have a password? Sign in with it")}
+                  </button>
+                ) : null}
               </>
             ) : (
               <>
@@ -524,14 +637,18 @@ export function SignInView() {
                   }}
                 >
                   <span className="lq-icon" data-icon="arrow-left" aria-hidden="true" />
-                  {t("غيّر الرقم", "Change the number")}
+                  {door === "phone"
+                    ? t("غيّر الرقم", "Change the number")
+                    : t("غيّر الإيميل", "Change the address")}
                 </button>
 
                 <h1 className="lq-signin__title">{t("اكتب الكود", "Enter the code")}</h1>
                 <p className="lq-signin__lede">
                   {t("اتبعت لـ", "Sent to")}{" "}
+                  {/* The address as typed, the number regrouped — one is a
+                      string the shopper wrote, the other is a figure. */}
                   <b className="lq-signin__num" dir="ltr">
-                    +20 {groupDigits(digits)}
+                    {door === "phone" ? `+20 ${groupDigits(digits)}` : email.trim()}
                   </b>
                 </p>
 

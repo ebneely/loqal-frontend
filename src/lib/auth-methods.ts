@@ -20,6 +20,7 @@ export const authMethodsSchema = z
     emailPassword: z.boolean(),
     google: z.boolean(),
     phoneOtp: z.boolean(),
+    emailOtp: z.boolean(),
   })
   .strict();
 
@@ -45,4 +46,5 @@ export const EMAIL_ONLY: AuthMethods = {
   emailPassword: true,
   google: false,
   phoneOtp: false,
+  emailOtp: false,
 };

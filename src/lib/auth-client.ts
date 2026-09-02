@@ -17,6 +17,7 @@
  */
 import { createAuthClient } from "better-auth/react";
 import {
+  emailOTPClient,
   inferAdditionalFields,
   phoneNumberClient,
 } from "better-auth/client/plugins";
@@ -38,6 +39,12 @@ export const authClient = createAuthClient({
      * gives the screen the two calls to make.
      */
     phoneNumberClient(),
+    /**
+     * The third door: a code to an email address, never a password. Same two
+     * calls as the phone route — send, then verify — and the same rule that an
+     * unknown address becomes an account when its code checks out.
+     */
+    emailOTPClient(),
     inferAdditionalFields({
       user: {
         role: { type: "string", input: false },
