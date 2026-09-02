@@ -763,6 +763,49 @@ html[data-greeted="1"] .lq-open{display:none}
    list or a sequence. Declared after those queries so it wins. */
 .lq-rows{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:var(--border-width) solid var(--line)}
 .lq-rows>*{background:var(--paper)}
+/* What a disclosure row opens into. It was three inline styles on /account. */
+.lq-drawer{display:grid;gap:var(--space-3);padding:0 var(--space-4) var(--space-4);animation:lq-drawer var(--dur-base) var(--ease-out) both}
+@keyframes lq-drawer{from{opacity:0;translate:0 -6px}}
+@media (prefers-reduced-motion:reduce){.lq-drawer{animation:none}}
+.lq-qa{display:grid;gap:2px}
+.lq-qa__q{font-size:var(--text-sm);font-weight:var(--weight-medium)}
+
+/* ── The account rail ─────────────────────────────────────────────────────── */
+/* A settings surface rather than one long column: five sections, one open at a
+   time, so addresses and notifications become another rail entry instead of
+   another block on a screen that already scrolls. The seams are the shared
+   1px background the rows use, so the rail and the panel are one object. */
+.lq-arail{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:var(--border-width) solid var(--line);border-radius:var(--radius-lg);overflow:clip}
+@container (min-width:760px){.lq-arail{grid-template-columns:232px minmax(0,1fr)}}
+.lq-arail__rail{display:grid;align-content:start;gap:1px;background:var(--line)}
+.lq-arail__tab{position:relative;display:flex;align-items:center;gap:var(--space-3);min-block-size:var(--tap-primary);padding-inline:var(--space-4);border:0;background:var(--raise);color:var(--ink-2);font:inherit;font-size:var(--text-base);font-weight:var(--weight-light);text-align:start;cursor:pointer;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
+.lq-arail__tab:hover{background:var(--paper);color:var(--ink)}
+.lq-arail__tab[aria-selected="true"]{background:var(--paper);color:var(--ink);font-weight:var(--weight-regular)}
+.lq-arail__tab .lq-icon{font-size:18px;color:var(--ink-3)}
+.lq-arail__tab[aria-selected="true"] .lq-icon{color:var(--green)}
+/* The marker is drawn by the tab, not by a moving element: a strip that slides
+   between two lists (a column on desktop, a row on a phone) is two animations
+   to keep in step, and this is one. */
+.lq-arail__tab::before{content:"";position:absolute;inset-block:var(--space-2);inset-inline-start:0;inline-size:3px;border-radius:var(--radius-full);background:var(--green);scale:1 0;transition:scale var(--dur-base) var(--ease-out)}
+.lq-arail__tab[aria-selected="true"]::before{scale:1 1}
+.lq-arail__pane{background:var(--paper);padding:var(--space-6);min-block-size:260px;animation:lq-pane var(--dur-slow) var(--ease-out) both}
+@keyframes lq-pane{from{opacity:0;translate:0 10px}}
+@media (prefers-reduced-motion:reduce){.lq-arail__pane{animation:none}}
+.lq-arail__pane:focus-visible{outline:none}
+.lq-arail__title{margin:0;font-size:var(--text-xl);font-weight:var(--weight-regular);letter-spacing:-0.02em;line-height:var(--leading-snug);overflow-wrap:anywhere}
+.lq-arail__sub{margin:var(--space-1) 0 var(--space-5);font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2);max-inline-size:56ch}
+.lq-arail__acts{display:flex;flex-wrap:wrap;gap:var(--space-3);margin-block-end:var(--space-4)}
+.lq-arail__acts>*{flex:1 1 auto}
+/* Under 760 the rail lies down: a scrolling row of tabs with the marker beneath
+   them. A 232px column beside what is left of a phone is not a layout. */
+@container (max-width:759px){
+  .lq-arail__rail{grid-auto-flow:column;grid-auto-columns:max-content;justify-content:start;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:none}
+  .lq-arail__rail::-webkit-scrollbar{display:none}
+  .lq-arail__tab{min-block-size:var(--tap-min);white-space:nowrap}
+  .lq-arail__tab::before{inset-block:auto 0;inset-inline:var(--space-3);inline-size:auto;block-size:2px;scale:0 1}
+  .lq-arail__tab[aria-selected="true"]::before{scale:1 1}
+  .lq-arail__pane{padding:var(--space-5) var(--space-4)}
+}
 
 /* ── Two-column page body ─────────────────────────────────────────────────── */
 /* A filter rail beside a results column. flex-wrap rather than a container

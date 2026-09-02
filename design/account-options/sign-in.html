@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — three ways in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200..700&family=Source+Code+Pro:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDEBE5;--raise:#F5F4F0;--field:#F7F6F3;
+  --line:#CFCBC0;--line-ink:#B3AEA1;
+  --ink:#14130F;--ink2:#605F5A;--ink3:#757470;
+  --green:#007950;--green-soft:#DDEBE3;--green-line:#A8C9B8;
+  --quint:cubic-bezier(.22,1,.36,1);--expo:cubic-bezier(.16,1,.3,1);
+  --mono:"Source Code Pro",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E4E1D9;color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+svg{display:block}
+
+.bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;background:var(--paper);border-bottom:1px solid var(--line)}
+.bar h1{margin:0;font-size:13px;font-weight:500;color:var(--ink2)}
+.bar a{font-size:12.5px;color:var(--ink2)}
+.tabs{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:clip}
+.tabs button{min-height:38px;padding:0 15px;border:0;background:var(--paper);color:var(--ink2);font:inherit;font-size:13px;cursor:pointer}
+.tabs button:hover{background:var(--raise)}
+.tabs button[aria-selected=true]{background:var(--green);color:#fff}
+.end{margin-inline-start:auto;display:flex;gap:8px}
+.gh{min-height:38px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--raise);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.gh[aria-pressed=true]{background:var(--green-soft);border-color:var(--green-line);color:var(--green)}
+
+.stage{padding:26px 20px 90px;display:grid;place-items:start center}
+.opt{width:min(1000px,100%);display:none}
+.opt[data-on]{display:block}
+body[data-phone] .opt{width:400px}
+.frame{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:clip;container-type:inline-size}
+.note{margin:16px 4px 0;font-size:12.5px;font-weight:300;color:var(--ink3);line-height:1.7}
+.note b{font-weight:500;color:var(--ink2)}
+.note code{font-family:var(--mono);font-size:11.5px;background:var(--raise);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+
+/* shared */
+.pad{padding:34px 26px 38px}
+body[data-phone] .pad{padding:24px 16px 30px}
+h2.t{margin:0;font-size:clamp(26px,3.4cqi,34px);font-weight:300;letter-spacing:-.035em;line-height:1.05}
+.lede{margin:8px 0 0;font-size:13.5px;font-weight:300;color:var(--ink2);max-width:46ch}
+.eyebrow{display:block;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.prose{margin:0;font-size:12.5px;font-weight:300;color:var(--ink2);line-height:1.7}
+
+.lab{display:block;font-size:12.5px;font-weight:500;margin:0 0 7px}
+.field{width:100%;min-height:52px;padding:0 15px;border:1px solid var(--line);border-radius:11px;background:var(--field);font:inherit;font-size:15px;color:var(--ink);transition:border-color .18s,box-shadow .18s,background .18s}
+.field:focus{outline:0;border-color:var(--green-line);background:var(--paper);box-shadow:0 0 0 3px var(--green-soft)}
+.field::placeholder{color:var(--ink3);font-weight:300}
+.phone{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:11px;background:var(--field);overflow:clip;transition:border-color .18s,box-shadow .18s,background .18s}
+.phone:focus-within{border-color:var(--green-line);background:var(--paper);box-shadow:0 0 0 3px var(--green-soft)}
+.phone .cc{display:flex;align-items:center;gap:7px;padding:0 13px;min-height:52px;border-inline-end:1px solid var(--line);font-family:var(--mono);font-size:14px;color:var(--ink2);background:var(--raise)}
+.phone input{flex:1;min-width:0;min-height:52px;border:0;background:transparent;padding:0 14px;font:inherit;font-family:var(--mono);font-size:16px;letter-spacing:.09em;color:var(--ink)}
+.phone input:focus{outline:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;padding:0 20px;border-radius:11px;border:1px solid var(--green);background:var(--green);color:#fff;font:inherit;font-size:15px;cursor:pointer;text-decoration:none;transition:transform .2s var(--quint),box-shadow .2s,opacity .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 3px 0 0 #05442f}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.ghost{background:var(--raise);border-color:var(--line);color:var(--ink)}
+.btn.ghost:hover{box-shadow:0 3px 0 0 var(--line-ink)}
+.btn.google{background:var(--paper);border-color:var(--line-ink);color:var(--ink)}
+.btn.google:hover{box-shadow:0 3px 0 0 var(--line-ink)}
+
+.or{display:flex;align-items:center;gap:14px;margin:18px 0;color:var(--ink3);font-size:11.5px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.link{background:0;border:0;padding:0;font:inherit;font-size:13px;color:var(--green);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.muted{font-size:12px;font-weight:300;color:var(--ink3)}
+
+/* the code boxes */
+.code{display:flex;gap:9px;direction:ltr}
+.code input{flex:1;min-width:0;height:60px;text-align:center;border:1px solid var(--line);border-radius:11px;background:var(--field);font-family:var(--mono);font-size:24px;font-weight:600;color:var(--ink);transition:.18s}
+.code input:focus{outline:0;border-color:var(--green-line);background:var(--paper);box-shadow:0 0 0 3px var(--green-soft)}
+.code input[data-filled]{border-color:var(--green-line);background:var(--green-soft);color:var(--green)}
+.tick{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink3);font-family:var(--mono)}
+.ring{width:16px;height:16px;border-radius:999px;border:2px solid var(--line);border-top-color:var(--green);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* step machine */
+.step{display:none}
+.step[data-on]{display:block;animation:in .42s var(--expo) both}
+@keyframes in{from{opacity:0;transform:translateY(12px)}}
+.dots{display:flex;gap:6px;margin-bottom:22px}
+.dots i{height:3px;flex:1;border-radius:999px;background:var(--line);transition:background .3s}
+.dots i[data-on]{background:var(--green)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ══ E · split ═══════════════════════════════════════════════════════════ */
+.e-split{display:grid;grid-template-columns:1fr}
+@container (min-width:800px){.e-split{grid-template-columns:1fr .92fr}}
+.e-form{padding:38px 34px 40px}
+body[data-phone] .e-form{padding:24px 16px 28px}
+.e-art{position:relative;background:#14130F;color:#EDEBE5;padding:38px 34px;display:grid;align-content:space-between;gap:26px;overflow:clip}
+body[data-phone] .e-art{display:none}
+.e-art h3{margin:0;font-size:24px;font-weight:300;letter-spacing:-.03em;line-height:1.25;max-width:20ch}
+.e-art .pt{display:flex;align-items:flex-start;gap:11px;font-size:13px;font-weight:300;opacity:.86;line-height:1.6}
+.e-art .pt svg{flex:none;margin-top:2px;color:#8FD3B4}
+.e-art .rings{position:absolute;inset-block-start:-70px;inset-inline-end:-70px;width:260px;height:260px;border-radius:999px;border:1px solid rgb(237 235 229/.14);animation:float 9s ease-in-out infinite}
+.e-art .rings::after{content:"";position:absolute;inset:44px;border-radius:999px;border:1px solid rgb(237 235 229/.1)}
+@keyframes float{50%{transform:translateY(16px)}}
+
+/* ══ F · one field ═══════════════════════════════════════════════════════ */
+.f-wrap{max-width:430px;margin:0 auto;padding:44px 24px 46px;text-align:center}
+body[data-phone] .f-wrap{padding:28px 16px 32px}
+.f-mark{width:56px;height:56px;margin:0 auto 20px;display:grid;place-items:center;border:1px solid var(--line);border-radius:16px;background:var(--raise);color:var(--green)}
+.f-wrap .lede{margin-inline:auto}
+.f-form{margin-top:26px;text-align:start}
+.f-tabs{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:11px;overflow:clip;margin-bottom:18px}
+.f-tabs button{flex:1;min-height:46px;border:0;background:var(--paper);font:inherit;font-size:13.5px;color:var(--ink2);cursor:pointer;transition:.2s}
+.f-tabs button[data-on]{background:var(--green);color:#fff}
+
+/* ══ G · sheet ═══════════════════════════════════════════════════════════ */
+.g-back{background:
+   repeating-linear-gradient(135deg,var(--raise) 0 22px,var(--paper) 22px 44px);
+  padding:40px 20px;display:grid;place-items:center}
+body[data-phone] .g-back{padding:18px 10px}
+.g-sheet{width:min(430px,100%);background:var(--paper);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 0 -4px rgb(20 19 15/.06);padding:12px 22px 26px;animation:rise .5s var(--expo) both}
+@keyframes rise{from{opacity:0;transform:translateY(26px)}}
+.g-grab{width:44px;height:4px;border-radius:999px;background:var(--line);margin:0 auto 18px}
+.g-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.g-head .x{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:var(--raise);color:var(--ink2);cursor:pointer}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/></g></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></g></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12.5 5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16V6h11v10M14 9h4l3 3v4h-3"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></g></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></g></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></g></symbol>
+<symbol id="i-google" viewBox="0 0 24 24"><path fill="#4285F4" d="M21.6 12.2c0-.7-.06-1.4-.18-2.05H12v3.88h5.4a4.6 4.6 0 0 1-2 3.03v2.5h3.23c1.89-1.74 2.97-4.3 2.97-7.36Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.44l-3.23-2.5c-.9.6-2.05.96-3.39.96-2.6 0-4.8-1.76-5.59-4.12H3.07v2.58A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.9a6 6 0 0 1 0-3.8V7.52H3.07a10 10 0 0 0 0 8.96l3.34-2.58Z"/><path fill="#EA4335" d="M12 5.98c1.47 0 2.79.5 3.83 1.5l2.86-2.86C16.95 2.99 14.7 2 12 2A10 10 0 0 0 3.07 7.52l3.34 2.58C7.2 7.74 9.4 5.98 12 5.98Z"/></symbol>
+</defs></svg>
+
+<header class="bar">
+  <h1>Sign in · three ways in</h1>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-go="e">E · Split</button>
+    <button role="tab" aria-selected="false" data-go="f">F · One field</button>
+    <button role="tab" aria-selected="false" data-go="g">G · Sheet</button>
+  </div>
+  <div class="end">
+    <a href="./index.html">← account options</a>
+    <button class="gh" id="phone" aria-pressed="false">Phone</button>
+    <button class="gh" id="lang" aria-pressed="false">عربي</button>
+  </div>
+</header>
+
+<main class="stage">
+
+<!-- ══ E · split ══════════════════════════════════════════════════════════ -->
+<section class="opt" data-opt="e" data-on>
+  <div class="frame">
+    <div class="e-split">
+      <div class="e-form" data-flow>
+        <div class="dots"><i data-on></i><i></i></div>
+
+        <div class="step" data-step="1" data-on>
+          <h2 class="t" data-en="Sign in" data-ar="ادخل على حسابك">Sign in</h2>
+          <p class="lede" data-en="Your number, then a six-digit code. No password to forget." data-ar="رقمك، وبعدين كود من ٦ أرقام. من غير باسورد تنساه.">Your number, then a six-digit code. No password to forget.</p>
+
+          <div style="margin-top:26px">
+            <label class="lab" data-en="Mobile number" data-ar="رقم الموبايل">Mobile number</label>
+            <div class="phone">
+              <span class="cc">🇪🇬 +20</span>
+              <input inputmode="numeric" placeholder="10 0000 0000" data-num aria-label="Mobile number">
+            </div>
+            <p class="muted" style="margin:9px 2px 0" data-en="We send the code on WhatsApp, and by SMS if WhatsApp does not reach you." data-ar="بنبعت الكود على واتساب، ولو مَوصلش بنبعته SMS.">We send the code on WhatsApp, and by SMS if WhatsApp does not reach you.</p>
+          </div>
+
+          <div style="margin-top:20px"><button class="btn" data-go2 disabled data-en="Send the code" data-ar="ابعت الكود">Send the code</button></div>
+
+          <div class="or" data-en="or" data-ar="أو">or</div>
+          <button class="btn google"><svg width="19" height="19"><use href="#i-google"/></svg><span data-en="Continue with Google" data-ar="كمّل بجوجل">Continue with Google</span></button>
+          <div style="margin-top:10px"><button class="btn ghost"><svg width="18" height="18"><use href="#i-mail"/></svg><span data-en="Use email and password" data-ar="بالإيميل والباسورد">Use email and password</span></button></div>
+
+          <p class="prose" style="margin-top:22px" data-en="You do not need an account to order. Buy as a guest and open the order by its number and phone." data-ar="مش لازم حساب عشان تطلب. اشتري كضيف وافتح الأوردر برقمه ورقم الموبايل.">You do not need an account to order. Buy as a guest and open the order by its number and phone.</p>
+          <div style="margin-top:12px"><button class="btn ghost" data-en="Continue as a guest" data-ar="كمّل كضيف">Continue as a guest</button></div>
+        </div>
+
+        <div class="step" data-step="2">
+          <button class="link" data-back style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink2)"><svg width="16" height="16"><use href="#i-back"/></svg><span data-en="Change the number" data-ar="غيّر الرقم">Change the number</span></button>
+          <h2 class="t" style="margin-top:14px" data-en="Enter the code" data-ar="اكتب الكود">Enter the code</h2>
+          <p class="lede"><span data-en="Sent to" data-ar="اتبعت لـ">Sent to</span> <b style="font-family:var(--mono);font-weight:600">+20 10 0000 0000</b></p>
+          <div class="code" style="margin-top:24px" data-code>
+            <input maxlength="1" inputmode="numeric" aria-label="1"><input maxlength="1" inputmode="numeric" aria-label="2"><input maxlength="1" inputmode="numeric" aria-label="3"><input maxlength="1" inputmode="numeric" aria-label="4"><input maxlength="1" inputmode="numeric" aria-label="5"><input maxlength="1" inputmode="numeric" aria-label="6">
+          </div>
+          <div class="tick" style="margin-top:16px" data-tick><span data-en="Checking…" data-ar="بنتأكد…">Checking…</span></div>
+          <div style="margin-top:18px"><button class="link" data-en="Send it again in 0:42" data-ar="ابعته تاني بعد ٠:٤٢">Send it again in 0:42</button></div>
+        </div>
+      </div>
+
+      <aside class="e-art">
+        <span class="rings"></span>
+        <div>
+          <span class="eyebrow" style="color:#8FD3B4">loqaaal</span>
+          <h3 style="margin-top:12px" data-en="Your neighbourhood shops, in one basket." data-ar="محلات منطقتك، في شنطة واحدة.">Your neighbourhood shops, in one basket.</h3>
+        </div>
+        <div style="display:grid;gap:14px">
+          <span class="pt"><svg width="18" height="18"><use href="#i-truck"/></svg><span data-en="Same-day delivery in Cairo and Giza — the shop books its own rider." data-ar="توصيل في نفس اليوم في القاهرة والجيزة — المحل بيحجز المندوب بنفسه.">Same-day delivery in Cairo and Giza — the shop books its own rider.</span></span>
+          <span class="pt"><svg width="18" height="18"><use href="#i-pin"/></svg><span data-en="Addresses kept, so the next order is two taps." data-ar="العناوين محفوظة، فالأوردر الجاي بضغطتين.">Addresses kept, so the next order is two taps.</span></span>
+          <span class="pt"><svg width="18" height="18"><use href="#i-bag"/></svg><span data-en="Every order in one place, whichever shop it came from." data-ar="كل الأوردرات في مكان واحد، من أي محل.">Every order in one place, whichever shop it came from.</span></span>
+        </div>
+        <span class="muted" style="color:#EDEBE5;opacity:.5" data-en="Cash on delivery · card · Valu · InstaPay" data-ar="كاش عند الاستلام · بطاقة · فاليو · إنستاباي">Cash on delivery · card · Valu · InstaPay</span>
+      </aside>
+    </div>
+  </div>
+  <p class="note"><b>E · Split.</b> The desktop screen stops being a form floating in a field of stone: the ink panel carries the three reasons to have an account, and the form gets a real width. Phone-first order — number, then code — with Google and email under it, and the guest exit kept where it is. On a phone the panel drops and only the form ships.</p>
+</section>
+
+<!-- ══ F · one field ══════════════════════════════════════════════════════ -->
+<section class="opt" data-opt="f">
+  <div class="frame">
+    <div class="f-wrap" data-flow>
+      <div class="step" data-step="1" data-on>
+        <span class="f-mark"><svg width="24" height="24"><use href="#i-phone"/></svg></span>
+        <h2 class="t" data-en="One number, one code" data-ar="رقم واحد وكود واحد">One number, one code</h2>
+        <p class="lede" data-en="Sign in and sign up are the same door. If the number is new, the account is made when the code checks out." data-ar="الدخول والتسجيل نفس الباب. لو الرقم جديد، الحساب بيتعمل أول ما الكود يظبط.">Sign in and sign up are the same door. If the number is new, the account is made when the code checks out.</p>
+
+        <div class="f-form">
+          <div class="f-tabs">
+            <button data-on data-en="Mobile" data-ar="موبايل">Mobile</button>
+            <button data-en="Email" data-ar="إيميل">Email</button>
+          </div>
+          <div class="phone">
+            <span class="cc">🇪🇬 +20</span>
+            <input inputmode="numeric" placeholder="10 0000 0000" data-num aria-label="Mobile number">
+          </div>
+          <div style="margin-top:14px"><button class="btn" data-go2 disabled data-en="Send the code" data-ar="ابعت الكود">Send the code</button></div>
+          <div class="or" data-en="or" data-ar="أو">or</div>
+          <button class="btn google"><svg width="19" height="19"><use href="#i-google"/></svg><span data-en="Continue with Google" data-ar="كمّل بجوجل">Continue with Google</span></button>
+          <p class="prose" style="margin-top:20px;text-align:center" data-en="Ordering works without any of this." data-ar="الطلب شغّال من غير ده كله.">Ordering works without any of this.</p>
+          <div style="margin-top:10px"><button class="btn ghost" data-en="Continue as a guest" data-ar="كمّل كضيف">Continue as a guest</button></div>
+        </div>
+      </div>
+
+      <div class="step" data-step="2">
+        <span class="f-mark"><svg width="24" height="24"><use href="#i-mail"/></svg></span>
+        <h2 class="t" data-en="Check WhatsApp" data-ar="بصّ على واتساب">Check WhatsApp</h2>
+        <p class="lede"><span data-en="Six digits, sent to" data-ar="٦ أرقام، اتبعت لـ">Six digits, sent to</span> <b style="font-family:var(--mono);font-weight:600">+20 10 0000 0000</b></p>
+        <div class="f-form">
+          <div class="code" data-code>
+            <input maxlength="1" inputmode="numeric" aria-label="1"><input maxlength="1" inputmode="numeric" aria-label="2"><input maxlength="1" inputmode="numeric" aria-label="3"><input maxlength="1" inputmode="numeric" aria-label="4"><input maxlength="1" inputmode="numeric" aria-label="5"><input maxlength="1" inputmode="numeric" aria-label="6">
+          </div>
+          <div class="tick" style="margin-top:16px;justify-content:center" data-tick><span data-en="Checking…" data-ar="بنتأكد…">Checking…</span></div>
+          <div style="margin-top:20px;display:flex;justify-content:space-between;gap:12px">
+            <button class="link" data-back data-en="Change the number" data-ar="غيّر الرقم">Change the number</button>
+            <button class="link" data-en="Send again · 0:42" data-ar="ابعت تاني · ٠:٤٢">Send again · 0:42</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note"><b>F · One field.</b> The narrowest reading: one column, one input, and the same door for signing in and signing up — a shopper who has never had an account never has to decide which button they want. Email is a tab rather than a second screen. Cheapest to build of the three, and the phone version is the desktop version.</p>
+</section>
+
+<!-- ══ G · sheet ══════════════════════════════════════════════════════════ -->
+<section class="opt" data-opt="g">
+  <div class="frame">
+    <div class="g-back">
+      <div class="g-sheet" data-flow>
+        <span class="g-grab"></span>
+        <div class="g-head">
+          <div>
+            <span class="eyebrow" data-en="loqaaal account" data-ar="حساب loqaaal">loqaaal account</span>
+            <h2 class="t" style="font-size:24px;margin-top:6px" data-step-title data-en="Sign in" data-ar="ادخل على حسابك">Sign in</h2>
+          </div>
+          <span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span>
+        </div>
+
+        <div class="step" data-step="1" data-on>
+          <p class="prose" data-en="Signing in is only ever needed to keep your addresses and your orders. Checkout never asks." data-ar="الدخول بس عشان العناوين والأوردرات تفضل محفوظة. الشراء مش بيسأل عنه.">Signing in is only ever needed to keep your addresses and your orders. Checkout never asks.</p>
+          <div style="margin-top:18px">
+            <label class="lab" data-en="Mobile number" data-ar="رقم الموبايل">Mobile number</label>
+            <div class="phone">
+              <span class="cc">🇪🇬 +20</span>
+              <input inputmode="numeric" placeholder="10 0000 0000" data-num aria-label="Mobile number">
+            </div>
+          </div>
+          <div style="margin-top:14px"><button class="btn" data-go2 disabled data-en="Send the code" data-ar="ابعت الكود">Send the code</button></div>
+          <div class="or" data-en="or" data-ar="أو">or</div>
+          <button class="btn google"><svg width="19" height="19"><use href="#i-google"/></svg><span data-en="Continue with Google" data-ar="كمّل بجوجل">Continue with Google</span></button>
+          <div style="margin-top:10px"><button class="btn ghost"><svg width="18" height="18"><use href="#i-mail"/></svg><span data-en="Email and password" data-ar="إيميل وباسورد">Email and password</span></button></div>
+          <div style="margin-top:16px;text-align:center"><button class="link" data-en="Continue as a guest" data-ar="كمّل كضيف">Continue as a guest</button></div>
+        </div>
+
+        <div class="step" data-step="2">
+          <p class="prose"><span data-en="Six digits sent to" data-ar="٦ أرقام اتبعت لـ">Six digits sent to</span> <b style="font-family:var(--mono);font-weight:600">+20 10 0000 0000</b></p>
+          <div class="code" style="margin-top:18px" data-code>
+            <input maxlength="1" inputmode="numeric" aria-label="1"><input maxlength="1" inputmode="numeric" aria-label="2"><input maxlength="1" inputmode="numeric" aria-label="3"><input maxlength="1" inputmode="numeric" aria-label="4"><input maxlength="1" inputmode="numeric" aria-label="5"><input maxlength="1" inputmode="numeric" aria-label="6">
+          </div>
+          <div class="tick" style="margin-top:14px" data-tick><span data-en="Checking…" data-ar="بنتأكد…">Checking…</span></div>
+          <div style="margin-top:18px;display:flex;justify-content:space-between;gap:12px">
+            <button class="link" data-back data-en="Change the number" data-ar="غيّر الرقم">Change the number</button>
+            <button class="link" data-en="Send again · 0:42" data-ar="ابعت تاني · ٠:٤٢">Send again · 0:42</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note"><b>G · Sheet.</b> Not a page at all — a sheet over whatever the shopper was doing, so signing in never loses the basket or the product they were reading. Same two steps inside. It is the most work of the three: the route has to keep working as a page for a direct link, so the sheet and the page are the same component mounted two ways.</p>
+</section>
+
+</main>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+$$('.tabs button').forEach((b) => b.addEventListener('click', () => {
+  $$('.tabs button').forEach((o) => o.setAttribute('aria-selected', String(o === b)));
+  $$('.opt').forEach((o) => o.toggleAttribute('data-on', o.dataset.opt === b.dataset.go));
+}));
+
+$('#phone').addEventListener('click', (e) => {
+  const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+  e.currentTarget.setAttribute('aria-pressed', String(on));
+  document.body.toggleAttribute('data-phone', on);
+});
+
+$('#lang').addEventListener('click', (e) => {
+  const ar = document.documentElement.dir !== 'rtl';
+  document.documentElement.lang = ar ? 'ar' : 'en';
+  document.documentElement.dir = ar ? 'rtl' : 'ltr';
+  e.currentTarget.setAttribute('aria-pressed', String(ar));
+  e.currentTarget.textContent = ar ? 'English' : 'عربي';
+  $$('[data-en]').forEach((el) => { el.textContent = ar ? el.dataset.ar : el.dataset.en; });
+});
+
+/* the number gates the button, the way it will have to in the real form */
+$$('[data-num]').forEach((input) => input.addEventListener('input', () => {
+  const digits = input.value.replace(/\D/g, '');
+  input.value = digits.replace(/^(\d{2})(\d{0,4})(\d{0,4}).*$/, (m, a, b, c) => [a, b, c].filter(Boolean).join(' '));
+  const flow = input.closest('[data-flow]');
+  $('[data-go2]', flow).disabled = digits.length < 10;
+}));
+
+/* step 1 -> 2, and back */
+$$('[data-go2]').forEach((b) => b.addEventListener('click', () => go(b.closest('[data-flow]'), 2)));
+$$('[data-back]').forEach((b) => b.addEventListener('click', () => go(b.closest('[data-flow]'), 1)));
+
+function go(flow, n) {
+  $$('.step', flow).forEach((s) => s.toggleAttribute('data-on', s.dataset.step === String(n)));
+  const dots = $$('.dots i', flow);
+  dots.forEach((d, i) => d.toggleAttribute('data-on', i < n));
+  const title = $('[data-step-title]', flow);
+  if (title) {
+    const ar = document.documentElement.dir === 'rtl';
+    title.textContent = n === 2 ? (ar ? 'اكتب الكود' : 'Enter the code') : (ar ? 'ادخل على حسابك' : 'Sign in');
+  }
+  const tick = $('[data-tick]', flow);
+  if (tick) tick.style.visibility = 'hidden';
+  const boxes = $$('[data-code] input', flow);
+  boxes.forEach((i) => { i.value = ''; i.removeAttribute('data-filled'); });
+  if (n === 2) setTimeout(() => boxes[0]?.focus(), 120);
+}
+
+/* the six boxes: type forward, backspace back, paste fills all six */
+$$('[data-code]').forEach((group) => {
+  const boxes = $$('input', group);
+  boxes.forEach((box, i) => {
+    box.addEventListener('input', () => {
+      box.value = box.value.replace(/\D/g, '').slice(0, 1);
+      box.toggleAttribute('data-filled', box.value !== '');
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+      settle(group, boxes);
+    });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+    });
+    box.addEventListener('paste', (e) => {
+      const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+      if (!digits) return;
+      e.preventDefault();
+      boxes.forEach((b, n) => { b.value = digits[n] ?? ''; b.toggleAttribute('data-filled', !!digits[n]); });
+      boxes[Math.min(digits.length, 5)].focus();
+      settle(group, boxes);
+    });
+  });
+});
+
+/* six digits in -> it verifies on its own, no submit button to hunt for */
+function settle(group, boxes) {
+  const flow = group.closest('[data-flow]');
+  const tick = $('[data-tick]', flow);
+  if (!tick) return;
+  const full = boxes.every((b) => b.value);
+  const ar = document.documentElement.dir === 'rtl';
+  if (!full) { tick.style.visibility = 'hidden'; return; }
+  tick.style.visibility = 'visible';
+  tick.innerHTML = '<span class="ring"></span><span>' + (ar ? 'بنتأكد…' : 'Checking…') + '</span>';
+  setTimeout(() => {
+    tick.innerHTML = '<svg width="17" height="17" style="color:var(--green)"><use href="#i-check"/></svg><span style="color:var(--green)">' + (ar ? 'تمام — بنفتحلك' : 'Right — signing you in') + '</span>';
+  }, 900);
+}
+</script>
+</body>
+</html>
