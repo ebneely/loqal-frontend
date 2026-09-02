@@ -854,10 +854,15 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-or{display:flex;align-items:center;gap:var(--space-4);color:var(--ink-3);font-family:var(--font-mono);font-size:var(--text-2xs);letter-spacing:0.1em;text-transform:uppercase}
 .lq-or::before,.lq-or::after{content:"";flex:1;block-size:1px;background:var(--line)}
 
-.lq-signin__art{position:relative;display:grid;align-content:space-between;gap:var(--space-6);padding:var(--space-8) var(--space-6);background:var(--surface-ink);color:var(--text-on-ink);overflow:clip}
+/* Stacked at the TOP, per the motif mockup — eyebrow, headline, the three
+   points, then the payment line, all in one block. Spreading them top-and-bottom
+   left a hole in the middle of the panel that the rings had to fill. */
+.lq-signin__art{position:relative;display:grid;align-content:start;gap:var(--space-5);padding:var(--space-8) var(--space-6);background:var(--surface-ink);color:var(--text-on-ink);overflow:clip}
 @container (max-width:819px){.lq-signin__art{display:none}}
-.lq-signin__brand{color:var(--green-line);opacity:1}
-.lq-signin__pitch{margin:var(--space-3) 0 0;font-size:var(--text-2xl);font-weight:var(--weight-light);letter-spacing:-0.03em;line-height:var(--leading-snug);max-inline-size:20ch}
+/* The mockup's own values: a green eyebrow with real tracking, then a headline
+   at medium weight rather than light — on ink, light strokes thin out. */
+.lq-signin__brand{color:var(--green-line);opacity:1;letter-spacing:0.1em}
+.lq-signin__pitch{margin:var(--space-3) 0 0;font-size:var(--text-2xl);font-weight:var(--weight-medium);letter-spacing:-0.02em;line-height:var(--leading-snug);max-inline-size:18ch}
 .lq-signin__points{display:grid;gap:var(--space-4);margin:0;padding:0;list-style:none}
 .lq-signin__points li{display:flex;align-items:flex-start;gap:var(--space-3);font-size:var(--text-sm);font-weight:var(--weight-light);line-height:var(--leading-normal);opacity:0.86}
 .lq-signin__points .lq-icon{flex:none;margin-block-start:2px;font-size:18px;color:var(--green-line)}
@@ -873,7 +878,10 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-signin__rings i:nth-child(3){inset:90px;border-color:rgb(237 235 229 / 0.18)}
 .lq-signin__rings i:nth-child(1){inset:0}
 .lq-signin__art>*{position:relative;z-index:1}
-.lq-signin__art>.lq-signin__rings{z-index:0}
+/* Wins over the rule above it, which is the same specificity and later in the
+   file: `position:relative` there was dropping the rings back into the grid
+   flow, so they sat centred at the top of the panel instead of in its corner. */
+.lq-signin__art>.lq-signin__rings{position:absolute;z-index:0;inset-block-start:-90px;inset-inline-end:-90px}
 @keyframes lq-ringpulse{50%{scale:1.06}}
 @media (prefers-reduced-motion:reduce){.lq-signin__rings{animation:none}}
 
