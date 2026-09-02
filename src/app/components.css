@@ -844,12 +844,23 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-signin__points li{display:flex;align-items:flex-start;gap:var(--space-3);font-size:var(--text-sm);font-weight:var(--weight-light);line-height:var(--leading-normal);opacity:0.86}
 .lq-signin__points .lq-icon{flex:none;margin-block-start:2px;font-size:18px;color:var(--green-line)}
 .lq-signin__pay{font-size:var(--text-xs);font-weight:var(--weight-light);opacity:0.5}
-/* Two rings drifting behind the copy — the only motion on the panel, and it
-   stops entirely for a shopper who asked for less. */
-.lq-signin__rings{position:absolute;inset-block-start:-70px;inset-inline-end:-70px;inline-size:260px;block-size:260px;border-radius:var(--radius-full);border:1px solid rgb(237 235 229 / 0.14);animation:lq-drift 9s var(--ease-in-out) infinite}
-.lq-signin__rings::after{content:"";position:absolute;inset:44px;border-radius:var(--radius-full);border:1px solid rgb(237 235 229 / 0.1)}
-@keyframes lq-drift{50%{translate:0 16px}}
-@media (prefers-reduced-motion:reduce){.lq-signin__rings{animation:none}}
+/* The wordmark's own `a`, taking the long way round the panel — one lap a
+   minute, which is slow enough to read as drift rather than as animation. The
+   copy sits above it, and a shopper who asked for less motion gets it parked
+   in the corner. */
+/* Sized to its own glyph — `inline-size:1em` — because an absolutely
+   positioned span shrink-to-fits against the whole panel and a 260px letter
+   then claimed a 450px box that hung off the edge. */
+.lq-signin__glyph{position:absolute;z-index:0;inset-block-start:4%;inset-inline-start:4%;display:grid;place-items:center;inline-size:1em;block-size:1em;font-family:var(--font-display);font-size:clamp(96px,17cqi,168px);font-weight:var(--weight-bold);line-height:1;letter-spacing:-0.06em;color:var(--green-line);opacity:0.2;pointer-events:none;user-select:none;animation:lq-lap 60s var(--ease-in-out) infinite}
+.lq-signin__art>*{position:relative;z-index:1}
+.lq-signin__art>.lq-signin__glyph{z-index:0}
+@keyframes lq-lap{
+  0%,100%{inset-block-start:5%;inset-inline-start:5%;rotate:0deg}
+  25%{inset-block-start:8%;inset-inline-start:52%;rotate:8deg}
+  50%{inset-block-start:56%;inset-inline-start:54%;rotate:-6deg}
+  75%{inset-block-start:58%;inset-inline-start:4%;rotate:5deg}
+}
+@media (prefers-reduced-motion:reduce){.lq-signin__glyph{animation:none;inset-block-start:8%;inset-inline-start:6%}}
 
 /* ── The account rail ─────────────────────────────────────────────────────── */
 /* A settings surface rather than one long column: five sections, one open at a

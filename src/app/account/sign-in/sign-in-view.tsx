@@ -585,7 +585,11 @@ export function SignInView() {
           </div>
 
           <aside className="lq-signin__art" aria-hidden="true">
-            <span className="lq-signin__rings" />
+            {/* The mark's own letter, drifting the long way round the panel.
+                One glyph rather than the two rings that were here: the rings
+                were decoration that meant nothing, and this is the shape the
+                wordmark is built from. */}
+            <span className="lq-signin__glyph">a</span>
             <div>
               <span className="lq-eyebrow lq-signin__brand">loqaaal</span>
               <p className="lq-signin__pitch">
