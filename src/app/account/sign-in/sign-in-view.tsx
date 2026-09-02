@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { authClient, signIn } from "@/lib/auth-client";
 import { EMAIL_ONLY, authMethodsKey, fetchAuthMethods } from "@/lib/auth-methods";
 import { useLocale } from "@/lib/locale-context";
+import { CodeBoxes } from "@/components/code-boxes";
 import { LocaleSwitch } from "@/components/locale-switch";
 import { Wordmark } from "@/components/wordmark";
 
@@ -50,7 +51,6 @@ import { Wordmark } from "@/components/wordmark";
 
 /** Egyptian mobiles are ten digits after +20, and the API refuses anything else. */
 const DIGITS = 10;
-const CODE_LENGTH = 6;
 /** Long enough that resending is a decision, short enough not to strand anyone. */
 const RESEND_SECONDS = 45;
 
@@ -112,14 +112,14 @@ export function SignInView() {
   const [chosen, setChosen] = useState<Door | null>(null);
   const [step, setStep] = useState<Step>("number");
   const [digits, setDigits] = useState("");
-  const [code, setCode] = useState<string[]>(() => Array<string>(CODE_LENGTH).fill(""));
+  /** Bumped to clear the six boxes — a code sent, or a code refused. */
+  const [attempt, setAttempt] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
 
-  const boxes = useRef<(HTMLInputElement | null)[]>([]);
   const phoneNumber = `+20${digits}`;
 
   /**
@@ -211,11 +211,10 @@ export function SignInView() {
         return;
       }
 
-      setCode(Array<string>(CODE_LENGTH).fill(""));
+      setAttempt((n) => n + 1);
       setStep("code");
       setLeft(RESEND_SECONDS);
       setPending(false);
-      window.setTimeout(() => boxes.current[0]?.focus(), 60);
     } catch {
       setError(unreachable());
       setPending(false);
@@ -242,9 +241,8 @@ export function SignInView() {
           result.error.message ??
             t("الكود مش مظبوط. جرّب تاني.", "That code is not right. Try again.")
         );
-        setCode(Array<string>(CODE_LENGTH).fill(""));
+        setAttempt((n) => n + 1);
         setPending(false);
-        boxes.current[0]?.focus();
         return;
       }
 
@@ -297,28 +295,6 @@ export function SignInView() {
     } catch {
       setError(unreachable());
     }
-  };
-
-  /** One box: type forward, backspace back, and a pasted code fills all six. */
-  const onCodeChange = (index: number, raw: string) => {
-    const digit = raw.replace(/\D/g, "");
-    if (digit.length > 1) {
-      const spread = digit.slice(0, CODE_LENGTH).split("");
-      const next = Array<string>(CODE_LENGTH).fill("");
-      spread.forEach((value, at) => (next[at] = value));
-      setCode(next);
-      boxes.current[Math.min(spread.length, CODE_LENGTH - 1)]?.focus();
-      if (spread.length === CODE_LENGTH) void verify(next.join(""));
-      return;
-    }
-
-    const next = [...code];
-    next[index] = digit;
-    setCode(next);
-    if (digit && index < CODE_LENGTH - 1) boxes.current[index + 1]?.focus();
-
-    const full = next.join("");
-    if (full.length === CODE_LENGTH && !full.includes("")) void verify(full);
   };
 
   const error_ = error ? (
@@ -652,32 +628,12 @@ export function SignInView() {
                   </b>
                 </p>
 
-                {/* One field per digit, LTR always: a six-digit code is a
-                    number, and mirroring it in Arabic would reverse it. */}
-                <div className="lq-code" dir="ltr">
-                  {code.map((value, index) => (
-                    <input
-                      key={index}
-                      ref={(node) => {
-                        boxes.current[index] = node;
-                      }}
-                      className="lq-code__box"
-                      inputMode="numeric"
-                      autoComplete={index === 0 ? "one-time-code" : "off"}
-                      maxLength={CODE_LENGTH}
-                      value={value}
-                      data-filled={value ? "true" : undefined}
-                      disabled={pending}
-                      aria-label={`${index + 1}`}
-                      onChange={(event) => onCodeChange(index, event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Backspace" && !value && index > 0) {
-                          boxes.current[index - 1]?.focus();
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
+                <CodeBoxes
+                  onComplete={(full) => void verify(full)}
+                  pending={pending}
+                  autoFocus
+                  resetKey={attempt}
+                />
 
                 {error_}
 
@@ -702,11 +658,14 @@ export function SignInView() {
           </div>
 
           <aside className="lq-signin__art" aria-hidden="true">
-            {/* The mark's own letter, drifting the long way round the panel.
-                One glyph rather than the two rings that were here: the rings
-                were decoration that meant nothing, and this is the shape the
-                wordmark is built from. */}
-            <span className="lq-signin__glyph">a</span>
+            {/* Three concentric rings in the panel's far corner, breathing
+                once every four seconds. Straight from the motif mockup, and
+                the only motion on the screen. */}
+            <span className="lq-signin__rings">
+              <i />
+              <i />
+              <i />
+            </span>
             <div>
               <span className="lq-eyebrow lq-signin__brand">loqaaal</span>
               <p className="lq-signin__pitch">

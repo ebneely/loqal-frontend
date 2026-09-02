@@ -770,6 +770,20 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-qa{display:grid;gap:2px}
 .lq-qa__q{font-size:var(--text-sm);font-weight:var(--weight-medium)}
 
+/* ── Keep this number ─────────────────────────────────────────────────────── */
+/* The post-order offer. Green-tinted rather than stone, because it is the one
+   thing on that screen the shopper is being invited to do — and it goes quiet
+   (`[data-done]`) the moment they have, rather than disappearing, so the tap
+   they just made has a visible result. */
+.lq-keep{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-block:var(--space-6);padding:var(--space-5);border:var(--border-width) solid var(--green-line);border-radius:var(--radius-lg);background:var(--green-soft)}
+.lq-keep[data-done]{border-color:var(--line);background:var(--raise)}
+.lq-keep__body{flex:1 1 260px;min-inline-size:0;display:grid;gap:var(--space-2)}
+.lq-keep__title{font-size:var(--text-base);font-weight:var(--weight-medium)}
+.lq-keep__lede{margin:0;font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2);line-height:var(--leading-normal)}
+.lq-keep__go{flex:0 0 auto}
+.lq-keep__tick{flex:none;font-size:22px;color:var(--green)}
+@container (max-width:520px){.lq-keep__go{inline-size:100%}}
+
 /* ── The gate ─────────────────────────────────────────────────────────────── */
 /* A page with no site chrome: the mark, a way back, the language toggle and
    the form, filling the window. It is its own container — every width rule
@@ -848,23 +862,20 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-signin__points li{display:flex;align-items:flex-start;gap:var(--space-3);font-size:var(--text-sm);font-weight:var(--weight-light);line-height:var(--leading-normal);opacity:0.86}
 .lq-signin__points .lq-icon{flex:none;margin-block-start:2px;font-size:18px;color:var(--green-line)}
 .lq-signin__pay{font-size:var(--text-xs);font-weight:var(--weight-light);opacity:0.5}
-/* The wordmark's own `a`, taking the long way round the panel — one lap a
-   minute, which is slow enough to read as drift rather than as animation. The
-   copy sits above it, and a shopper who asked for less motion gets it parked
-   in the corner. */
-/* Sized to its own glyph — `inline-size:1em` — because an absolutely
-   positioned span shrink-to-fits against the whole panel and a 260px letter
-   then claimed a 450px box that hung off the edge. */
-.lq-signin__glyph{position:absolute;z-index:0;inset-block-start:4%;inset-inline-start:4%;display:grid;place-items:center;inline-size:1em;block-size:1em;font-family:var(--font-display);font-size:clamp(96px,17cqi,168px);font-weight:var(--weight-bold);line-height:1;letter-spacing:-0.06em;color:var(--green-line);opacity:0.2;pointer-events:none;user-select:none;animation:lq-lap 60s var(--ease-in-out) infinite}
+/* Three concentric rings in the panel's far corner, breathing once every four
+   seconds — the motif from the mockup, and the only motion on this screen. The
+   outermost is faintest: the eye should read a shape, not a target.
+   The corner is logical, so the rings sit in the panel's trailing corner under
+   either direction, and the panel's own clip cuts them. */
+.lq-signin__rings{position:absolute;z-index:0;inset-block-start:-90px;inset-inline-end:-90px;inline-size:280px;block-size:280px;pointer-events:none;transform-origin:center;animation:lq-ringpulse 4s var(--ease-in-out) infinite}
+.lq-signin__rings i{position:absolute;border-radius:var(--radius-full);border:1px solid rgb(237 235 229 / 0.1)}
+.lq-signin__rings i:nth-child(2){inset:45px;border-color:rgb(237 235 229 / 0.14)}
+.lq-signin__rings i:nth-child(3){inset:90px;border-color:rgb(237 235 229 / 0.18)}
+.lq-signin__rings i:nth-child(1){inset:0}
 .lq-signin__art>*{position:relative;z-index:1}
-.lq-signin__art>.lq-signin__glyph{z-index:0}
-@keyframes lq-lap{
-  0%,100%{inset-block-start:5%;inset-inline-start:5%;rotate:0deg}
-  25%{inset-block-start:8%;inset-inline-start:52%;rotate:8deg}
-  50%{inset-block-start:56%;inset-inline-start:54%;rotate:-6deg}
-  75%{inset-block-start:58%;inset-inline-start:4%;rotate:5deg}
-}
-@media (prefers-reduced-motion:reduce){.lq-signin__glyph{animation:none;inset-block-start:8%;inset-inline-start:6%}}
+.lq-signin__art>.lq-signin__rings{z-index:0}
+@keyframes lq-ringpulse{50%{scale:1.06}}
+@media (prefers-reduced-motion:reduce){.lq-signin__rings{animation:none}}
 
 /* ── The account rail ─────────────────────────────────────────────────────── */
 /* A settings surface rather than one long column: five sections, one open at a

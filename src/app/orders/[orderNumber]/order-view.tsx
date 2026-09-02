@@ -28,6 +28,7 @@ import { Shell } from "@/components/shell";
 import { Money } from "@/components/money";
 import { StatusPill, StatusRail } from "@/components/status-pill";
 import { Garment, garmentFor } from "@/components/garment";
+import { KeepNumber } from "@/components/keep-number";
 import { deliveryLabel } from "@/components/delivery-picker";
 
 /**
@@ -309,6 +310,13 @@ function Loaded({
             <Money className="lq-money" amount={order.grandTotal} locale={locale} reconciled />
           </div>
         </section>
+
+        {/* ── Keep the number you just used ───────────────────────────────── */}
+        {/* The one place asking for an account is not a tax on the sale: the
+            order is already placed and the phone is already proved. It draws
+            nothing for a shopper who is signed in, or where a code cannot be
+            delivered. */}
+        <KeepNumber phone={order.shippingAddress.phone} />
 
         {/* ── Where it is going ───────────────────────────────────────────── */}
         <section className="lq-sec" aria-label={t("العنوان", "The address")}>
