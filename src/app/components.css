@@ -567,15 +567,15 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-catrail__art,.lq-catrail__name,.lq-catrail__in{transition:opacity var(--dur-base) var(--ease)}
 .lq-catrail__art{display:grid;place-items:center;inline-size:clamp(72px,8cqi,96px);block-size:clamp(72px,8cqi,96px)}
 .lq-catrail__art svg{inline-size:100%;block-size:100%}
-/* A shop's sign, where a category has a drawing: its own logo, or its initials
-   until it has one. Framed, because a brand-supplied logo arrives at any
-   proportion and an unframed one would sit at a different size in every cell. */
-/* A rounded square, not a circle: brand logos arrive square and with their own
-   ground, and a circle crops the corners off every one of them. Same shape the
-   shop cards give a sign. */
-.lq-catrail__sign{border:var(--border-width) solid var(--line);border-radius:var(--radius-md);background:var(--field);overflow:hidden}
-.lq-catrail__sign img{inline-size:100%;block-size:100%;object-fit:contain}
-.lq-catrail__sign b{font-size:var(--text-xl);font-weight:var(--weight-medium);color:var(--ink-2)}
+/* The shop card's plate at rail size: a 16:10 band of the shop's photograph,
+   the logo on a stone notch in its corner, initials alone when there is no
+   photograph. The logo is never the whole tile — five brand logos side by side
+   are five colour schemes, and the rail is stone. */
+.lq-catrail__sign{position:relative;inline-size:clamp(104px,12cqi,150px);block-size:auto;aspect-ratio:16/10;border:var(--border-width) solid var(--line);border-radius:var(--radius-md);background:var(--field);overflow:hidden}
+.lq-catrail__shot{inline-size:100%;block-size:100%;object-fit:cover}
+.lq-catrail__notch{position:absolute;inset-block-end:0;inset-inline-start:0;inline-size:38%;aspect-ratio:1;display:grid;place-items:center;padding:4px;background:var(--paper);border-block-start:var(--border-width) solid var(--line);border-inline-end:var(--border-width) solid var(--line);border-start-end-radius:var(--radius-md)}
+.lq-catrail__notch img{max-inline-size:100%;max-block-size:100%;object-fit:contain}
+.lq-catrail__sign b{font-family:var(--font-display);font-size:var(--text-2xl);font-weight:var(--weight-bold);letter-spacing:0;color:var(--ink-3)}
 .lq-catrail__item:hover .lq-catrail__sign,.lq-catrail__item:focus-visible .lq-catrail__sign{border-color:var(--green-line);background:var(--green-soft)}
 .lq-catrail__name{font-size:var(--text-sm);text-align:center;line-height:var(--leading-snug)}
 .lq-catrail__in{font-size:var(--text-2xs);font-weight:var(--weight-light);color:var(--ink-3)}

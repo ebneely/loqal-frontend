@@ -14,9 +14,11 @@ import { MegaMenu } from "@/components/mega-menu";
  *
  * The A–Z index it replaced was built for an alphabet and given five shops, so
  * the panel was a row of headings over an empty field with a feature pane
- * stranded at one edge. A shop is a place, and the thing that identifies a
- * place is its own sign — so each shop carries its logo, or its initials while
- * it has none, at the size the shop cards use.
+ * stranded at one edge. A shop is a place, so each cell is the same object the
+ * shops section shows: the shop's photograph in a 16:10 band, its logo on a
+ * stone notch in the corner of that band, and — with no photograph — its
+ * initials alone. The logo is never the tile itself; a rail of five brand
+ * logos is a rail of five different colour schemes.
  *
  * ONE PAGE OF SHOPS. `/v1/brands` is paged and this shows page 1; an index
  * that silently omitted page 2 would be wrong, so when the shop count outgrows
@@ -53,7 +55,7 @@ export function BrandsMenu() {
           <div className="lq-catrail" aria-hidden="true">
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <span className="lq-catrail__item" key={i}>
-                <span className="lq-skel lq-catrail__art" />
+                <span className="lq-skel lq-catrail__art lq-catrail__sign" />
                 <span className="lq-skel" style={{ blockSize: "12px", inlineSize: "60%" }} />
               </span>
             ))}
@@ -79,10 +81,28 @@ export function BrandsMenu() {
                 href={`/shop/${shop.slug}`}
                 style={{ "--lq-d": `${index * 45}ms` } as React.CSSProperties}
               >
-                <span className="lq-catrail__art lq-catrail__sign" aria-hidden="true">
-                  {shop.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={shop.logoUrl} alt="" loading="lazy" decoding="async" />
+                <span
+                  className="lq-catrail__art lq-catrail__sign"
+                  data-none={shop.images[0] ?? shop.coverUrl ? undefined : "true"}
+                  aria-hidden="true"
+                >
+                  {shop.images[0] ?? shop.coverUrl ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        className="lq-catrail__shot"
+                        src={shop.images[0] ?? shop.coverUrl ?? undefined}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      {shop.logoUrl ? (
+                        <span className="lq-catrail__notch">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={shop.logoUrl} alt="" loading="lazy" decoding="async" />
+                        </span>
+                      ) : null}
+                    </>
                   ) : (
                     <b>{initialsOf(shop.name)}</b>
                   )}
