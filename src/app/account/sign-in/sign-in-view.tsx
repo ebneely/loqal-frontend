@@ -495,11 +495,12 @@ export function SignInView() {
                   </button>
                 ) : null}
 
-                <hr className="lq-rule" />
-
                 {/* Buying never required an account, and saying so is better
-                    than letting somebody build one to find that out. */}
-                <p className="lq-prose">
+                    than letting somebody build one to find that out. A rule
+                    across the column used to separate this; on a card that
+                    already has a border and a seam down its middle, one more
+                    line was one too many. */}
+                <p className="lq-signin__aside">
                   {t(
                     "مش لازم حساب عشان تطلب. تقدر تشتري كضيف وتتابع الأوردر برقمه ورقم موبايلك.",
                     "You do not need an account to order. You can buy as a guest and follow the order by its number and your phone."

@@ -799,12 +799,20 @@ html[data-greeted="1"] .lq-open{display:none}
    six code boxes then pushes the whole card past the page. */
 @container (min-width:820px){.lq-signin{grid-template-columns:minmax(0,1fr) minmax(0,0.92fr)}}
 .lq-signin{min-block-size:min(600px,74svh)}
-.lq-signin__form{display:grid;align-content:center;gap:var(--space-4);background:var(--paper);padding:var(--space-8) var(--space-6) var(--space-7)}
+/* `--space-7` does not exist in tokens.css, and one bad value voids the whole
+   shorthand: the form rendered with NO padding at all, every field and button
+   running edge to edge into the card's own border. */
+.lq-signin__form{display:grid;align-content:center;justify-items:stretch;gap:var(--space-4);background:var(--paper);padding:var(--space-10) var(--space-8)}
+/* The column is wide on a desktop and a 500px-long text field is not easier to
+   fill in than a 380px one — the form keeps its own measure and centres. */
+.lq-signin__form>*{inline-size:100%;max-inline-size:380px;margin-inline:auto}
 @container (max-width:520px){.lq-signin__form{padding:var(--space-6) var(--space-4)}}
 .lq-signin__title{margin:0;font-size:var(--text-3xl);font-weight:var(--weight-light);letter-spacing:-0.035em;line-height:var(--leading-tight)}
 .lq-signin__lede{margin:0;font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2);max-inline-size:46ch}
 .lq-signin__num{font-family:var(--font-mono);font-weight:var(--weight-semibold)}
 .lq-signin__block{display:grid;gap:var(--space-3)}
+/* The guest note, set apart by space and size rather than by another hairline. */
+.lq-signin__aside{margin:var(--space-4) 0 0;font-size:var(--text-xs);font-weight:var(--weight-light);line-height:var(--leading-normal);color:var(--ink-3);text-align:center}
 .lq-signin__back{display:inline-flex;align-items:center;gap:var(--space-2);inline-size:max-content;padding:0;border:0;background:none;color:var(--ink-2);font-size:var(--text-sm);font-weight:var(--weight-light);cursor:pointer}
 .lq-signin__back:hover{color:var(--green)}
 .lq-signin__g{inline-size:18px;block-size:18px;flex:none}
