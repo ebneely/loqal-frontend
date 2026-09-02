@@ -351,7 +351,12 @@ export function AccountView() {
                           {t.signOut}
                         </button>
                       ) : (
-                        <Link className="lq-btn lq-btn--primary" href="/account/sign-in">
+                        <Link
+                          className="lq-btn lq-btn--primary"
+                          /* `next` so signing in returns here rather than to
+                             wherever the sign-in screen would otherwise guess. */
+                          href="/account/sign-in?next=%2Faccount"
+                        >
                           {t.signIn}
                         </Link>
                       )}

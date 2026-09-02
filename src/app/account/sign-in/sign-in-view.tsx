@@ -1,17 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { authClient, signIn } from "@/lib/auth-client";
 import { EMAIL_ONLY, authMethodsKey, fetchAuthMethods } from "@/lib/auth-methods";
 import { useLocale } from "@/lib/locale-context";
-import { Shell } from "@/components/shell";
+import { LocaleSwitch } from "@/components/locale-switch";
+import { Wordmark } from "@/components/wordmark";
 
 /**
- * Signing in — a number, then six digits.
+ * Signing in — a number, then six digits, on a page of its own.
+ *
+ * NO SITE CHROME. The header, the mega-menus and the 400px footer belong to
+ * shopping; on a credential screen they squeeze the one thing the page is for
+ * into the strip between them and offer a dozen ways to wander off mid-sign-in.
+ * So this route does not mount `Shell`: it is the mark, a way back to the shop,
+ * the language toggle, and the form, filling the window.
+ *
+ * IT GOES BACK WHERE THE SHOPPER CAME FROM. `?next=` carries the path that sent
+ * them here, and the browser's own referrer covers the links that forgot to;
+ * both are refused unless they are a path on this site, because a `next` that
+ * can point anywhere is an open redirect with a sign-in form in front of it.
  *
  * A phone is the credential an Egyptian shopper already has, and it is already
  * half of how this product works: a guest order is opened with its number and
@@ -51,6 +63,35 @@ function groupDigits(digits: string): string {
   return parts.filter(Boolean).join(" ");
 }
 
+/**
+ * A destination this site is allowed to send somebody to after they sign in.
+ *
+ * Anything not starting with a single `/` is refused: `//evil.example` is a
+ * protocol-relative URL a browser reads as another origin, and `https://…` is
+ * the same hole spelled out. Sign-in is exactly the page where an open redirect
+ * is worth having — the shopper has just proved who they are and will trust the
+ * screen they land on.
+ */
+function safeNext(raw: string | null | undefined): string | null {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return null;
+  // Landing back on the form they just completed is a loop, not a return.
+  if (raw.startsWith("/account/sign-in")) return null;
+  return raw;
+}
+
+/** The referrer, reduced to a path, and only when it is one of ours. */
+function pathFromReferrer(): string | null {
+  if (typeof document === "undefined" || !document.referrer) return null;
+
+  try {
+    const url = new URL(document.referrer);
+    if (url.origin !== window.location.origin) return null;
+    return safeNext(`${url.pathname}${url.search}`);
+  } catch {
+    return null;
+  }
+}
+
 export function SignInView() {
   const locale = useLocale();
   const router = useRouter();
@@ -81,6 +122,19 @@ export function SignInView() {
   const phoneNumber = `+20${digits}`;
 
   /**
+   * Where to land afterwards.
+   *
+   * `?next=` is the one the links carry, and it is all the RENDER may use: the
+   * referrer exists only in the browser, so reading it here would give the
+   * server one href and the client another, which is a hydration mismatch on a
+   * link the shopper can see. The referrer is consulted at the moment of the
+   * redirect instead, where there is no markup to disagree about — that covers
+   * every link that arrives here without a `next`.
+   */
+  const params = useSearchParams();
+  const back = safeNext(params.get("next")) ?? "/account";
+
+  /**
    * DERIVED, never stored. The first render answers EMAIL_ONLY — the query has
    * not come back yet — and a mode held in state would latch that fallback and
    * stay on email even after the API says the phone route exists. Only the
@@ -104,7 +158,7 @@ export function SignInView() {
    */
   const land = () => {
     router.refresh();
-    router.replace("/account");
+    router.replace(safeNext(params.get("next")) ?? pathFromReferrer() ?? "/account");
   };
 
   const unreachable = () =>
@@ -212,7 +266,7 @@ export function SignInView() {
   const withGoogle = async () => {
     setError(null);
     try {
-      await signIn.social({ provider: "google", callbackURL: "/account" });
+      await signIn.social({ provider: "google", callbackURL: back });
     } catch {
       setError(unreachable());
     }
@@ -249,8 +303,23 @@ export function SignInView() {
   ) : null;
 
   return (
-    <Shell title={t("الدخول", "Sign in")}>
-      <div className="lq-wrap lq-pad">
+    /* Its own container, because `.lq-shell` is not here to be one and every
+       width rule on this page is a container query. */
+    <main className="lq-gate">
+      <div className="lq-gate__bar">
+        <Link className="lq-gate__mark" href="/">
+          <Wordmark />
+        </Link>
+        <div className="lq-gate__tools">
+          <LocaleSwitch />
+          <Link className="lq-gate__back" href={back}>
+            <span className="lq-icon" data-icon="arrow-left" aria-hidden="true" />
+            {t("رجوع للمحلات", "Back to the shop")}
+          </Link>
+        </div>
+      </div>
+
+      <div className="lq-gate__body">
         <section className="lq-signin lq-rv">
           <div className="lq-signin__form">
             {step === "number" ? (
@@ -436,7 +505,10 @@ export function SignInView() {
                     "You do not need an account to order. You can buy as a guest and follow the order by its number and your phone."
                   )}
                 </p>
-                <Link className="lq-btn lq-btn--secondary lq-btn--block" href="/">
+                {/* Back where they were, not to the home page: a shopper who
+                    declines the account should return to the basket or the
+                    product they were reading. */}
+                <Link className="lq-btn lq-btn--secondary lq-btn--block" href={back}>
                   {t("كمّل كضيف", "Continue as a guest")}
                 </Link>
               </>
@@ -550,7 +622,17 @@ export function SignInView() {
             </span>
           </aside>
         </section>
+
+        <p className="lq-gate__foot">
+          {t(
+            "بتسجّل دخولك على loqaaal — القاهرة والجيزة.",
+            "Signing in to loqaaal — Cairo and Giza."
+          )}{" "}
+          <a href="https://wa.me/201559959890" target="_blank" rel="noopener noreferrer">
+            {t("محتاج مساعدة؟", "Need help?")}
+          </a>
+        </p>
       </div>
-    </Shell>
+    </main>
   );
 }

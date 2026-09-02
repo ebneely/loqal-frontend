@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { SignInView } from "./sign-in-view";
 
@@ -15,6 +16,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/**
+ * The Suspense boundary is not decoration: the view reads `?next=` with
+ * `useSearchParams`, and Next refuses to build a page that does so without one.
+ */
 export default function SignInPage() {
-  return <SignInView />;
+  return (
+    <Suspense fallback={<div className="lq-gate" />}>
+      <SignInView />
+    </Suspense>
+  );
 }
