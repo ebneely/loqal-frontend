@@ -20,7 +20,15 @@ export const authMethodsSchema = z
     emailPassword: z.boolean(),
     google: z.boolean(),
     phoneOtp: z.boolean(),
-    emailOtp: z.boolean(),
+    /**
+     * DEFAULTED, not required, and that is the whole lesson of the deploy that
+     * shipped this file before the API that answers it. A required key against
+     * an older API fails the parse, the query throws, and the screen falls all
+     * the way back to email and password — losing the phone door as well, which
+     * that API did support. A door this deployment has not heard of is simply
+     * off.
+     */
+    emailOtp: z.boolean().default(false),
   })
   .strict();
 
