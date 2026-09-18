@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import type { PublicBrand } from "@loqal/contracts/storefront.contract";
 import { Money } from "@/components/money";
+import { isOpenNow } from "@/lib/shop-hours";
 import type { Locale } from "@/lib/locale";
 
 /**
@@ -20,27 +21,20 @@ import type { Locale } from "@/lib/locale";
  * the slots it has not used. A shopper is buying from a place, and the card
  * should look like one.
  *
- * ── The fields it wants and mostly cannot have ──────────────────────────────
+ * ── Where it is and whether it is open ──────────────────────────────────────
  *
- * `neighbourhood`, `street`, `hours` and `openNow` are optional, and today
- * every call site leaves all four undefined, because `publicBrandSchema`
- * carries none of them: it has id, slug, name, logoUrl, coverUrl, description,
- * the three figures below, and now `images`.
+ * The API now answers `neighbourhood` (the shop's city/district as it wrote
+ * it) and `hours`, and the card works out "open" or "closed" from those in
+ * Cairo time as it paints — the API does not send a boolean, because shop
+ * pages are cached and "open" is a fact about the moment somebody looks.
  *
- * They are in the props anyway, and the card renders each one only if it
- * arrives. Two reasons that is better than deleting them:
+ * The props of the same names still win when a caller passes them. Each one
+ * renders only if it exists: a shop that has not given its hours shows no
+ * badge at all, never "closed". NOTHING IS FAKED — a placeholder neighbourhood
+ * is worse than none, and a shop wrongly marked shut loses the sale.
  *
- *   1. It is the shape the product needs. `design/app.js` had all four, invented
- *      in a hardcoded array. Writing the component to the real shape means the
- *      day the API answers them, this file does not change.
- *   2. NOTHING IS FAKED IN THE MEANTIME. A placeholder neighbourhood is worse
- *      than no neighbourhood — a shopper who picks a shop because it is in
- *      الزمالك and finds out at checkout that it is not has been lied to by the
- *      one screen this product asks them to trust.
- *
- * `images` is defaulted to `[]` in the contract and the API does not send it
- * yet, so the gallery falls back to `coverUrl` and the card is exactly what it
- * was — and lights up the moment the backend starts answering.
+ * `images`, `neighbourhood` and `hours` are all defaulted in the contract, so
+ * against an API that does not send them yet the card is exactly what it was.
  */
 const SLOTS = 5;
 const STEP = 1150;
@@ -86,9 +80,17 @@ export function ShopCard({
   const description =
     shop.description?.[locale] ?? shop.description?.ar ?? shop.description?.en ?? null;
 
+  /* The props win when a caller passes them; otherwise the shop's own answer
+     from the API. Both are optional, so a shop that has said nothing still
+     shows nothing rather than a guess. */
+  const where = neighbourhood ?? shop.neighbourhood;
+  const openHours =
+    hours ?? (shop.hours ? `${shop.hours.opensAt} – ${shop.hours.closesAt}` : null);
+  const open = openNow ?? (shop.hours ? isOpenNow(shop.hours) : null);
+
   /** The line under the name: the address if we have one, the shop's own
       description if we do not, and nothing at all rather than filler. */
-  const place = [neighbourhood, street].filter(Boolean).join(" — ") || null;
+  const place = [where, street].filter(Boolean).join(" — ") || null;
 
   const gallery = (
     shop.images.length > 0 ? shop.images : shop.coverUrl ? [shop.coverUrl] : []
@@ -160,13 +162,15 @@ export function ShopCard({
             means the API did not say, which is NOT the same as closed — and a
             card that shows "مقفول" because a field is missing turns a gap in
             the schema into a shop losing a sale. */}
-        {openNow === true ? (
-          <span className="lq-shopcard__state" data-open="true">
+        {/* `suppressHydrationWarning`: "open" is worked out from the clock,
+            and the server and the browser can read it a minute apart. */}
+        {open === true ? (
+          <span className="lq-shopcard__state" data-open="true" suppressHydrationWarning>
             <i className="lq-shopcard__dot" />
             {t("مفتوح", "Open")}
           </span>
-        ) : openNow === false ? (
-          <span className="lq-shopcard__state" data-open="false">
+        ) : open === false ? (
+          <span className="lq-shopcard__state" data-open="false" suppressHydrationWarning>
             {t("مقفول", "Closed")}
           </span>
         ) : null}
@@ -229,9 +233,15 @@ export function ShopCard({
           </span>
         </span>
 
-        {hours || typeof pieceCount === "number" ? (
+        {openHours || typeof pieceCount === "number" ? (
           <span className="lq-shopcard__foot">
-            {hours ? <span>{hours}</span> : <span />}
+            {openHours ? (
+              <span dir="ltr" data-num>
+                {openHours}
+              </span>
+            ) : (
+              <span />
+            )}
             {typeof pieceCount === "number" ? (
               <span data-num>
                 {pieceCount} {t("قطعة", "pieces")}

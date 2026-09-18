@@ -158,6 +158,25 @@ export const publicBrandSchema = z
      * `facets` is defaulted to avoid. A card falls back to `coverUrl`.
      */
     images: z.array(z.string().url()).default([]),
+    /**
+     * Where the shop is (its city/district as it wrote it) and when it opens.
+     * Defaulted, never required, for the same reason `images` is: this ships
+     * ahead of the API that answers it, and a strict required key would blank
+     * the shops section until the backend deploy.
+     *
+     * No "open now" on the wire — the storefront works that out in Cairo time
+     * as it paints, because shop pages are cached and a boolean would be stale.
+     */
+    neighbourhood: z.string().nullable().default(null),
+    hours: z
+      .object({
+        opensAt: z.string(),
+        closesAt: z.string(),
+        closedDays: z.array(z.number().int().min(0).max(6)),
+      })
+      .strict()
+      .nullable()
+      .default(null),
     deliveryFee: moneySchema.nullable(),
     minimumOrderValue: moneySchema.nullable(),
     returnWindowDays: z.number().int(),
