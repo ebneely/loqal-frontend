@@ -8,6 +8,8 @@ import { useSession, signOut } from "@/lib/auth-client";
 import { setLocaleCookie } from "@/lib/locale-context";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
+import { AddressBook } from "./address-book";
+import { MyOrders } from "./my-orders";
 
 /**
  * Account, as five sections with a rail rather than one column of everything.
@@ -37,16 +39,20 @@ import { Shell } from "@/components/shell";
  * links *here*, which means this screen has to answer them, not forward them.
  * The day those routes exist they become link rows like the rest.
  *
- * THE ORDERS SECTION LISTS NOTHING. There is no "my orders" endpoint — an
- * order is opened by its number and the phone that placed it, which is the
- * credential, and `/orders` is the screen that asks for both. A list of
- * invented recent orders is the one thing this section must not be.
+ * THE ORDERS SECTION IS REAL FOR AN ACCOUNT AND A LOOKUP FOR A GUEST. Signed
+ * in, it lists `/v1/orders/mine` — including guest orders placed before the
+ * account existed, matched by the API on a verified phone or email. A guest
+ * still opens an order by its number and phone, which is their credential.
+ *
+ * THE ADDRESSES SECTION exists only for an account. A guest has no address
+ * book, only the address frozen onto each order.
  */
 
-/** The five sections, in the order the rail shows them. */
+/** The sections, in the order the rail shows them. */
 const TABS = [
   { key: "me", icon: "user", ar: "إنت مين", en: "Who you are" },
   { key: "orders", icon: "package", ar: "الأوردرات", en: "Orders" },
+  { key: "addresses", icon: "map-pin", ar: "العناوين", en: "Addresses" },
   { key: "lang", icon: "globe", ar: "اللغة", en: "Language" },
   { key: "help", icon: "message-circle", ar: "المساعدة", en: "Help" },
   { key: "about", icon: "info", ar: "loqaaal", en: "loqaaal" },
@@ -194,7 +200,11 @@ export function AccountView() {
 
   const t = {
     title: ar ? "حسابي" : "Account",
-    lede: ar ? "خمس أقسام، واحد مفتوح في كل مرة." : "Five sections, one open at a time.",
+    // No count in the sentence: it said "five" and was wrong the day a sixth
+    // section arrived.
+    lede: ar
+      ? "أوردراتك وعناوينك وكل حاجة تخص حسابك."
+      : "Your orders, your addresses, and everything about your account.",
     guest: ar ? "بتتصفح كضيف" : "Browsing as a guest",
     guestBody: ar
       ? "الأوردر بيتفتح برقمه ورقم الموبايل. الحساب بس بيجمّعهم مع بعض."
@@ -216,6 +226,10 @@ export function AccountView() {
       ? "افتح أوردرك برقمه ورقم الموبايل اللي طلبت بيه. الرقمين مع بعض هما المفتاح، فمفيش حد تاني يقدر يفتحه."
       : "Open your order with its number and the phone that placed it. The two together are the key, so nobody else can open it.",
     track: ar ? "تتبّع أوردر" : "Track an order",
+    addresses: ar ? "العناوين" : "Addresses",
+    addressesGuest: ar
+      ? "العناوين بتتحفظ على الحساب. ادخل وأول أوردر هيحفظ عنوانه لوحده."
+      : "Addresses are kept on an account. Sign in and your next order saves its address by itself.",
     shop: ar ? "كمّل تسوّق" : "Keep shopping",
     language: ar ? "اللغة" : "Language",
     languageBody: ar
@@ -375,11 +389,37 @@ export function AccountView() {
             {tab === "orders" ? (
               <div {...paneProps("orders")}>
                 <h2 className="lq-arail__title">{t.orders}</h2>
-                <p className="lq-arail__sub">{t.ordersBody}</p>
-                <div className="lq-rows">
-                  <RowLink icon="package" label={t.track} href="/orders" />
-                  <RowLink icon="store" label={t.shop} href="/shops" />
-                </div>
+                {session?.user ? (
+                  <MyOrders />
+                ) : (
+                  <>
+                    <p className="lq-arail__sub">{t.ordersBody}</p>
+                    <div className="lq-rows">
+                      <RowLink icon="package" label={t.track} href="/orders" />
+                      <RowLink icon="store" label={t.shop} href="/shops" />
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : null}
+
+            {/* ── Addresses ───────────────────────────────────────────────── */}
+            {tab === "addresses" ? (
+              <div {...paneProps("addresses")}>
+                <h2 className="lq-arail__title">{t.addresses}</h2>
+                {session?.user ? (
+                  <AddressBook />
+                ) : (
+                  <>
+                    <p className="lq-arail__sub">{t.addressesGuest}</p>
+                    <Link
+                      className="lq-btn lq-btn--primary"
+                      href="/account/sign-in?next=%2Faccount%23addresses"
+                    >
+                      {t.signIn}
+                    </Link>
+                  </>
+                )}
               </div>
             ) : null}
 

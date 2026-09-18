@@ -13,6 +13,7 @@ import {
   type CreateOrderResult,
 } from "@loqal/contracts/storefront.contract";
 import { ApiError } from "@/lib/api";
+import { useAddresses } from "@/lib/account";
 import { useCart } from "@/lib/cart";
 import { useCheckoutKey, useCreateOrder, usePaymentLink } from "@/lib/orders";
 import { useSession } from "@/lib/auth-client";
@@ -219,6 +220,31 @@ export function CheckoutView() {
   const [notes, setNotes] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, true>>>({});
   const [stage, setStage] = useState<Stage>(0);
+
+  /**
+   * THE "TWO TAPS" THE SIGN-IN SCREEN PROMISES. A signed-in shopper's default
+   * address fills the address fields — once, and only fields still empty, so
+   * nothing the shopper has already typed is ever overwritten.
+   *
+   * Adjusted during render rather than in an effect: the address arrives after
+   * the first render, and state copied in an effect paints the empty form for a
+   * frame and re-renders the whole checkout a second time. `prefilledFrom`
+   * records which address was used, so this runs exactly once per address.
+   */
+  const { data: savedAddresses } = useAddresses(!anonymous && !sessionPending);
+  const defaultAddress = savedAddresses?.find((a) => a.isDefault) ?? null;
+  const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null);
+
+  if (defaultAddress && prefilledFrom !== defaultAddress.id) {
+    setPrefilledFrom(defaultAddress.id);
+    if (!fullName && defaultAddress.fullName) setFullName(defaultAddress.fullName);
+    if (!phone) setPhone(defaultAddress.phone);
+    if (!governorate) setGovernorate(defaultAddress.governorate);
+    if (!city) setCity(defaultAddress.city);
+    if (!street) setStreet(defaultAddress.street);
+    if (!building && defaultAddress.building) setBuilding(defaultAddress.building);
+    if (!notes && defaultAddress.notes) setNotes(defaultAddress.notes);
+  }
 
   /**
    * True from the moment an order comes back until the browser has actually

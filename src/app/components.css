@@ -770,6 +770,21 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-qa{display:grid;gap:2px}
 .lq-qa__q{font-size:var(--text-sm);font-weight:var(--weight-medium)}
 
+/* ── My orders, and the address book ──────────────────────────────────────── */
+.lq-myorder__num{font-family:var(--font-mono);font-size:var(--text-sm);font-weight:var(--weight-semibold);letter-spacing:0.02em}
+.lq-myorder__total{margin-inline-start:auto;flex:none}
+.lq-myorder .lq-row__end{margin-inline-start:var(--space-2)}
+/* The default is marked by a badge AND a green edge — never by colour alone. */
+.lq-addr{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3) var(--space-4);padding:var(--space-4);border-inline-start:3px solid transparent}
+.lq-addr[data-default]{border-inline-start-color:var(--green)}
+.lq-addr__body{flex:1 1 220px;min-inline-size:0;display:grid;gap:2px}
+.lq-addr__name{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-2);font-size:var(--text-base);font-weight:var(--weight-medium)}
+.lq-addr__badge{font-size:var(--text-2xs)}
+.lq-addr__acts{display:flex;align-items:center;gap:var(--space-3)}
+.lq-addr__remove{padding:0;border:0;background:none;font:inherit;font-size:var(--text-sm);color:var(--ink-3);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.lq-addr__remove:hover{color:var(--state-bad-fg)}
+.lq-addr__remove:disabled{opacity:0.5;cursor:default}
+
 /* ── Keep this number ─────────────────────────────────────────────────────── */
 /* The post-order offer. Green-tinted rather than stone, because it is the one
    thing on that screen the shopper is being invited to do — and it goes quiet
