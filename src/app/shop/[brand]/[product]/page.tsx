@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api";
-import { fetchProduct } from "@/lib/catalog";
+import { fetchBrand, fetchProduct } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 
@@ -32,13 +32,40 @@ async function load(params: Params) {
   }
 }
 
+/**
+ * The shop's NAME, which the product payload does not carry.
+ *
+ * `GET /v1/brands/:slug/products/:slug` answers the product and nothing about
+ * the shop, so this page used to print the route's SLUG wherever the shop's
+ * name belongs — the breadcrumb, the eyebrow over the title, and the JSON-LD
+ * `brand.name` Google shows under the result — while the shop page, the cards
+ * and the bag all said "Maadi Leather". This is the same `fetchBrand` the shop
+ * page reads, under the same ISR window and tag, so it is a cache hit for a
+ * shopper who came from the shop and costs no database round trip otherwise.
+ *
+ * NULL ON ANY FAILURE, never a throw. The product is the page; the shop's name
+ * is a label on it, and a brand read that fails must not take a product that
+ * loaded fine down to the error boundary with it. The callers fall back to the
+ * slug, which is the old behaviour, not a new failure.
+ */
+async function loadBrandName(slug: string): Promise<string | null> {
+  try {
+    return (await fetchBrand(slug)).name;
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<Params>;
 }): Promise<Metadata> {
   const resolved = await params;
-  const product = await load(resolved);
+  const [product, brandName] = await Promise.all([
+    load(resolved),
+    loadBrandName(resolved.brand),
+  ]);
   if (!product) return { title: "الصفحة مش موجودة" };
 
   const nameAr = product.name?.ar ?? product.name?.en ?? "";
@@ -46,7 +73,7 @@ export async function generateMetadata({
   const description =
     product.description?.ar ??
     product.description?.en ??
-    `${nameAr} — اشتريه من محل ${resolved.brand} على loqaaal.`;
+    `${nameAr} — اشتريه من محل ${brandName ?? resolved.brand} على loqaaal.`;
 
   const canonical = `/shop/${resolved.brand}/${resolved.product}`;
 
@@ -77,8 +104,16 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: { params: Promise<Params> }) {
   const resolved = await params;
-  const product = await load(resolved);
+  /* In parallel: neither read waits on the other, and serialising them would
+     add an API round trip to the render. */
+  const [product, loadedBrandName] = await Promise.all([
+    load(resolved),
+    loadBrandName(resolved.brand),
+  ]);
   if (!product) notFound();
+
+  /** The shop's name for every label; `resolved.brand` stays the address. */
+  const brandName = loadedBrandName ?? resolved.brand;
 
   /**
    * Arabic, and not from the cookie — reading it here would take this route off
@@ -109,7 +144,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     description: product.description?.[locale] ?? undefined,
     sku: product.variants[0]?.sku,
     image: product.mediaUrls.length ? product.mediaUrls : undefined,
-    brand: { "@type": "Brand", name: resolved.brand },
+    brand: { "@type": "Brand", name: brandName },
     ...(product.priceFrom
       ? {
           offers: {
@@ -144,7 +179,12 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         the view below still server-renders inside it.
       */}
       <Shell title={name}>
-        <ProductView product={product} brandSlug={resolved.brand} locale={locale} />
+        <ProductView
+          product={product}
+          brandSlug={resolved.brand}
+          brandName={brandName}
+          locale={locale}
+        />
       </Shell>
     </>
   );
