@@ -29,9 +29,9 @@ import { MyOrders } from "./my-orders";
  * WHY THIS SCREEN CARRIES THE FOOTER'S LINKS. The dark footer is desktop-only —
  * a container query in components.css hides it under 720px, where a 400px dark
  * block above a fixed tab bar is a dead end. `site-footer.tsx` says so and
- * points four of its six links at `/account`. So this is where عن لوكال,
- * انضم كمحل, shipping, returns, the FAQ and contact have to be reachable on a
- * phone, and this file is the only place they are.
+ * points four of its six links into this screen's Help section. So this is
+ * where عن لوكال, انضم كمحل, shipping, returns, the FAQ and contact have to be
+ * reachable on a phone, and this file is the only place they are.
  *
  * SHIPPING, RETURNS AND THE FAQ ARE DISCLOSURES, NOT LINKS. There is no
  * `/shipping`, `/returns` or `/faq` route in the app and inventing three links
@@ -59,6 +59,13 @@ const TABS = [
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
+
+/**
+ * The Help answers a link can open directly: `#help-returns` is the Help
+ * section with the returns answer already unfolded. These are the keys of the
+ * disclosures below, and the footer and the drawer send one each.
+ */
+const HELP_ANSWERS: readonly string[] = ["shipping", "returns", "faq"];
 
 /**
  * The row is `.lq-row`, the register's own list-row primitive: 52px, which is
@@ -158,15 +165,27 @@ export function AccountView() {
   const rail = useRef<HTMLDivElement>(null);
 
   /**
-   * Deep links, and the browser's own back button. `/account#help` is what the
-   * footer's four links become the day they point at a section rather than at
-   * the top of a scroll, and a section you cannot link to is a section nobody
-   * can send anybody to.
+   * Deep links, and the browser's own back button. A section you cannot link
+   * to is a section nobody can send anybody to.
+   *
+   * `#help` opens Help, and `#help-<answer>` opens Help with that answer
+   * unfolded, which is what the footer's and the drawer's Shipping, Returns
+   * and FAQ links send. They used to point at plain `/account`, which opens on
+   * "Who you are" and left a shopper who asked about returns looking at a
+   * sign-in prompt.
+   *
+   * Read on mount and on `hashchange`. A Next `<Link>` to a different hash on
+   * THIS page changes the address without firing `hashchange`, so from
+   * Account itself those links move the address but not the section; the rail
+   * is right there for that case.
    */
   useEffect(() => {
     const read = () => {
-      const key = window.location.hash.replace("#", "");
+      const hash = window.location.hash.replace("#", "");
+      const answer = hash.startsWith("help-") ? hash.slice("help-".length) : null;
+      const key = answer ? "help" : hash;
       if (TABS.some((t) => t.key === key)) setTab(key as TabKey);
+      if (answer && HELP_ANSWERS.includes(answer)) setOpen(answer);
     };
     read();
     window.addEventListener("hashchange", read);
@@ -242,7 +261,9 @@ export function AccountView() {
       ? "موقع الحملة سطح منفصل، فبيفتح في تبويب جديد."
       : "The campaign site is a separate surface, so it opens in a new tab.",
     help: ar ? "المساعدة" : "Help",
-    helpBody: ar ? "الأربعة اللي الفوتر بيوديهم هنا." : "The four the footer sends here.",
+    helpBody: ar
+      ? "التوصيل، والاستبدال والاسترجاع، وإزاي تكلّمنا."
+      : "Delivery, returns, and how to reach us.",
     about: ar ? "عن loqaaal" : "About loqaaal",
     join: ar ? "انضم كمحل" : "Join as a shop",
     shipping: ar ? "الشحن والتوصيل" : "Shipping and delivery",
