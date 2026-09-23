@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import type {
@@ -16,6 +16,7 @@ import {
   queryKeys,
   type SearchFilters,
 } from "@/lib/catalog";
+import { track } from "@/lib/analytics";
 import { ApiError } from "@/lib/api";
 import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
@@ -287,6 +288,39 @@ export function SearchView() {
 
   const pages = results.data?.pages ?? [];
   const items = pages.flatMap((page) => page.items);
+
+  /**
+   * ONE SEARCH EVENT PER SUBMITTED TERM, once its first page is in.
+   *
+   * A term that found nothing is `SEARCH_ZERO_RESULT`, its own type on the
+   * API, which is what the console's "searches that found nothing" list is
+   * built from — the thing a shop most needs to hear. Ticking a filter re-runs
+   * the query but is not a new search, so the key is the term and the shelf,
+   * not the filters. A category browse with no typed word sends nothing: there
+   * is no term to count, and a tile tap is not somebody searching.
+   *
+   * `results` is the first page's row count and `hasMore` says whether it is
+   * the whole answer — search returns no total (see storefront.contract.ts).
+   */
+  const firstPage = pages[0];
+  const trackedSearch = useRef<string | null>(null);
+  useEffect(() => {
+    if (!submitted || !firstPage) return;
+    const key = `${submitted}|${category}`;
+    if (trackedSearch.current === key) return;
+    trackedSearch.current = key;
+
+    const found = firstPage.items.length;
+    track({
+      type: found === 0 ? "SEARCH_ZERO_RESULT" : "SEARCH",
+      searchTerm: submitted,
+      metadata: {
+        results: found,
+        hasMore: firstPage.hasMore,
+        ...(category ? { category } : {}),
+      },
+    });
+  }, [submitted, category, firstPage]);
   /** Facets describe the whole match set, so the first page is authoritative. */
   const facets: SearchFacets | undefined = pages[0]?.facets;
 

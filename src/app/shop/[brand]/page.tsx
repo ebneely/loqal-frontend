@@ -7,6 +7,7 @@ import { fetchBrand, fetchBrandProducts } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { ProductCard } from "@/components/product-card";
+import { TrackView } from "@/components/track-view";
 
 /**
  * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
@@ -102,6 +103,8 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
 
   return (
     <Shell title={name}>
+      {/* The shop view for the console's funnel — see lib/analytics.ts. */}
+      <TrackView type="BRAND_VIEW" brandId={page.brand.id} />
       <div className="lq-wrap">
         {/* The trail back out. A shopper who arrived on a shop from a search
             result has no other way up to the shop index. */}

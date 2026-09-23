@@ -12,6 +12,7 @@ import {
   type CreateOrderBody,
   type CreateOrderResult,
 } from "@loqal/contracts/storefront.contract";
+import { track } from "@/lib/analytics";
 import { ApiError } from "@/lib/api";
 import { useAddresses } from "@/lib/account";
 import { useCart } from "@/lib/cart";
@@ -302,6 +303,23 @@ export function CheckoutView() {
     }
     target.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [refusedAt]);
+
+  /**
+   * CHECKOUT_START, once, when the bag has loaded with something in it.
+   *
+   * Not on mount: an empty bag or a bag that failed to load is not somebody
+   * starting to check out, and the funnel's last step is only honest if it
+   * counts the ones that could have finished.
+   */
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current || !cart || cart.itemCount === 0) return;
+    checkoutTracked.current = true;
+    track({
+      type: "CHECKOUT_START",
+      metadata: { items: cart.itemCount, shops: cart.brands.length },
+    });
+  }, [cart]);
 
   const title = t("إتمام الأوردر", "Checkout");
 
