@@ -140,10 +140,14 @@ function discountPercent(price: string, compareAt: string | null): number | null
 export function ProductView({
   product,
   brandSlug,
+  brandName,
   locale,
 }: {
   product: PublicProductDetail;
+  /** The shop's address, for links only. */
   brandSlug: string;
+  /** The shop's name, for everything a shopper reads. */
+  brandName: string;
   locale: Locale;
 }) {
   const ar = locale === "ar";
@@ -308,7 +312,7 @@ export function ProductView({
           /
         </span>
         <Link className="lq-eyebrow" href={`/shop/${brandSlug}`} data-bidi>
-          {brandSlug}
+          {brandName}
         </Link>
         <span className="lq-eyebrow" aria-hidden="true">
           /
@@ -370,7 +374,7 @@ export function ProductView({
               data-bidi
               style={{ "--lq-d": "0ms" } as React.CSSProperties}
             >
-              {brandSlug}
+              {brandName}
             </Link>
 
             <h1
