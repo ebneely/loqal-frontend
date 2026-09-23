@@ -313,10 +313,11 @@ export type SearchProductsQuery = z.infer<typeof searchProductsQuerySchema>;
  * to Brand, and it now left-joins the variants so it can filter and price. It
  * carries `priceFrom`, `compareAtPrice` and `inStock`.
  *
- * IT STILL HAS NO `coverUrl` AND NO `total`. The cover needs a presigned media
- * URL per row, which is a second pass over every match; the count is not a
- * meaningful number over a similarity search and costs another query. So a
- * search result is STILL not a `PublicProduct` and still cannot be rendered by
+ * IT HAS NO `total`, and only lately a `coverUrl`. The count is not a
+ * meaningful number over a similarity search and costs another query. The
+ * cover is now signed for the returned page only (ebneely/loqal-backend#7),
+ * and is optional below because an API from before that sends no such key. So
+ * a search result is STILL not a `PublicProduct` and still cannot be rendered by
  * anything that assumes one — reusing `publicProductPageSchema` here, which is
  * what this app did at first, fails to parse every response, and `.strict()`
  * is what turns that into an error at the boundary rather than an undefined
@@ -365,6 +366,16 @@ export const searchResultSchema = z
      * rather than a false one.
      */
     inStock: z.boolean().optional(),
+
+    /**
+     * The product's first photo, presigned — the catalogue's own cover rule.
+     *
+     * OPTIONAL AND DEFAULTED TO null, for the reason `facets` is: the schema
+     * is `.strict()`, and an API that has not shipped the key would otherwise
+     * fail every search. Null means no photo, or nobody said; either way the
+     * card draws the garment, as it did for every row before.
+     */
+    coverUrl: z.string().url().nullable().optional().default(null),
   })
   .strict();
 export type SearchResult = z.infer<typeof searchResultSchema>;

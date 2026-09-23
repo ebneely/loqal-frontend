@@ -11,6 +11,7 @@ import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
 import { Money } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
+import { ProductPhoto } from "@/components/product-photo";
 /* One component, two screens — the bag and checkout. See the note at the top
    of delivery-picker.tsx. */
 import { DeliveryPicker, deliveryLabel } from "@/components/delivery-picker";
@@ -324,12 +325,24 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
 
   return (
     <div className="lq-line">
-      {/* THE DRAWING, NOT A PICTURE OF A MISSING PICTURE. There is no product
-          photography and the cart line carries no image URL, so the well holds
-          the same hairline-framed line art the catalogue draws, seeded from the
-          product's own id so the piece keeps one drawing across reloads. */}
+      {/* The product's own photo, so the piece in the bag looks like the one
+          the shopper picked. `ProductPhoto`, as on a product card: with no
+          configured media host or a file that fails to load it degrades to the
+          drawing rather than throwing. The drawing is the fallback for a line
+          with no photo, seeded from the product's own id so the piece keeps one
+          drawing across reloads. */}
       <span className="lq-line__well">
-        <Garment className="lq-garment" kind={garmentFor(line.productId)} />
+        {line.coverUrl ? (
+          <ProductPhoto
+            src={line.coverUrl}
+            alt={name}
+            productId={line.productId}
+            // `.lq-line` gives the well a fixed 72px column.
+            sizes="72px"
+          />
+        ) : (
+          <Garment className="lq-garment" kind={garmentFor(line.productId)} />
+        )}
       </span>
 
       {/* A grid stack, because `.lq-line__name` and `.lq-line__meta` are both
