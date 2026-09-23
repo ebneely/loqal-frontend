@@ -734,6 +734,8 @@ export function SearchView({
 
               <ActiveChips
                 filters={filters}
+                facets={facets}
+                items={items}
                 locale={locale}
                 onRemove={(next) => setFilters(next)}
               />
@@ -1075,22 +1077,40 @@ function PriceRange({
  * A rail scrolled out of view is a filter a shopper forgot they set, and "no
  * results" with an invisible cause is the worst state this screen has. The
  * chips sit above the grid, where the emptiness would be.
+ *
+ * A shop chip says the shop's NAME. The filter holds slugs, because that is
+ * what the API filters on, and the chip used to print one — `nefertari ×`
+ * beside a rail that says "Nefertari". The name comes from the brand facet,
+ * which keeps listing a ticked shop because a facet never filters by its own
+ * dimension; the rows on the page are the second source, for a shop the other
+ * filters have pushed out of the facet. Only when neither has it is the slug
+ * shown: an address is a poor label, but a chip that says nothing does not
+ * tell a shopper which filter its × removes.
  */
 function ActiveChips({
   filters,
+  facets,
+  items,
   locale,
   onRemove,
 }: {
   filters: SearchFilters;
+  facets: SearchFacets | undefined;
+  items: SearchResult[];
   locale: Locale;
   onRemove: (next: SearchFilters) => void;
 }) {
   const chips: { key: string; label: string; next: SearchFilters }[] = [];
 
+  const brandName = (slug: string) =>
+    facets?.brands.find((brand) => brand.slug === slug)?.name ??
+    items.find((item) => item.brandSlug === slug)?.brandName ??
+    slug;
+
   for (const slug of filters.brands ?? []) {
     chips.push({
       key: `brand:${slug}`,
-      label: slug,
+      label: brandName(slug),
       next: { ...filters, brands: filters.brands?.filter((b) => b !== slug) },
     });
   }
