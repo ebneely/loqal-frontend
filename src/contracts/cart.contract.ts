@@ -54,6 +54,10 @@ export const cartLineSchema = z
      *  of a JSON column nothing constrains. Coerce at the point of display. */
     attributes: z.record(z.string(), z.unknown()),
     productName: productNameSchema,
+    /** The product's first photo, presigned, or null when it has none.
+     *  Optional and defaulted because an API from before it sends no such key,
+     *  and this schema is `.strict()`: required, it would fail the whole bag. */
+    coverUrl: z.string().url().nullable().optional().default(null),
     unitPrice: moneySchema,
     lineTotal: moneySchema,
     /** Whether stock covers the requested quantity RIGHT NOW. */

@@ -22,6 +22,7 @@ import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
 import { Money, MoneyWas } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
+import { ProductPhoto } from "@/components/product-photo";
 import { EmptyState } from "@/components/state";
 import { useFailureVariant } from "@/components/failure-variant";
 import { StateRail } from "@/components/state-rail";
@@ -1215,10 +1216,12 @@ function ActiveChips({
  * A result card.
  *
  * These are cards now rather than a plain list, because the row finally
- * carries what a card needs to be honest: `inStock` for the sold-out state and
- * `priceFrom` for the figure. It still has NO `coverUrl` — that would be a
- * presigned URL per row, a second pass over every match — so the garment
- * drawing stands in, exactly as it does everywhere else there is no photo.
+ * carries what a card needs to be honest: `inStock` for the sold-out state,
+ * `priceFrom` for the figure, and `coverUrl` for the photo. The photo is drawn
+ * the way `product-card.tsx` draws it, so a piece looks the same in search as
+ * on its shop's shelf. The garment drawing is only the no-photo fallback now:
+ * it used to stand in for every row, and because it is picked by hashing the
+ * id, a dress could come out as a sock.
  */
 function SearchCard({
   item,
@@ -1255,7 +1258,21 @@ function SearchCard({
       style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
     >
       <span className="lq-pcard__well">
-        <Garment className="lq-garment" kind={garmentFor(item.id)} />
+        {item.coverUrl ? (
+          /* `ProductPhoto`, not a bare `next/image`: with no configured media
+             host or a file that fails to load, it degrades to the same garment
+             drawing the branch below draws, instead of throwing. */
+          <ProductPhoto
+            src={item.coverUrl}
+            alt={name}
+            productId={item.id}
+            // The same steps as the grid, so a phone never downloads a 1200px
+            // file for a 190px tile.
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+          />
+        ) : (
+          <Garment className="lq-garment" kind={garmentFor(item.id)} />
+        )}
         {off != null ? (
           <span className="lq-badge lq-badge--sale lq-pcard__tag" data-num>
             −{off}%

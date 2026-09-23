@@ -287,7 +287,7 @@ html[data-greeted="1"] .lq-open{display:none}
 /* A hairline, like every other well in the system. Without it a cart line's
    garment floated on a bare --raise rectangle while the same drawing on a
    product card sat inside a frame. */
-.lq-line__well{border-radius:var(--radius-sm);aspect-ratio:var(--ratio-garment);overflow:hidden;background:var(--raise);border:var(--border-width) solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.lq-line__well{position:relative;border-radius:var(--radius-sm);aspect-ratio:var(--ratio-garment);overflow:hidden;background:var(--raise);border:var(--border-width) solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
 .lq-line__well img{inline-size:100%;block-size:100%;object-fit:cover}
 /* The name and the meta line are separate rows, not two inline spans that
    collide. Every screen using .lq-line was inlining this grid. */
