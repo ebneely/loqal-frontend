@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api";
 import { fetchBrand, fetchProduct } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
+import { TrackView } from "@/components/track-view";
 
 import { ProductView } from "./product-view";
 
@@ -33,7 +34,7 @@ async function load(params: Params) {
 }
 
 /**
- * The shop's NAME, which the product payload does not carry.
+ * The shop's NAME, and its id, which the product payload does not carry.
  *
  * `GET /v1/brands/:slug/products/:slug` answers the product and nothing about
  * the shop, so this page used to print the route's SLUG wherever the shop's
@@ -47,10 +48,15 @@ async function load(params: Params) {
  * is a label on it, and a brand read that fails must not take a product that
  * loaded fine down to the error boundary with it. The callers fall back to the
  * slug, which is the old behaviour, not a new failure.
+ *
+ * The id rides along for the product-view analytics event, which files a view
+ * under its shop by id. Without the brand it is sent without one, which the
+ * API accepts.
  */
-async function loadBrandName(slug: string): Promise<string | null> {
+async function loadBrand(slug: string): Promise<{ id: string; name: string } | null> {
   try {
-    return (await fetchBrand(slug)).name;
+    const brand = await fetchBrand(slug);
+    return { id: brand.id, name: brand.name };
   } catch {
     return null;
   }
@@ -62,11 +68,9 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const resolved = await params;
-  const [product, brandName] = await Promise.all([
-    load(resolved),
-    loadBrandName(resolved.brand),
-  ]);
+  const [product, brand] = await Promise.all([load(resolved), loadBrand(resolved.brand)]);
   if (!product) return { title: "الصفحة مش موجودة" };
+  const brandName = brand?.name ?? null;
 
   const nameAr = product.name?.ar ?? product.name?.en ?? "";
   const nameEn = product.name?.en ?? product.name?.ar ?? "";
@@ -106,14 +110,11 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const resolved = await params;
   /* In parallel: neither read waits on the other, and serialising them would
      add an API round trip to the render. */
-  const [product, loadedBrandName] = await Promise.all([
-    load(resolved),
-    loadBrandName(resolved.brand),
-  ]);
+  const [product, brand] = await Promise.all([load(resolved), loadBrand(resolved.brand)]);
   if (!product) notFound();
 
   /** The shop's name for every label; `resolved.brand` stays the address. */
-  const brandName = loadedBrandName ?? resolved.brand;
+  const brandName = brand?.name ?? resolved.brand;
 
   /**
    * Arabic, and not from the cookie — reading it here would take this route off
@@ -179,6 +180,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         the view below still server-renders inside it.
       */}
       <Shell title={name}>
+        <TrackView type="PRODUCT_VIEW" productId={product.id} brandId={brand?.id} />
         <ProductView
           product={product}
           brandSlug={resolved.brand}

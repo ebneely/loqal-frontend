@@ -8,6 +8,7 @@ import {
 } from "@loqal/contracts/cart.contract";
 import type { DeliveryMethod } from "@loqal/contracts/enums";
 
+import { track } from "./analytics";
 import { api } from "./api";
 import { guestSessionId } from "./orders";
 
@@ -62,12 +63,17 @@ export function useCart() {
 
 /** Replace the cache outright — see the note at the top of the file. */
 function useCartWrite<TArgs>(
-  run: (args: TArgs) => Promise<CartSummary>
+  run: (args: TArgs) => Promise<CartSummary>,
+  /** Anything else that should happen once the API has said yes. */
+  after?: (summary: CartSummary, args: TArgs) => void
 ) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: run,
-    onSuccess: (summary) => client.setQueryData(CART_KEY, summary),
+    onSuccess: (summary, args) => {
+      client.setQueryData(CART_KEY, summary);
+      after?.(summary, args);
+    },
     /**
      * On failure the cache is left ALONE rather than rolled back to a guess.
      * There is no optimistic write to undo: the count comes from the server on
@@ -77,11 +83,33 @@ function useCartWrite<TArgs>(
   });
 }
 
+/**
+ * The add, and its analytics event once it has SUCCEEDED — an add the API
+ * refused did not put anything in a bag, and counting it would inflate the
+ * funnel with exactly the failures it exists to show.
+ *
+ * The product and shop ids come off the returned line rather than from the
+ * caller: the summary already says which product the variant belongs to, so
+ * no screen has to thread them through.
+ */
 export function useAddToBag() {
-  return useCartWrite<{ variantId: string; quantity: number }>((body) =>
-    api.post(cartSummarySchema, "/v1/cart/items", body, {
-      headers: guestHeaders(),
-    })
+  return useCartWrite<{ variantId: string; quantity: number }>(
+    (body) =>
+      api.post(cartSummarySchema, "/v1/cart/items", body, {
+        headers: guestHeaders(),
+      }),
+    (summary, { variantId, quantity }) => {
+      const line = summary.brands
+        .flatMap((brand) => brand.items)
+        .find((item) => item.variantId === variantId);
+      track({
+        type: "CART_ADD",
+        variantId,
+        productId: line?.productId,
+        brandId: line?.brandId,
+        metadata: { quantity },
+      });
+    }
   );
 }
 
