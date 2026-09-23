@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import type {
@@ -25,6 +26,8 @@ import { EmptyState } from "@/components/state";
 import { useFailureVariant } from "@/components/failure-variant";
 import { StateRail } from "@/components/state-rail";
 import { StateWayOn } from "@/components/state-wayon";
+
+import { cleanCategory, cleanQuery, searchHref } from "./search-params";
 
 /**
  * Search, with the filter rail.
@@ -120,15 +123,26 @@ const toggle = (list: string[] | undefined, value: string): string[] => {
     : [...current, value];
 };
 
-export function SearchView({
-  initialQuery = "",
-  initialCategory = "",
-}: {
-  initialQuery?: string;
-  initialCategory?: string;
-}) {
+export function SearchView() {
   const locale = useLocale();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+
+  /**
+   * SEEDED FROM THE ADDRESS BAR, NOT FROM PROPS.
+   *
+   * The page used to hand the query and category down as props from its own
+   * render, and after a Back those can be older than the address: Next
+   * restores a history entry with the tree it was rendered with, and this
+   * entry was rendered as a bare `/search` before the term was written into
+   * it. `useSearchParams` reads the restored address itself, so a shopper
+   * coming Back out of a product gets the search she left. Read once — the
+   * state below owns the search from then on, and writes it back.
+   */
+  const address = useSearchParams();
+  const [initialQuery] = useState(() => cleanQuery(address.get("q") ?? ""));
+  const [initialCategory] = useState(() =>
+    cleanCategory(address.get("category") ?? ""),
+  );
 
   const [term, setTerm] = useState(initialQuery);
   /**
@@ -155,6 +169,37 @@ export function SearchView({
   const category = filters.category ?? "";
   /** A search needs a word or a shelf. With neither there is nothing to ask. */
   const asking = submitted.length > 0 || category.length > 0;
+
+  /**
+   * THE SEARCH, WRITTEN BACK INTO THE ADDRESS.
+   *
+   * Without this the term lived in state alone, so Back out of a product
+   * restored `/search` with nothing in it and the shopper searched again after
+   * every piece she opened. REPLACED, not pushed: a new search is not a place
+   * Back should step through, and a push per submit would leave a trail of
+   * them between her and the page she came from.
+   *
+   * The native `replaceState` rather than `router.replace`, which would re-run
+   * this route's server render for an address bar (see page.tsx); Next folds
+   * the native call into its router so `useSearchParams` follows it. Keyed on
+   * the SUBMITTED term and the category, so typing does not rewrite the
+   * address per keystroke, and compared on clean values so arriving at an
+   * address that is already right writes nothing.
+   *
+   * The rail's own filters are not written. They are ticked against the facet
+   * set of one search, and the term and the shelf are what get a shopper back
+   * to it.
+   */
+  useEffect(() => {
+    const current = new URLSearchParams(window.location.search);
+    if (
+      cleanQuery(current.get("q") ?? "") === submitted &&
+      cleanCategory(current.get("category") ?? "") === category
+    ) {
+      return;
+    }
+    window.history.replaceState(null, "", searchHref(submitted, category));
+  }, [submitted, category]);
 
   /**
    * The category's NAME, for the line that says what is being filtered.

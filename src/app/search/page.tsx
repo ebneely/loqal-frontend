@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
+import { cleanCategory, cleanQuery } from "./search-params";
 import { SearchView } from "./search-view";
 
 /**
@@ -18,20 +20,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-/**
- * The API's own `slug` primitive, verbatim: lowercase words joined by hyphens,
- * two to eighty characters. Checked here rather than passed through, so a
- * hand-mangled address costs the shopper the view's "we do not have that
- * section" instead of a 400 they cannot read.
- */
-const isSlug = (value: string) =>
-  value.length >= 2 && value.length <= 80 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(value);
-
 const first = (value: string | string[] | undefined) =>
   (Array.isArray(value) ? value[0] : value) ?? "";
 
 /**
- * TWO PARAMETERS ON THE WAY IN, AND NEITHER IS WRITTEN ON THE WAY OUT.
+ * TWO PARAMETERS, READ ON THE WAY IN AND WRITTEN BACK ON THE WAY OUT.
  *
  * `?q=` makes a typed search linkable — a shopper can send "دوّر على قميص" to
  * somebody, and the back button out of a product returns to the results rather
@@ -39,16 +32,18 @@ const first = (value: string | string[] | undefined) =>
  * category tile on `/` and on `/categories` is a link to this page, and the
  * slug in the address is the whole of what it carries.
  *
- * Not written on the way out for the other half of the same argument: pushing
- * the term into the URL on every submit re-runs the server render of this
- * route, and on Egyptian mobile data that is a round trip bought for a cosmetic
- * address bar. The typed term lives in component state.
+ * The view writes both back with `history.replaceState` when a search is
+ * submitted or the shelf is dropped. It used to keep the typed term in state
+ * only, so Back out of a product restored a bare `/search` and the shopper had
+ * to search again after every piece she opened. `replaceState` rather than a
+ * router navigation, because pushing the term through the router re-runs the
+ * server render of this route, and on Egyptian mobile data that is a round
+ * trip bought for an address bar. Next folds a native `replaceState` into its
+ * own router, so `useSearchParams` sees the new address without one.
  *
- * `q` is trimmed to 200 because `searchProductsQuerySchema` caps `query` there
- * and the DTO is `.strict()` — a pasted paragraph would come back a 400, not a
- * result. `category` is checked against the slug shape instead of trimmed:
- * anything else was never a category, and sending it would buy a 400 in place
- * of the "we do not have that section" the view can say for itself.
+ * Both are cleaned by `search-params.ts`, which the view uses as well: `q` is
+ * trimmed to the API's 200-character cap, and `category` is checked against
+ * the slug shape instead, because anything else was never a category.
  */
 export default async function SearchPage({
   searchParams,
@@ -56,21 +51,23 @@ export default async function SearchPage({
   searchParams: Promise<{ q?: string | string[]; category?: string | string[] }>;
 }) {
   const params = await searchParams;
-  const category = first(params.category).trim().toLowerCase();
-  const query = first(params.q).trim().slice(0, 200);
-  const categorySlug = isSlug(category) ? category : "";
+  const categorySlug = cleanCategory(first(params.category));
+  const query = cleanQuery(first(params.q));
 
   return (
-    /* KEYED ON THE PARAMS. The view seeds its state from these props ONCE, so
+    /* KEYED ON THE PARAMS. The view seeds its state from the address ONCE, so
        without the key a navigation from `?category=a` to `?category=b` reuses
        the same instance and changes nothing — every category link in the
        header was a dead tap from this page. A remount is also the right reset:
        a new shelf should not inherit the old shelf's typed term or ticked
-       filters, and the results already fetched stay warm in the query cache. */
-    <SearchView
-      key={`${categorySlug}|${query}`}
-      initialQuery={query}
-      initialCategory={categorySlug}
-    />
+       filters, and the results already fetched stay warm in the query cache.
+
+       The Suspense boundary is required rather than decorative: the view reads
+       the address with `useSearchParams`, and Next wants a boundary above any
+       component that does. This route is dynamic, so nothing suspends on it
+       and the fallback is never drawn. */
+    <Suspense fallback={null}>
+      <SearchView key={`${categorySlug}|${query}`} />
+    </Suspense>
   );
 }
