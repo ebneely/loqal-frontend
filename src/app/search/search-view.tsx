@@ -250,7 +250,8 @@ export function SearchView({
    * An API build without the variant join parses fine — `facets` is defaulted
    * rather than required, so search still works — but every list comes back
    * empty. Headings with nothing under them read as a broken rail, so the
-   * absence gets said out loud instead.
+   * absence gets said out loud instead — but only beside results, because a
+   * search that matched nothing has empty facets on every build.
    */
   const hasFacets = Boolean(
     facets &&
@@ -571,15 +572,23 @@ export function SearchView({
                   {t("بنجيب الفلاتر…", "Loading filters…")}
                 </p>
               ) : !hasFacets ? (
-                /* The API answered but sent no facets — a build without the
-                   variant join. Say so rather than showing headings with
-                   nothing under them, which reads as a broken rail. */
-                <p className="lq-hint">
-                  {t(
-                    "الفلاتر مش متاحة من السيرفر ده لسه.",
-                    "This server build does not send filters yet.",
-                  )}
-                </p>
+                /* No facets means one of two things, and only one of them is
+                   worth a sentence. With results on the page it is a build
+                   without the variant join — say so rather than showing
+                   headings with nothing under them, which reads as a broken
+                   rail. With NO results the facets are empty because nothing
+                   matched, and a note about server builds is an internal
+                   detail told to a shopper who simply found nothing: the
+                   empty state beside it already says that, and the "مسح"
+                   above still clears whatever was ticked. */
+                items.length > 0 ? (
+                  <p className="lq-hint">
+                    {t(
+                      "الفلاتر مش متاحة من السيرفر ده لسه.",
+                      "This server build does not send filters yet.",
+                    )}
+                  </p>
+                ) : null
               ) : (
                 <>
                   <FacetGroup title={t("المحل", "Shop")}>
