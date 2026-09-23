@@ -95,7 +95,12 @@
 .lq-selgroup{padding:var(--space-2) var(--space-3) var(--space-1);font-size:var(--text-xs);font-weight:var(--weight-regular);color:var(--ink-2)}
 
 /* ── Checkbox ─────────────────────────────────────────────────────────────── */
-.lq-check{display:flex;align-items:flex-start;gap:var(--space-3);min-block-size:var(--tap-min);cursor:pointer}
+/* The native input inside is `.lq-vh`: absolutely positioned, so the label is
+   its containing block and focusing it cannot scroll the page to wherever the
+   nearest positioned ancestor happens to be. The ring it would draw is clipped
+   away with it, so the box draws it instead. */
+.lq-check{position:relative;display:flex;align-items:flex-start;gap:var(--space-3);min-block-size:var(--tap-min);cursor:pointer}
+.lq-check input:focus-visible+.lq-check__box{outline:var(--focus-width) solid var(--ring);outline-offset:var(--focus-offset)}
 .lq-check__box{display:grid;place-items:center;flex:none;inline-size:22px;block-size:22px;margin-block-start:calc((var(--tap-min) - 22px) / 2);border:var(--border-width) solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface-card);color:transparent;transition:background var(--dur-fast),border-color var(--dur-fast),scale var(--dur-fast)}
 .lq-check:active .lq-check__box{scale:0.9}
 .lq-check__box[data-checked="true"]{background:var(--brand);border-color:var(--brand);color:var(--text-on-brand)}
