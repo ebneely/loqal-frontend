@@ -942,6 +942,18 @@ function FacetGroup({
   );
 }
 
+/**
+ * A checkbox drawn by `.lq-check__box`, operated by a real one.
+ *
+ * The native input stays in the DOM for the keyboard, the screen reader and
+ * the label's own click, and is hidden with `.lq-vh` rather than removed —
+ * `display: none` would take it out of the tab order and out of the
+ * accessibility tree with it. It used to be left visible and the box was never
+ * told the state, so a shopper saw a 13px system checkbox tick beside a styled
+ * box that stayed empty. The box now reads `data-checked`, which is what the
+ * stylesheet keys its fill on, and carries the tick; its focus ring is drawn
+ * from the input's `:focus-visible` in components.css.
+ */
 function Check({
   label,
   count,
@@ -955,8 +967,19 @@ function Check({
 }) {
   return (
     <label className="lq-check">
-      <input type="checkbox" checked={checked} onChange={onChange} />
-      <span className="lq-check__box" aria-hidden="true" />
+      <input
+        type="checkbox"
+        className="lq-vh"
+        checked={checked}
+        onChange={onChange}
+      />
+      <span
+        className="lq-check__box"
+        data-checked={checked ? "true" : "false"}
+        aria-hidden="true"
+      >
+        <span className="lq-icon" data-icon="check" />
+      </span>
       <span className="lq-check__text" data-bidi>
         {label}
         {count != null ? (
