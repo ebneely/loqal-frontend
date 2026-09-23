@@ -79,10 +79,14 @@ const PAYMENTS = [
 const LINKS = [
   { ar: "عن loqaaal", en: "About loqaaal", href: "https://join-loqaaal.vercel.app/" },
   { ar: "انضم كمحل", en: "Join as a shop", href: "https://join-loqaaal.vercel.app/" },
-  { ar: "الشحن والتوصيل", en: "Shipping", href: "/account" },
-  { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account" },
-  { ar: "الأسئلة الشائعة", en: "FAQ", href: "/account" },
-  { ar: "تواصل معنا", en: "Contact", href: "/account" },
+  /* Into Account's Help section, each with its own answer already open — see
+     the hash reader in account-view.tsx. Plain `/account` opened on "Who you
+     are", which answers none of these. Contact has no answer to open: the
+     WhatsApp row sits in the section itself. */
+  { ar: "الشحن والتوصيل", en: "Shipping", href: "/account#help-shipping" },
+  { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account#help-returns" },
+  { ar: "الأسئلة الشائعة", en: "FAQ", href: "/account#help-faq" },
+  { ar: "تواصل معنا", en: "Contact", href: "/account#help" },
 ];
 
 function Subscribe() {

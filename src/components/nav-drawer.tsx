@@ -82,10 +82,10 @@ const PLACES = [
 const LINKS = [
   { ar: "عن loqaaal", en: "About loqaaal", href: "https://join-loqaaal.vercel.app/" },
   { ar: "انضم كمحل", en: "Join as a shop", href: "https://join-loqaaal.vercel.app/" },
-  { ar: "الشحن والتوصيل", en: "Shipping", href: "/account" },
-  { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account" },
-  { ar: "الأسئلة الشائعة", en: "FAQ", href: "/account" },
-  { ar: "تواصل معنا", en: "Contact", href: "/account" },
+  { ar: "الشحن والتوصيل", en: "Shipping", href: "/account#help-shipping" },
+  { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account#help-returns" },
+  { ar: "الأسئلة الشائعة", en: "FAQ", href: "/account#help-faq" },
+  { ar: "تواصل معنا", en: "Contact", href: "/account#help" },
 ] as const;
 
 /** Everything a Tab can land on inside the panel. Order is DOM order. */
