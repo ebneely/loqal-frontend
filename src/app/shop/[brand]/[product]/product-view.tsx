@@ -7,6 +7,7 @@ import type {
   PublicProductDetail,
   PublicVariant,
 } from "@loqal/contracts/storefront.contract";
+import { attributeName } from "@/lib/attribute-names";
 import { useAddToBag } from "@/lib/cart";
 import type { Locale } from "@/lib/locale";
 import { Money, MoneyWas } from "@/components/money";
@@ -235,8 +236,18 @@ export function ProductView({
   const priceIsFrom = selected == null && prices.size > 1;
 
   const missing = groups.find((group) => choice[group.key] == null);
-  const groupLabel = (key: string) =>
-    key === SKU_KEY ? (ar ? "الاختيار" : "the option") : key;
+  /**
+   * The heading over a group and the button while it is unchosen. A real key
+   * goes through `attributeName`, which translates the known ones and
+   * title-cases the rest — printing the key itself put "size" on an Arabic
+   * page. The synthetic SKU group has no key a shop wrote, so it is named here.
+   */
+  const groupName = (key: string) =>
+    key === SKU_KEY
+      ? ar
+        ? { label: "الاختيار", choose: "اختار الاختيار" }
+        : { label: "Option", choose: "Choose an option" }
+      : attributeName(key, locale);
 
   const t = {
     home: ar ? "الرئيسية" : "Home",
@@ -289,9 +300,7 @@ export function ProductView({
   const buyLabel = addToBag.isPending
     ? t.adding
     : missing
-      ? ar
-        ? `اختار ${groupLabel(missing.key)}`
-        : `Choose ${groupLabel(missing.key)}`
+      ? groupName(missing.key).choose
       : selected && !selected.inStock
         ? t.soldOut
         : t.add;
@@ -437,7 +446,7 @@ export function ProductView({
                 >
                   <div className="lq-vp__head">
                     <span className="lq-vp__label" data-bidi>
-                      {groupLabel(group.key)}
+                      {groupName(group.key).label}
                       {choice[group.key] ? ` — ${choice[group.key]}` : ""}
                     </span>
                     {group.values.some((value) => !available(group.key, value)) ? (
