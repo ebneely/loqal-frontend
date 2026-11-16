@@ -9,6 +9,7 @@ import type { DeliveryMethod } from "@loqal/contracts/enums";
 import { useCart, useRemoveBagLine, useUpdateBagLine } from "@/lib/cart";
 import { fetchBrand, queryKeys } from "@/lib/catalog";
 import { clock, isOpenNow } from "@/lib/shop-hours";
+import { formatDeliveryTime } from "@/lib/delivery-time";
 import { formatPrice, type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
@@ -210,6 +211,8 @@ function ShopLot({
     staleTime: 5 * 60_000,
   });
   const open = shop?.hours ? isOpenNow(shop.hours) : null;
+  /* This shop's own window — one per shop, never one for the whole bag. */
+  const eta = formatDeliveryTime(shop?.deliveryTime, locale);
 
   return (
     <section
@@ -223,9 +226,9 @@ function ShopLot({
           <Link href={`/shop/${brand.brandSlug}`} className="lq-ghead__name" data-bidi>
             {brand.brandName}
           </Link>
-          {shop?.neighbourhood ? (
+          {shop?.neighbourhood || eta ? (
             <span className="lq-ghead__meta" data-bidi>
-              {shop.neighbourhood}
+              {[shop?.neighbourhood, eta].filter(Boolean).join(" · ")}
             </span>
           ) : null}
         </div>

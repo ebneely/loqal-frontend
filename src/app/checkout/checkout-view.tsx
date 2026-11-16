@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import type { CartBrand, CartSummary } from "@loqal/contracts/cart.contract";
 import type { DeliveryMethod, PaymentMethod } from "@loqal/contracts/enums";
@@ -16,6 +17,9 @@ import { ApiError } from "@/lib/api";
 import { useAddresses } from "@/lib/account";
 import { useDeliveryLocation } from "@/lib/delivery-location";
 import { useCart } from "@/lib/cart";
+import { track } from "@/lib/analytics";
+import { fetchBrand, queryKeys } from "@/lib/catalog";
+import { formatDeliveryTime } from "@/lib/delivery-time";
 import { useCheckoutKey, useCreateOrder, usePaymentLink } from "@/lib/orders";
 import { useSession } from "@/lib/auth-client";
 import { formatPrice, type Locale } from "@/lib/locale";
@@ -309,6 +313,15 @@ export function CheckoutView() {
     }
     target.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [refusedAt]);
+
+  /* One CHECKOUT_START beacon per visit to this screen with a bag to pay for. */
+  const hasItems = (cart?.itemCount ?? 0) > 0;
+  const started = useRef(false);
+  useEffect(() => {
+    if (!hasItems || started.current) return;
+    started.current = true;
+    track({ type: "CHECKOUT_START", metadata: { shops: cart?.brands.length ?? 0 } });
+  }, [hasItems, cart?.brands.length]);
 
   const title = t("إتمام الطلب", "Checkout");
 
@@ -1001,8 +1014,10 @@ export function CheckoutView() {
 
    EVERYTHING HERE IS ON THE WIRE. `cartBrandSchema` carries a name, lines, a
    subtotal, a minimum and this shop's fare under the chosen method — and
-   nothing else. No neighbourhood, no opening hours and NO ETA: the reference
-   mockup drew an ETA pill and there is no field behind it, so it is not drawn.
+   nothing else. The delivery window is the shop's own, read from its public
+   record (the same cached read the bag makes); a shop that has not given one
+   shows none, and one window per shop is the point — there is no ETA for the
+   whole order.
    ══════════════════════════════════════════════════════════════════════════ */
 
 function ShopCard({
@@ -1016,6 +1031,12 @@ function ShopCard({
 }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
   const pieces = brand.items.reduce((sum, line) => sum + line.quantity, 0);
+  const { data: shop } = useQuery({
+    queryKey: queryKeys.brand(brand.brandSlug),
+    queryFn: () => fetchBrand(brand.brandSlug),
+    staleTime: 5 * 60_000,
+  });
+  const eta = formatDeliveryTime(shop?.deliveryTime, locale);
 
   return (
     <section className="lq-group" aria-label={brand.brandName}>
@@ -1025,6 +1046,7 @@ function ShopCard({
         </span>
         <span className="lq-ghead__meta">
           <Pieces n={pieces} locale={locale} />
+          {eta ? ` · ${eta}` : null}
         </span>
       </div>
 

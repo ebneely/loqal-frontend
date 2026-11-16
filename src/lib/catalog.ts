@@ -4,7 +4,9 @@ import {
   publicCategoryListSchema,
   publicProductDetailSchema,
   publicProductPageSchema,
+  publicReviewListSchema,
   searchResultPageSchema,
+  searchSuggestSchema,
   type ListPublicProductsQuery,
   type SearchSort,
 } from "@loqal/contracts/storefront.contract";
@@ -62,7 +64,30 @@ export const queryKeys = {
    */
   search: (q: string, page: number, filters?: SearchFilters) =>
     ["search", q, page, filters ?? {}] as const,
+  suggest: (q: string) => ["suggest", q] as const,
+  reviews: (brandId: string) => ["reviews", brandId] as const,
 };
+
+/**
+ * As-you-type suggestions. Browser-only and uncached: the signal lets TanStack
+ * abort the request a newer keystroke made stale. 1..60 characters, the API's
+ * own bounds.
+ */
+export function fetchSuggest(q: string, signal?: AbortSignal) {
+  return api.get(searchSuggestSchema, "/v1/search/suggest", {
+    query: { q: q.trim().slice(0, 60) },
+    signal,
+    cache: "no-store",
+  });
+}
+
+/** A shop's visible reviews, newest first. */
+export function fetchReviews(brandId: string, signal?: AbortSignal) {
+  return api.get(publicReviewListSchema, `/v1/brands/id/${encodeURIComponent(brandId)}/reviews`, {
+    signal,
+    cache: "no-store",
+  });
+}
 
 export function fetchCategories() {
   return api.get(publicCategoryListSchema, "/v1/categories", {
@@ -135,6 +160,8 @@ export type SearchFilters = {
   priceMin?: number;
   priceMax?: number;
   inStockOnly?: boolean;
+  /** Pieces whose "was" price is above the price. A newer API parameter. */
+  onSale?: boolean;
   sort?: SearchSort;
 };
 
@@ -168,10 +195,33 @@ export function searchProducts(
       priceMin: filters.priceMin,
       priceMax: filters.priceMax,
       inStockOnly: filters.inStockOnly ? true : undefined,
+      onSale: filters.onSale ? true : undefined,
       sort: filters.sort && filters.sort !== "relevance" ? filters.sort : undefined,
     },
     cache: "no-store",
   });
+}
+
+/**
+ * The home page's «العروض» row: pieces with a real drop, nothing else.
+ *
+ * Fails soft by contract: an API without `onSale` refuses the call (its DTO is
+ * strict), and then the row is simply not drawn. Rows are re-checked here as
+ * well, so an API that ignored the flag could not put a full-price piece under
+ * the word «عروض».
+ */
+export async function fetchOffers(perPage = 8) {
+  try {
+    const page = await searchProducts("", 1, perPage, { onSale: true });
+    return page.items.filter(
+      (item) =>
+        item.priceFrom != null &&
+        item.compareAtPrice != null &&
+        Number(item.compareAtPrice) > Number(item.priceFrom),
+    );
+  } catch {
+    return [];
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

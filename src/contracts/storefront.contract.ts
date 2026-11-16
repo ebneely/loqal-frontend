@@ -122,9 +122,8 @@ export type PublicProductDetail = z.infer<typeof publicProductDetailSchema>;
 /**
  * A shop, as the storefront lists and opens it.
  *
- * There is no rating and no review count, because reviews are a *Later* story
- * and are not in the schema — a card that reserved space for stars would be
- * promising something the API cannot answer.
+ * The rating is the API's own aggregate of visible reviews, and a shop with
+ * none draws no stars — space is never reserved for a figure nobody gave.
  */
 export const publicBrandSchema = z
   .object({
@@ -185,6 +184,19 @@ export const publicBrandSchema = z
     location: z
       .object({ latitude: z.number(), longitude: z.number() })
       .strict()
+      .nullable()
+      .default(null),
+    /**
+     * How long the shop says a delivery takes, in minutes, and its rating from
+     * visible reviews. Defaulted like `location`: the deployed API does not
+     * send either yet, and null draws nothing.
+     */
+    deliveryTime: z
+      .object({ minMinutes: z.number(), maxMinutes: z.number() })
+      .nullable()
+      .default(null),
+    rating: z
+      .object({ average: z.number(), count: z.number().int() })
       .nullable()
       .default(null),
     deliveryFee: moneySchema.nullable(),
@@ -448,6 +460,66 @@ export const searchResultPageSchema = z
   })
   .strict();
 export type SearchResultPage = z.infer<typeof searchResultPageSchema>;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Favourites, suggestions and reviews (TODO/06-plan-talabat.md).
+
+   All three ship AHEAD of the API that answers them, so every caller treats a
+   404 as "not here yet" and hides the feature. Nested shapes here are not
+   `.strict()`: a key the backend adds later must not blank a whole panel.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/** `GET /v1/favourites/ids`. */
+export const favouriteIdsSchema = z.object({
+  shopIds: z.array(z.string()),
+  productIds: z.array(z.string()),
+});
+export type FavouriteIds = z.infer<typeof favouriteIdsSchema>;
+
+/** `GET /v1/favourites` — the same item shapes as the shop and search lists. */
+export const favouritesSchema = z.object({
+  shops: z.array(publicBrandSchema),
+  // A saved piece is not a search hit, so a missing rank is not an error.
+  products: z.array(searchResultSchema.extend({ rank: z.number().optional().default(0) })),
+});
+export type Favourites = z.infer<typeof favouritesSchema>;
+
+/** `GET /v1/search/suggest?q=`. */
+export const searchSuggestSchema = z.object({
+  shops: z.array(z.object({ slug: z.string(), name: z.string() })).default([]),
+  categories: z.array(z.object({ slug: z.string(), name: bilingualSchema })).default([]),
+  products: z
+    .array(
+      z.object({
+        brandSlug: z.string(),
+        productSlug: z.string(),
+        name: bilingualSchema.nullable(),
+        imageUrl: z.string().nullable().default(null),
+      }),
+    )
+    .default([]),
+});
+export type SearchSuggest = z.infer<typeof searchSuggestSchema>;
+
+/**
+ * One public review. The API answers the whole Review row today; only what a
+ * shopper may read is kept (zod strips the rest — who wrote it is never shown).
+ */
+export const publicReviewSchema = z.object({
+  id: z.string(),
+  rating: z.number().int().min(1).max(5),
+  body: z.string().nullable().optional(),
+  brandReply: z.string().nullable().optional(),
+  brandRepliedAt: z.string().nullable().optional(),
+  createdAt: z.string(),
+});
+export type PublicReview = z.infer<typeof publicReviewSchema>;
+
+/** A bare array today; a page envelope is accepted too, so either wire parses. */
+export const publicReviewListSchema = z.union([
+  z.array(publicReviewSchema),
+  z.object({ items: z.array(publicReviewSchema) }).transform((page) => page.items),
+]);
 
 
 /* ══════════════════════════════════════════════════════════════════════════

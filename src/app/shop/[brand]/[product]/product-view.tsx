@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import type {
@@ -13,6 +13,8 @@ import type { Locale } from "@/lib/locale";
 import { Money, MoneyWas } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
 import { ProductPhoto } from "@/components/product-photo";
+import { FavButton } from "@/components/fav-button";
+import { track } from "@/lib/analytics";
 
 /**
  * The product screen.
@@ -133,6 +135,10 @@ export function ProductView({
 
   /** Which photo the large well shows. */
   const [photo, setPhoto] = useState(0);
+
+  useEffect(() => {
+    track({ type: "PRODUCT_VIEW", productId: product.id });
+  }, [product.id]);
 
   const addToBag = useAddToBag();
 
@@ -314,9 +320,18 @@ export function ProductView({
             {brandName}
           </Link>
 
-          <h1 className="lq-pdp__name" data-bidi>
-            {name}
-          </h1>
+          <div className="lq-pdp__titlerow">
+            <h1 className="lq-pdp__name" data-bidi>
+              {name}
+            </h1>
+            <FavButton
+              label={name}
+              target={{
+                kind: "product",
+                item: { id: product.id, slug: product.slug, brandSlug, brandName, name: product.name },
+              }}
+            />
+          </div>
 
           <p className="lq-pdp__price">
             {priceIsFrom ? <span className="lq-pdp__from">{t.from}</span> : null}
@@ -398,7 +413,13 @@ export function ProductView({
               disabled={!selected || !selected.inStock || addToBag.isPending}
               onClick={() => {
                 if (!selected) return;
-                addToBag.mutate({ variantId: selected.id, quantity: 1 });
+                addToBag.mutate(
+                  { variantId: selected.id, quantity: 1 },
+                  {
+                    onSuccess: () =>
+                      track({ type: "CART_ADD", productId: product.id, variantId: selected.id }),
+                  },
+                );
               }}
             >
               {buyLabel}

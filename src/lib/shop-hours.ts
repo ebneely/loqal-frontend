@@ -13,6 +13,7 @@
  */
 import type { PublicBrand } from "@loqal/contracts/storefront.contract";
 import { formatPrice } from "./locale";
+import { formatDeliveryTime } from "./delivery-time";
 
 export type ShopHours = {
   opensAt: string;
@@ -119,6 +120,18 @@ export const pieceCount = (n: number, locale: "ar" | "en") =>
 export const dayCount = (n: number, locale: "ar" | "en") =>
   counted(n, locale, ["يوم واحد", "يومان", "أيام", "يومًا"], ["day", "days"]);
 
+export const ratingCount = (n: number, locale: "ar" | "en") =>
+  counted(n, locale, ["تقييم واحد", "تقييمان", "تقييمات", "تقييمًا"], ["rating", "ratings"]);
+
+/** «★ 4.6 · 23 تقييمًا», or null when nobody has rated the shop yet. */
+export function ratingLine(
+  rating: { average: number; count: number } | null | undefined,
+  locale: "ar" | "en",
+): string | null {
+  if (!rating || rating.count < 1 || !Number.isFinite(rating.average)) return null;
+  return `★ ${rating.average.toFixed(1)} · ${ratingCount(rating.count, locale)}`;
+}
+
 /**
  * The facts row under a shop's name: a bold value and a quiet note each.
  * Only what the shop has actually said, in this order, so a shop with no
@@ -128,7 +141,7 @@ export function shopFacts(
   shop: Pick<
     PublicBrand,
     "neighbourhood" | "hours" | "deliveryFee" | "returnWindowDays"
-  >,
+  > & { deliveryTime?: PublicBrand["deliveryTime"] },
   locale: "ar" | "en",
   at: Date = new Date(),
 ): { value: string; note: string }[] {
@@ -146,7 +159,8 @@ export function shopFacts(
     });
   }
   facts.push({
-    value: t("اليوم نفسه", "Same day"),
+    // The shop's own window when it has given one; same day is the promise until then.
+    value: formatDeliveryTime(shop.deliveryTime, locale) ?? t("اليوم نفسه", "Same day"),
     note: t("يرسل المتجر طلبك بنفسه", "The shop sends your order itself"),
   });
   if (shop.deliveryFee != null) {

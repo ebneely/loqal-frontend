@@ -211,7 +211,11 @@ export function SiteFooter() {
 
       <div className="lq-foot__bot">
         <span>{t("متاجر القاهرة والجيزة", "Shops of Cairo & Giza")}</span>
-        <span data-num>© 2026 loqaaal</span>
+        <span className="lq-foot__legal">
+          <Link href="/privacy">{t("الخصوصية", "Privacy")}</Link>
+          <Link href="/terms">{t("الشروط", "Terms")}</Link>
+          <span data-num>© 2026 loqaaal</span>
+        </span>
       </div>
       <p className="lq-foot__huge" aria-hidden="true">
         loqaaal

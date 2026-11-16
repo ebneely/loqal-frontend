@@ -48,11 +48,16 @@ const first = (value: string | string[] | undefined) =>
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string | string[]; category?: string | string[] }>;
+  searchParams: Promise<{
+    q?: string | string[];
+    category?: string | string[];
+    offers?: string | string[];
+  }>;
 }) {
   const params = await searchParams;
   const categorySlug = cleanCategory(first(params.category));
   const query = cleanQuery(first(params.q));
+  const offers = first(params.offers) === "1";
 
   return (
     /* KEYED ON THE PARAMS. The view seeds its state from the address ONCE, so
@@ -67,7 +72,7 @@ export default async function SearchPage({
        component that does. This route is dynamic, so nothing suspends on it
        and the fallback is never drawn. */
     <Suspense fallback={null}>
-      <SearchView key={`${categorySlug}|${query}`} />
+      <SearchView key={`${categorySlug}|${query}|${offers}`} />
     </Suspense>
   );
 }

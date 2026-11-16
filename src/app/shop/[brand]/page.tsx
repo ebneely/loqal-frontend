@@ -5,9 +5,12 @@ import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { fetchBrand, fetchBrandProducts } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
-import { pieceCount, shopFacts } from "@/lib/shop-hours";
+import { pieceCount, ratingLine, shopFacts } from "@/lib/shop-hours";
 import { Shell } from "@/components/shell";
 import { ProductCard } from "@/components/product-card";
+import { FavButton } from "@/components/fav-button";
+import { ShopReviews } from "@/components/shop-reviews";
+import { TrackView } from "@/components/track-view";
 
 /**
  * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
@@ -108,9 +111,11 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
      delivery terms until then. Never an invented address. */
   const facts = shopFacts(page.brand, locale).slice(0, 3);
   const { items, total } = page.products;
+  const rating = ratingLine(page.brand.rating, locale);
 
   return (
     <Shell title={name}>
+      <TrackView type="BRAND_VIEW" brandId={page.brand.id} />
       {/*
         The shop sign: its own photograph full-bleed, darkened from the foot so
         the name reads white over any picture. No photo is a green plate.
@@ -134,6 +139,17 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
           <h1 className="lq-shophero__name" data-bidi>
             {name}
           </h1>
+          <div className="lq-shophero__acts">
+            {rating ? (
+              <a className="lq-shophero__rating" href="#reviews" data-num>
+                {rating}
+              </a>
+            ) : null}
+            <FavButton
+              label={name}
+              target={{ kind: "shop", item: { id: page.brand.id, slug: page.brand.slug, name } }}
+            />
+          </div>
           <dl className="lq-facts">
             {facts.map((fact) => (
               <div key={fact.note}>
@@ -199,6 +215,8 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
           </p>
         ) : null}
       </section>
+
+      <ShopReviews brandId={page.brand.id} rating={page.brand.rating} />
     </Shell>
   );
 }

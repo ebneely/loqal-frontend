@@ -30,6 +30,7 @@ import { StatusPill, StatusRail } from "@/components/status-pill";
 import { Garment, garmentFor } from "@/components/garment";
 import { KeepNumber } from "@/components/keep-number";
 import { deliveryLabel } from "@/components/delivery-picker";
+import { RateShop } from "./rate-shop";
 
 /**
  * One order.
@@ -474,6 +475,16 @@ function ShopHalf({
           RETURN_REQUESTED and RETURNED — already has its own sentence above
           from `consequence()`, which is the return's state shown instead of a
           button that would 409. */}
+      {half.status === "DELIVERED" ? (
+        <RateShop
+          brandOrderId={half.id}
+          brandId={half.brandId}
+          shopName={shop?.name ?? null}
+          orderNumber={orderNumber}
+          phone={phone}
+          locale={locale}
+        />
+      ) : null}
       {half.status === "DELIVERED" ? (
         <ReturnRequest
           brandOrderId={half.id}

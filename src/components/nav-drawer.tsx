@@ -81,6 +81,8 @@ const LINKS = [
   { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account#help-returns" },
   { ar: "الأسئلة الشائعة", en: "FAQ", href: "/account#help-faq" },
   { ar: "تواصل معنا", en: "Contact", href: "/account#help" },
+  { ar: "الخصوصية", en: "Privacy", href: "/privacy" },
+  { ar: "الشروط", en: "Terms", href: "/terms" },
 ] as const;
 
 /** Everything a Tab can land on inside the panel. Order is DOM order. */

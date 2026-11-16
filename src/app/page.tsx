@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import type { PublicBrand, PublicProduct } from "@loqal/contracts/storefront.contract";
-import { fetchBrands, fetchBrandProducts, fetchCategories } from "@/lib/catalog";
+import { fetchBrands, fetchBrandProducts, fetchCategories, fetchOffers } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { initialsOf, shopCount, shopFacts } from "@/lib/shop-hours";
 import { Shell } from "@/components/shell";
 import { Hero } from "@/components/hero";
 import { ProductCard } from "@/components/product-card";
+import { SearchCard } from "@/components/search-card";
 import { ProductPhoto } from "@/components/product-photo";
 import { Garment, garmentFor } from "@/components/garment";
 import { Money } from "@/components/money";
@@ -44,7 +45,7 @@ export default async function HomePage() {
    * same. Categories are only the hero's quick links; the header reads the
    * same cached list, and losing them costs nothing else on the page.
    */
-  const [page, categories] = await Promise.all([
+  const [page, categories, offers] = await Promise.all([
     fetchBrands(1, 24).then(
       (result) => result,
       () => null,
@@ -53,6 +54,8 @@ export default async function HomePage() {
       (result) => result,
       () => [],
     ),
+    // Empty on any failure, and then the offers row is not drawn.
+    fetchOffers(8),
   ]);
 
   const shops = page?.items ?? [];
@@ -255,6 +258,28 @@ export default async function HomePage() {
                 priority={index === 0}
                 delayMs={(index % 4) * 70}
               />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* ── Offers ─────────────────────────────────────────────────────────
+          Pieces a shop has genuinely reduced (its "was" price above the
+          price). No banner, no countdown: the struck price and the drop are
+          the whole message, in red because red means a price that dropped. */}
+      {offers.length > 0 ? (
+        <section className="lq-home__sec" aria-labelledby="home-offers">
+          <header className="lq-sec__head lq-home__head">
+            <h2 className="lq-sec__title" id="home-offers">
+              {t("العروض", "Offers")}
+            </h2>
+            <Link className="lq-textlink" href="/search?offers=1">
+              {t("كل العروض", "All offers")}
+            </Link>
+          </header>
+          <div className="lq-feed">
+            {offers.map((item, index) => (
+              <SearchCard key={item.id} item={item} locale={locale} delayMs={(index % 4) * 70} />
             ))}
           </div>
         </section>

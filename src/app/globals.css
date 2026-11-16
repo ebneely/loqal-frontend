@@ -15,6 +15,7 @@
 @import "./palette.css";
 /* The delivery location control, picker and distance figure. */
 @import "./location.css";
+@import "./features.css";
 /* LAST, so the phone chrome layer can refine a class components.css already
    set without reaching for !important. Nothing in it applies above 720px. */
 @import "./mobile-chrome.css";

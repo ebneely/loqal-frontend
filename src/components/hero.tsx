@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { Locale } from "@/lib/locale";
+import { SearchField } from "@/components/search-field";
 
 /**
  * The first screen: a shop's own photograph owning the inline-END 57% of the
@@ -67,20 +68,13 @@ export function Hero({
           )}
         </p>
 
-        {/* A plain GET form: it works before the bundle lands, and /search
-            reads `q` from the address. */}
-        <form className="lq-hero__find" action="/search" role="search">
-          <label className="lq-search">
-            <span className="lq-icon" data-icon="search" aria-hidden="true" />
-            <input
-              type="search"
-              name="q"
-              enterKeyHint="search"
-              placeholder={t("عمّ تبحث؟", "What are you looking for?")}
-              aria-label={t("بحث", "Search")}
-            />
-          </label>
-        </form>
+        {/* Still a GET form underneath: it works before the bundle lands, and
+            /search reads `q` from the address. */}
+        <SearchField
+          className="lq-hero__find"
+          placeholder={t("عمّ تبحث؟", "What are you looking for?")}
+          label={t("بحث", "Search")}
+        />
 
         {links.length > 0 ? (
           <nav className="lq-hero__links" aria-label={t("الأقسام", "Categories")}>

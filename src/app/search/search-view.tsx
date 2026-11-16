@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import type {
@@ -20,10 +20,11 @@ import { ApiError } from "@/lib/api";
 import type { Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
-import { Money, MoneyWas } from "@/components/money";
-import { Garment, garmentFor } from "@/components/garment";
-import { ProductPhoto } from "@/components/product-photo";
+import { Money } from "@/components/money";
+import { SearchCard } from "@/components/search-card";
+import { SearchField } from "@/components/search-field";
 import { EmptyState } from "@/components/state";
+import { safeSearchTerm, track } from "@/lib/analytics";
 import { useFailureVariant } from "@/components/failure-variant";
 import { StateRail } from "@/components/state-rail";
 import { StateWayOn } from "@/components/state-wayon";
@@ -63,7 +64,7 @@ import { cleanCategory, cleanQuery, searchHref } from "./search-params";
  * try-on capability flag — `TryOnRender` is a render job, and `ProductMedia`
  * carries only a sort order, so nothing marks a garment photo as one that can
  * be tried on. Both are a migration plus data somebody has to curate, not a
- * checkbox. The wishlist heart is absent for the same reason: no model.
+ * checkbox.
  */
 
 /**
@@ -159,9 +160,11 @@ export function SearchView() {
    * dropping it a `setFilters` like every other filter rather than a
    * navigation.
    */
-  const [filters, setFilters] = useState<SearchFilters>(
-    initialCategory ? { category: initialCategory } : {},
-  );
+  const [filters, setFilters] = useState<SearchFilters>(() => ({
+    ...(initialCategory ? { category: initialCategory } : {}),
+    // `?offers=1` is the home page's «العروض» row asking for all of them.
+    ...(address.get("offers") === "1" ? { onSale: true } : {}),
+  }));
 
   const patch = (next: Partial<SearchFilters>) =>
     setFilters((current) => ({ ...current, ...next }));
@@ -171,8 +174,9 @@ export function SearchView() {
 
   /** Empty string, never undefined, so the query key is stable. */
   const category = filters.category ?? "";
-  /** A search needs a word or a shelf. With neither there is nothing to ask. */
-  const asking = submitted.length > 0 || category.length > 0;
+  const offers = filters.onSale === true;
+  /** A search needs a word, a shelf, or «عروض فقط». With none there is nothing to ask. */
+  const asking = submitted.length > 0 || category.length > 0 || offers;
 
   /**
    * THE SEARCH, WRITTEN BACK INTO THE ADDRESS.
@@ -198,12 +202,13 @@ export function SearchView() {
     const current = new URLSearchParams(window.location.search);
     if (
       cleanQuery(current.get("q") ?? "") === submitted &&
-      cleanCategory(current.get("category") ?? "") === category
+      cleanCategory(current.get("category") ?? "") === category &&
+      (current.get("offers") === "1") === offers
     ) {
       return;
     }
-    window.history.replaceState(null, "", searchHref(submitted, category));
-  }, [submitted, category]);
+    window.history.replaceState(null, "", searchHref(submitted, category, offers));
+  }, [submitted, category, offers]);
 
   /**
    * The category's NAME, for the line that says what is being filtered.
@@ -294,6 +299,33 @@ export function SearchView() {
   const facets: SearchFacets | undefined = pages[0]?.facets;
 
   /**
+   * One SEARCH beacon per typed search and filter set, when its first page
+   * lands; a zero-result one is also sent as SEARCH_ZERO_RESULT, the list the
+   * admin console reads. A shelf browsed with no typed word is not a search.
+   */
+  const firstPage = pages[0];
+  const tracked = useRef("");
+  useEffect(() => {
+    if (!firstPage || submitted.length === 0) return;
+    const key = JSON.stringify([submitted, filters]);
+    if (tracked.current === key) return;
+    tracked.current = key;
+    const searchTerm = safeSearchTerm(submitted);
+    if (!searchTerm) return;
+    const metadata = { results: firstPage.items.length, hasMore: firstPage.hasMore };
+    track({ type: "SEARCH", searchTerm, metadata });
+    if (firstPage.items.length === 0) track({ type: "SEARCH_ZERO_RESULT", searchTerm, metadata });
+  }, [firstPage, submitted, filters]);
+
+  /** An API that does not know «عروض فقط» refuses the whole search with a 400. */
+  const offersRefused =
+    results.isError &&
+    offers &&
+    !staleApi &&
+    results.error instanceof ApiError &&
+    results.error.statusCode === 400;
+
+  /**
    * Whether there is anything to draw a rail from.
    *
    * An API build without the variant join parses fine — `facets` is defaulted
@@ -325,7 +357,8 @@ export function SearchView() {
     (filters.sizes?.length ?? 0) +
     (filters.colors?.length ?? 0) +
     (filters.priceMin != null || filters.priceMax != null ? 1 : 0) +
-    (filters.inStockOnly ? 1 : 0);
+    (filters.inStockOnly ? 1 : 0) +
+    (filters.onSale ? 1 : 0);
 
   /** Everything the rail set, dropped; the shelf kept. */
   const clearFilters = () => setFilters(category ? { category } : {});
@@ -344,32 +377,21 @@ export function SearchView() {
         {/* The page names what it is showing: the shelf when one is chosen,
             otherwise the search itself. */}
         <h1 className="lq-pagetitle lq-srch__title" data-bidi>
-          {category ? categoryName : t("البحث", "Search")}
+          {category
+            ? categoryName
+            : offers && submitted.length === 0
+              ? t("العروض", "Offers")
+              : t("البحث", "Search")}
         </h1>
 
-        <form
+        <SearchField
           className="lq-srch__field"
-          role="search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setSubmitted(term.trim());
-          }}
-        >
-          <label className="lq-search">
-            <span className="lq-icon" data-icon="search" aria-hidden="true" />
-            <input
-              type="search"
-              enterKeyHint="search"
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              placeholder={t(
-                "ابحث عن قطعة أو متجر…",
-                "Search for a piece or a shop…",
-              )}
-              aria-label={t("ابحث", "Search")}
-            />
-          </label>
-        </form>
+          value={term}
+          onValueChange={setTerm}
+          onSearch={setSubmitted}
+          placeholder={t("ابحث عن قطعة أو متجر…", "Search for a piece or a shop…")}
+          label={t("ابحث", "Search")}
+        />
 
         {/* WHICH SHELF, AND THE WAY OFF IT.
             A filter a shopper cannot see is a filter they will blame the shop
@@ -575,6 +597,29 @@ export function SearchView() {
               />
             )}
           </section>
+        ) : offersRefused ? (
+          <section className="lq-srch__solo">
+            <EmptyState
+              size="page"
+              art="shelf"
+              role="status"
+              seed="search-offers"
+              title={t("تصفية العروض غير متاحة بعد", "Filtering by offers is not available yet")}
+              body={t(
+                "لا يعرف الخادم هذا الفلتر حتى الآن. أزله وستظهر القطع كلها، وفيها القطع المخفّضة بسعرها المشطوب.",
+                "The server does not know this filter yet. Drop it and every piece shows, the reduced ones with their struck price.",
+              )}
+              actions={
+                <button
+                  type="button"
+                  className="lq-btn lq-btn--primary"
+                  onClick={() => patch({ onSale: undefined })}
+                >
+                  {t("إزالة فلتر العروض", "Drop the offers filter")}
+                </button>
+              }
+            />
+          </section>
         ) : results.isError ? (
           <section className="lq-srch__solo">
             <EmptyState
@@ -776,6 +821,14 @@ export function SearchView() {
                       }
                     />
                   </FacetGroup>
+
+                  <FacetGroup title={t("العروض", "Offers")}>
+                    <Check
+                      label={t("عروض فقط", "Offers only")}
+                      checked={offers}
+                      onChange={() => patch({ onSale: offers ? undefined : true })}
+                    />
+                  </FacetGroup>
                 </>
               )}
               </div>
@@ -797,7 +850,9 @@ export function SearchView() {
                             `${items.length} نتيجة عن «${submitted}»`,
                             `${items.length} results for “${submitted}”`,
                           )
-                        : t(
+                        : !category
+                          ? t(`${items.length} قطعة في العروض`, `${items.length} pieces on offer`)
+                          : t(
                             `${items.length} قطعة في «${categoryName}»`,
                             `${items.length} pieces in “${categoryName}”`,
                           )}
@@ -1219,6 +1274,13 @@ function ActiveChips({
       next: { ...filters, inStockOnly: undefined },
     });
   }
+  if (filters.onSale) {
+    chips.push({
+      key: "offers",
+      label: locale === "ar" ? "عروض فقط" : "Offers only",
+      next: { ...filters, onSale: undefined },
+    });
+  }
 
   if (chips.length === 0) return null;
 
@@ -1243,99 +1305,3 @@ function ActiveChips({
   );
 }
 
-/**
- * A result card.
- *
- * These are cards now rather than a plain list, because the row finally
- * carries what a card needs to be honest: `inStock` for the sold-out state,
- * `priceFrom` for the figure, and `coverUrl` for the photo. The photo is drawn
- * the way `product-card.tsx` draws it, so a piece looks the same in search as
- * on its shop's shelf. The garment drawing is only the no-photo fallback now:
- * it used to stand in for every row, and because it is picked by hashing the
- * id, a dress could come out as a sock.
- */
-function SearchCard({
-  item,
-  locale,
-  delayMs,
-}: {
-  item: SearchResult;
-  locale: Locale;
-  delayMs: number;
-}) {
-  const name = item.name?.[locale] ?? item.name?.ar ?? item.name?.en ?? "";
-  const price = item.priceFrom ?? item.basePrice;
-
-  /**
-   * Only from a validated pair. The API refuses a compareAtPrice at or below
-   * the price with a 409, so a percentage here cannot be negative — but an
-   * unparseable value must not produce "NaN%" on a card either.
-   */
-  const now = Number(item.priceFrom);
-  const was = Number(item.compareAtPrice);
-  const off =
-    item.priceFrom &&
-    item.compareAtPrice &&
-    Number.isFinite(now) &&
-    Number.isFinite(was) &&
-    was > now
-      ? Math.round((1 - now / was) * 100)
-      : null;
-
-  return (
-    <Link
-      href={`/shop/${item.brandSlug}/${item.slug}`}
-      className="lq-pcard lq-rv"
-      style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
-    >
-      <span className="lq-pcard__well">
-        {item.coverUrl ? (
-          /* `ProductPhoto`, not a bare `next/image`: with no configured media
-             host or a file that fails to load, it degrades to the same garment
-             drawing the branch below draws, instead of throwing. */
-          <ProductPhoto
-            src={item.coverUrl}
-            alt={name}
-            productId={item.id}
-            // The same steps as the grid, so a phone never downloads a 1200px
-            // file for a 190px tile.
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-          />
-        ) : (
-          <Garment className="lq-garment" kind={garmentFor(item.id)} />
-        )}
-        {off != null ? (
-          <span className="lq-badge lq-badge--drop lq-pcard__tag" data-num>
-            −{off}%
-          </span>
-        ) : null}
-        {/* `=== false`, never `!item.inStock`. Undefined means the API did not
-            say — an older build with no variant join — and treating "nobody
-            said" as "sold out" stamps خلص across a healthy catalogue. */}
-        {item.inStock === false ? (
-          <span className="lq-pcard__out">
-            {locale === "ar" ? "نفد من المتجر" : "Sold out"}
-          </span>
-        ) : null}
-      </span>
-
-      <span className="lq-pcard__brand" data-bidi>
-        {item.brandName}
-      </span>
-      <span className="lq-pcard__name" data-bidi>
-        {name}
-      </span>
-
-      <span className="lq-srch__price">
-        {off != null ? (
-          <MoneyWas amount={item.compareAtPrice} locale={locale} />
-        ) : null}
-        <Money
-          className={off != null ? "lq-money lq-money--drop" : "lq-money"}
-          amount={price}
-          locale={locale}
-        />
-      </span>
-    </Link>
-  );
-}

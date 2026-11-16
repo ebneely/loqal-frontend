@@ -11,6 +11,7 @@ import { Shell } from "@/components/shell";
 import { EmptyState } from "@/components/state";
 import { AddressBook } from "./address-book";
 import { MyOrders } from "./my-orders";
+import { FavouritesPane } from "./favourites";
 
 /**
  * Account: a rail of sections at the inline start and one panel beside it.
@@ -42,6 +43,7 @@ import { MyOrders } from "./my-orders";
 const TABS = [
   { key: "me", ar: "بياناتي", en: "Your details" },
   { key: "orders", ar: "الطلبات", en: "Orders" },
+  { key: "favourites", ar: "المفضلة", en: "Saved" },
   { key: "addresses", ar: "العناوين", en: "Addresses" },
   { key: "help", ar: "المساعدة", en: "Help" },
   { key: "lang", ar: "اللغة", en: "Language" },
@@ -393,6 +395,14 @@ export function AccountView() {
             </div>
           ) : null}
 
+          {/* ── Saved ─────────────────────────────────────────────────────
+              Open to guests too: their hearts live in this browser. */}
+          {tab === "favourites" ? (
+            <div {...paneProps("favourites")}>
+              {isPending ? <div className="lq-skel" style={{ blockSize: 96 }} /> : <FavouritesPane />}
+            </div>
+          ) : null}
+
           {/* ── Addresses ──────────────────────────────────────────────── */}
           {tab === "addresses" ? (
             <div {...paneProps("addresses")}>
@@ -546,6 +556,8 @@ export function AccountView() {
                   href="https://join-loqaaal.vercel.app/"
                   external
                 />
+                <RowLink label={t("سياسة الخصوصية", "Privacy policy")} href="/privacy" />
+                <RowLink label={t("شروط الاستخدام", "Terms of use")} href="/terms" />
               </div>
             </div>
           ) : null}

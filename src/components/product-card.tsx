@@ -5,6 +5,7 @@ import type { Locale } from "@/lib/locale";
 import { Money } from "@/components/money";
 import { Garment, garmentFor } from "@/components/garment";
 import { ProductPhoto } from "@/components/product-photo";
+import { FavButton } from "@/components/fav-button";
 
 /**
  * `.lq-pcard` — the one product tile, used by every grid on the storefront.
@@ -56,51 +57,61 @@ export function ProductCard({
   const name = product.name?.[locale] ?? product.name?.ar ?? product.name?.en ?? "";
 
   return (
-    <Link
-      href={`/shop/${brandSlug}/${product.slug}`}
-      className="lq-pcard lq-rv"
-      data-out={product.inStock ? undefined : "true"}
-      style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
-    >
-      <span className="lq-pcard__well">
-        {product.coverUrl ? (
-          /* `ProductPhoto`, not a bare `next/image`: with no configured media
-             host or a file that fails to load, it degrades to the same garment
-             drawing the branch below draws, instead of throwing. */
-          <ProductPhoto
-            src={product.coverUrl}
-            alt={name}
-            productId={product.id}
-            // 2-up on a phone, 3-up at 768, 4-up at 1024 — the same steps the
-            // grid uses, so the browser never downloads a 1200px file for a
-            // 190px tile on mobile data.
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-            priority={priority}
-          />
-        ) : (
-          <Garment className="lq-garment" kind={garmentFor(product.id)} />
-        )}
+    <div className="lq-fav-host lq-rv" style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}>
+      <Link
+        href={`/shop/${brandSlug}/${product.slug}`}
+        className="lq-pcard"
+        data-out={product.inStock ? undefined : "true"}
+      >
+        <span className="lq-pcard__well">
+          {product.coverUrl ? (
+            /* `ProductPhoto`, not a bare `next/image`: with no configured media
+               host or a file that fails to load, it degrades to the same garment
+               drawing the branch below draws, instead of throwing. */
+            <ProductPhoto
+              src={product.coverUrl}
+              alt={name}
+              productId={product.id}
+              // 2-up on a phone, 3-up at 768, 4-up at 1024 — the same steps the
+              // grid uses, so the browser never downloads a 1200px file for a
+              // 190px tile on mobile data.
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              priority={priority}
+            />
+          ) : (
+            <Garment className="lq-garment" kind={garmentFor(product.id)} />
+          )}
 
-        {!product.inStock ? (
-          <span className="lq-pcard__flag">
-            {locale === "ar" ? "نفد من المتجر" : "Sold out"}
+          {!product.inStock ? (
+            <span className="lq-pcard__flag">
+              {locale === "ar" ? "نفد من المتجر" : "Sold out"}
+            </span>
+          ) : null}
+        </span>
+
+        <span className="lq-pcard__meta">
+          <span className="lq-pcard__name" data-bidi>
+            {name}
           </span>
-        ) : null}
-      </span>
-
-      <span className="lq-pcard__meta">
-        <span className="lq-pcard__name" data-bidi>
-          {name}
+          {/* A shelf price, so no decimals. `priceFrom` is the cheapest live
+              variant — what a card can honestly print when the sizes differ. */}
+          <Money className="lq-money" amount={product.priceFrom} locale={locale} />
+          {/* The shop, and where it is: on this product the shop is a place
+              rather than a seller label. */}
+          <span className="lq-pcard__brand" data-bidi>
+            {area ? `${brandName} · ${area}` : brandName}
+          </span>
         </span>
-        {/* A shelf price, so no decimals. `priceFrom` is the cheapest live
-            variant — what a card can honestly print when the sizes differ. */}
-        <Money className="lq-money" amount={product.priceFrom} locale={locale} />
-        {/* The shop, and where it is: on this product the shop is a place
-            rather than a seller label. */}
-        <span className="lq-pcard__brand" data-bidi>
-          {area ? `${brandName} · ${area}` : brandName}
-        </span>
-      </span>
-    </Link>
+      </Link>
+      {/* Beside the link, not in it: see fav-button.tsx. */}
+      <FavButton
+        className="lq-pcard__fav"
+        label={name}
+        target={{
+          kind: "product",
+          item: { id: product.id, slug: product.slug, brandSlug, brandName, name: product.name },
+        }}
+      />
+    </div>
   );
 }

@@ -36,10 +36,13 @@ export const cleanCategory = (value: string) => {
  * as `?q=`, so a category browse reads `/search?category=bags` and not
  * `/search?q=&category=bags`.
  */
-export function searchHref(query: string, category: string): string {
+export function searchHref(query: string, category: string, offers = false): string {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (category) params.set("category", category);
+  /* «عروض فقط» — the one rail filter with its own address, because the home
+     page's offers row links to it. */
+  if (offers) params.set("offers", "1");
   const search = params.toString();
   return search ? `/search?${search}` : "/search";
 }

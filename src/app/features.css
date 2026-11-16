@@ -1,0 +1,124 @@
+/* ==========================================================================
+   Wave-1 features (TODO/06-plan-talabat.md): favourites, ratings, delivery
+   windows, offers, search suggestions, legal pages.
+
+   Same register as everything else: square, hairlines, one green as a region
+   (a chosen heart is the well, white on bottle green), red only for a price
+   that dropped. Logical properties only; width switches are container queries
+   on `.lq-shell`.
+   ========================================================================== */
+
+/* ── The heart ────────────────────────────────────────────────────────────── */
+
+/* The filled heart for the chosen state. Same 24px grid as the Fluent set. */
+[data-icon="heart-filled"]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E")}
+
+/* A card and its heart: the heart sits beside the card's link, never in it,
+   and floats over the top inline-end corner of the photo. The host stretches
+   so a grid's lead tile still fills its two rows. */
+.lq-fav-host{position:relative;display:flex;flex-direction:column;min-inline-size:0}
+.lq-fav-host>.lq-pcard,.lq-fav-host>.lq-shopcard{flex:1}
+
+.lq-fav{display:inline-grid;place-items:center;flex:none;inline-size:var(--tap-min);block-size:var(--tap-min);padding:0;border:var(--border-width) solid var(--line-ink);border-radius:0;background:var(--paper);color:var(--ink);font-size:18px;cursor:pointer;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+.lq-fav:hover{background:var(--raise)}
+.lq-fav[aria-pressed="true"]{background:var(--well);border-color:var(--well);color:var(--well-ink)}
+.lq-fav[aria-pressed="true"]:hover{background:var(--green-2);border-color:var(--green-2)}
+.lq-fav:focus-visible{outline:var(--focus-width) solid var(--ring);outline-offset:var(--focus-offset)}
+
+/* Over a photo the heart drops its border: the photo is the edge. */
+.lq-pcard__fav,.lq-shopcard__fav{position:absolute;z-index:2;inset-block-start:var(--space-2);inset-inline-end:var(--space-2);inline-size:var(--tap-min);block-size:var(--tap-min);border-color:transparent}
+
+/* On the dark green (an image well, the shop hero) the well colour would
+   vanish, so a chosen heart takes the one bright green made for that. */
+.lq-pcard__fav[aria-pressed="true"],.lq-shopcard__fav[aria-pressed="true"],.lq-shophero__acts .lq-fav[aria-pressed="true"]{background:var(--green-bright);border-color:var(--green-bright)}
+
+/* Product page: the heart at the end of the name's line. */
+.lq-pdp__titlerow{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4)}
+.lq-pdp__titlerow .lq-fav{margin-block-start:var(--space-4)}
+
+/* Shop page: the rating and the heart under the name, on the green. */
+.lq-shophero__acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-block-start:var(--space-3)}
+.lq-shophero__acts .lq-fav{border-color:transparent}
+.lq-shophero__rating{color:var(--text-on-ink);font-size:var(--text-base);font-weight:var(--weight-medium);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.lq-shophero__rating:hover{color:var(--green-line)}
+
+/* ── Ratings ─────────────────────────────────────────────────────────────── */
+
+/* The rating figure on a card: ink, not gold — a star is a word here. */
+.lq-rating{color:var(--ink);font-weight:var(--weight-medium)}
+
+.lq-stars{display:inline-flex;gap:2px;font-size:var(--text-base);line-height:1;color:var(--line-ink)}
+.lq-stars [data-on]{color:var(--ink)}
+
+.lq-reviews__list{display:grid;gap:0;margin:0;padding:0;list-style:none;max-inline-size:760px;border-block-start:var(--border-width) solid var(--line)}
+.lq-review{display:grid;gap:var(--space-2);padding-block:var(--space-5);border-block-end:var(--border-width) solid var(--line)}
+.lq-review__head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2) var(--space-4)}
+.lq-review__body{margin:0;max-inline-size:var(--prose-max);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--ink);unicode-bidi:plaintext}
+/* The shop's reply hangs off the review on a hairline at the inline start. */
+.lq-review__reply{margin-block-start:var(--space-2);padding-inline-start:var(--space-4);border-inline-start:2px solid var(--green-2)}
+.lq-review__reply b{display:block;font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--ink)}
+.lq-review__reply p{margin:var(--space-1) 0 0;font-size:var(--text-sm);color:var(--ink-2);unicode-bidi:plaintext}
+
+/* The rating form on the order page. Five square star buttons; the chosen
+   run fills with the well, the way a chosen size does. */
+.lq-rate{display:grid;gap:var(--space-4);max-inline-size:32rem;padding-block-start:var(--space-4);border-block-start:var(--border-width) solid var(--line)}
+.lq-rate__stars{display:flex;flex-wrap:wrap;gap:var(--space-2);margin:0;padding:0;border:0}
+.lq-rate__stars legend{inline-size:100%;margin-block-end:var(--space-2);padding:0}
+.lq-rate__star{position:relative;display:inline-grid;place-items:center;inline-size:var(--tap-min);block-size:var(--tap-min);border:var(--border-width) solid var(--line-ink);background:var(--paper);color:var(--ink-3);font-size:20px;cursor:pointer;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+.lq-rate__star:hover{border-color:var(--ink);color:var(--ink)}
+.lq-rate__star[data-on]{background:var(--well);border-color:var(--well);color:var(--well-ink)}
+.lq-rate__star:has(input:focus-visible){outline:var(--focus-width) solid var(--ring);outline-offset:var(--focus-offset)}
+
+/* ── Search suggestions ──────────────────────────────────────────────────── */
+
+.lq-searchbox{position:relative}
+/* It floats over the page, so it carries the menu shadow. */
+.lq-suggest{position:absolute;z-index:var(--z-popover);inset-block-start:100%;inset-inline:0;max-block-size:min(70svh,520px);overflow-y:auto;overscroll-behavior:contain;background:var(--paper);border:var(--border-width) solid var(--line-ink);box-shadow:var(--shadow-md);animation:lq-suggest-in var(--dur-base) var(--ease) both}
+.lq-suggest__head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3) var(--space-4) var(--space-1);font-size:var(--text-xs);color:var(--ink-2)}
+.lq-suggest__head .lq-textlink{min-block-size:var(--tap-min);font-size:var(--text-sm);color:var(--ink)}
+.lq-suggest__gh{padding:var(--space-3) var(--space-4) var(--space-1);font-size:var(--text-xs);color:var(--ink-2)}
+.lq-suggest__gh[hidden]{display:none}
+.lq-suggest__opt{display:flex;align-items:center;gap:var(--space-3);min-block-size:var(--tap-min);padding:var(--space-2) var(--space-4);font-size:var(--text-base);font-weight:var(--weight-light);color:var(--ink);cursor:pointer}
+.lq-suggest__opt[aria-selected="true"]{background:var(--raise)}
+.lq-suggest__opt>.lq-icon{font-size:16px;color:var(--ink-3)}
+.lq-suggest__th{flex:none;inline-size:30px;aspect-ratio:var(--ratio-garment);overflow:hidden;background:var(--raise)}
+.lq-suggest__th img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
+/* The search page's field carries its own space below; the panel meets the rule. */
+.lq-srch__field .lq-suggest{inset-block-start:calc(100% - var(--space-6))}
+@keyframes lq-suggest-in{from{opacity:0;translate:0 -4px}to{opacity:1;translate:0 0}}
+
+/* On the home hero the field sits near the foot of a clipped band, so from
+   720 up the panel opens upward, over the lede. */
+@container (min-width:720px){
+  .lq-hero .lq-suggest{inset-block-start:auto;inset-block-end:100%;max-block-size:min(56svh,460px)}
+}
+
+/* ── Favourites in the account ───────────────────────────────────────────── */
+
+.lq-favrow{display:flex;align-items:center;gap:var(--space-3);border-block-end:var(--border-width) solid var(--line)}
+.lq-favrow>.lq-arow{flex:1;min-inline-size:0;border-block-end:0}
+.lq-favrow__th{display:grid;place-items:center;flex:none;inline-size:48px;aspect-ratio:var(--ratio-garment);overflow:hidden;background:var(--raise);font-family:var(--font-display);font-size:var(--text-lg);color:var(--ink)}
+.lq-favrow__th img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
+.lq-favrow__th .lq-garment{inline-size:72%;block-size:auto;aspect-ratio:1}
+.lq-favrow__price{margin-inline-start:auto;flex:none}
+.lq-acct__pane .lq-acct__title+.lq-acct__list{margin-block-start:var(--space-3)}
+
+/* ── Legal pages ─────────────────────────────────────────────────────────── */
+
+.lq-legal{padding:var(--section-gap) var(--pad) 0}
+.lq-legal__head{display:grid;gap:var(--space-3);max-inline-size:var(--prose-max);padding-block-end:var(--space-8);border-block-end:var(--border-width) solid var(--line)}
+.lq-legal__head .lq-lede,.lq-legal__head .lq-hint{margin:0}
+.lq-legal__sec{max-inline-size:var(--prose-max);padding-block:var(--space-6);border-block-end:var(--border-width) solid var(--line)}
+.lq-legal__sec h2{margin:0 0 var(--space-3);font-family:var(--font-display);font-size:var(--text-xl);font-weight:var(--weight-medium);line-height:1.3;color:var(--ink)}
+.lq-legal__sec p{margin:0 0 var(--space-3);font-size:var(--text-base);font-weight:var(--weight-light);line-height:var(--leading-normal);color:var(--ink)}
+.lq-legal__sec p:last-child{margin-block-end:0}
+
+/* The footer's bottom row: privacy and terms beside the year. */
+.lq-foot__legal{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-5)}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce){
+  .lq-fav,.lq-rate__star{transition:none}
+  .lq-suggest{animation:none}
+}

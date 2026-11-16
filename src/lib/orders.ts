@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
+import { z } from "zod";
 
 import {
   createOrderResultSchema,
@@ -278,6 +279,38 @@ export function useResendOrderVerification() {
  * names the actual reason, and the caller shows that reason rather than
  * re-deriving it.
  */
+/**
+ * `POST /v1/brand-orders/:brandOrderId/review` — rates one DELIVERED shop part.
+ *
+ * Body `{ rating, body?, orderNumber?, phone? }` (TODO/06-plan-talabat.md,
+ * Ratings). The order number and phone are the guest credential, the same
+ * pair this page already reads with; the API matches it only against a GUEST
+ * order. So it goes first, and on a 404 a signed-in shopper is tried again
+ * with the session alone, which is what proves an account's own order. One
+ * review per shop part: a second answers 409.
+ */
+export function useReviewBrandOrder() {
+  return useMutation<
+    unknown,
+    Error,
+    { brandOrderId: string; rating: number; body?: string; orderNumber: string; phone: string; signedIn: boolean }
+  >({
+    mutationFn: async ({ brandOrderId, rating, body, orderNumber, phone, signedIn }) => {
+      const path = `/v1/brand-orders/${encodeURIComponent(brandOrderId)}/review`;
+      try {
+        return await api.post(z.unknown(), path, { rating, body, orderNumber, phone });
+      } catch (error) {
+        // 404: not a guest order. 400: an API from before the guest credential.
+        if (signedIn && error instanceof ApiError && (error.isNotFound || error.statusCode === 400)) {
+          return api.post(z.unknown(), path, { rating, body });
+        }
+        throw error;
+      }
+    },
+    retry: false,
+  });
+}
+
 export function useRequestReturn() {
   return useMutation<RequestReturnResult, Error, { orderId: string; body: RequestReturnBody }>({
     mutationFn: ({ orderId, body }) =>

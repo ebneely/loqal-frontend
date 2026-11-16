@@ -4,6 +4,7 @@ import { Alexandria, Reem_Kufi } from "next/font/google";
 import { QueryProvider } from "@/lib/query";
 import { LocaleProvider } from "@/lib/locale-context";
 import { Opening } from "@/components/opening";
+import { FavouritesSync } from "@/lib/favourites";
 import { localeDir } from "@/lib/locale";
 import { getLocale } from "@/lib/locale-server";
 
@@ -112,7 +113,11 @@ export default async function RootLayout({
               Mounted inside LocaleProvider so a future greeting can be worded,
               though today it is only the mark and needs no words. */}
           <Opening />
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            {/* Pushes a guest's hearts to the account on sign-in. Renders nothing. */}
+            <FavouritesSync />
+            {children}
+          </QueryProvider>
         </LocaleProvider>
       </body>
     </html>

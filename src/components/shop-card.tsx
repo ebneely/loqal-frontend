@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 import type { PublicBrand } from "@loqal/contracts/storefront.contract";
 import { Money } from "@/components/money";
 import { Distance } from "@/components/nearest";
-import { clock, initialsOf, isOpenNow } from "@/lib/shop-hours";
+import { FavButton } from "@/components/fav-button";
+import { formatDeliveryTime } from "@/lib/delivery-time";
+import { clock, initialsOf, isOpenNow, ratingLine } from "@/lib/shop-hours";
 import type { Locale } from "@/lib/locale";
 
 /**
@@ -83,117 +85,135 @@ export function ShopCard({
     return () => window.clearInterval(timer);
   }, [running, gallery.length]);
 
+  const rating = ratingLine(shop.rating, locale);
+  const eta = formatDeliveryTime(shop.deliveryTime, locale);
+
   return (
-    <Link
-      href={`/shop/${shop.slug}`}
-      className="lq-shopcard lq-rv"
-      style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
-      onPointerEnter={() => setRunning(true)}
-      onPointerLeave={() => {
-        setRunning(false);
-        setAt(0);
-      }}
-    >
-      <span className="lq-shopcard__ph" data-none={gallery.length === 0 ? "true" : undefined}>
-        {gallery.length === 0 ? (
-          shop.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className="lq-shopcard__logo" src={shop.logoUrl} alt="" loading="lazy" decoding="async" />
-          ) : (
-            <span className="lq-shopcard__mark" aria-hidden="true">
-              {initialsOf(shop.name)}
-            </span>
-          )
-        ) : (
-          gallery.map((url, index) => (
-            /* A plain <img>, not next/image: `remotePatterns` is read from
-               LOQAL_MEDIA_HOST, so on any deployment that has not set it every
-               shop photo would throw instead of rendering. */
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={index}
-              className="lq-shopcard__shot"
-              src={url}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              data-on={index === at ? "true" : undefined}
-            />
-          ))
-        )}
-
-        {gallery.length > 1 ? (
-          <span className="lq-shopcard__ticks" aria-hidden="true">
-            {gallery.map((url, index) => (
-              <span
-                key={index}
-                className="lq-shopcard__tick"
-                data-done={index < at ? "true" : undefined}
-                data-run={running && index === at ? "true" : undefined}
-              >
-                <i />
+    <div className="lq-fav-host lq-rv" style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}>
+      <Link
+        href={`/shop/${shop.slug}`}
+        className="lq-shopcard"
+        onPointerEnter={() => setRunning(true)}
+        onPointerLeave={() => {
+          setRunning(false);
+          setAt(0);
+        }}
+      >
+        <span className="lq-shopcard__ph" data-none={gallery.length === 0 ? "true" : undefined}>
+          {gallery.length === 0 ? (
+            shop.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className="lq-shopcard__logo" src={shop.logoUrl} alt="" loading="lazy" decoding="async" />
+            ) : (
+              <span className="lq-shopcard__mark" aria-hidden="true">
+                {initialsOf(shop.name)}
               </span>
-            ))}
-          </span>
-        ) : null}
+            )
+          ) : (
+            gallery.map((url, index) => (
+              /* A plain <img>, not next/image: `remotePatterns` is read from
+                 LOQAL_MEDIA_HOST, so on any deployment that has not set it every
+                 shop photo would throw instead of rendering. */
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={index}
+                className="lq-shopcard__shot"
+                src={url}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                data-on={index === at ? "true" : undefined}
+              />
+            ))
+          )}
 
-        {/* Placement we sold is labelled wherever it renders. */}
-        {shop.isPromoted ? (
-          <span className="lq-shopcard__promo lq-badge lq-badge--tint">
-            {t("إعلان", "Promoted")}
-          </span>
-        ) : null}
-      </span>
+          {gallery.length > 1 ? (
+            <span className="lq-shopcard__ticks" aria-hidden="true">
+              {gallery.map((url, index) => (
+                <span
+                  key={index}
+                  className="lq-shopcard__tick"
+                  data-done={index < at ? "true" : undefined}
+                  data-run={running && index === at ? "true" : undefined}
+                >
+                  <i />
+                </span>
+              ))}
+            </span>
+          ) : null}
 
-      <span className="lq-shopcard__t">
-        <span className="lq-shopcard__name" data-bidi>
-          {shop.name}
+          {/* Placement we sold is labelled wherever it renders. */}
+          {shop.isPromoted ? (
+            <span className="lq-shopcard__promo lq-badge lq-badge--tint">
+              {t("إعلان", "Promoted")}
+            </span>
+          ) : null}
         </span>
 
-        {/* Only when the flag actually exists — a missing field is NOT closed.
-            `suppressHydrationWarning`: "open" is worked out from the clock,
-            and the server and the browser can read it a minute apart. */}
-        {open === true ? (
-          <span className="lq-shopcard__state" data-open="true" suppressHydrationWarning>
-            {shop.hours
-              ? t(
-                  `مفتوح حتى ${clock(shop.hours.closesAt, "ar")}`,
-                  `Open until ${clock(shop.hours.closesAt, "en")}`,
-                )
-              : t("مفتوح الآن", "Open now")}
+        <span className="lq-shopcard__t">
+          <span className="lq-shopcard__name" data-bidi>
+            {shop.name}
           </span>
-        ) : open === false ? (
-          <span className="lq-shopcard__state" data-open="false" suppressHydrationWarning>
-            {t("مغلق الآن", "Closed now")}
-          </span>
-        ) : null}
-      </span>
 
-      {place ? (
-        <span className="lq-shopcard__place" data-bidi>
-          {place}
+          {/* Only when the flag actually exists — a missing field is NOT closed.
+              `suppressHydrationWarning`: "open" is worked out from the clock,
+              and the server and the browser can read it a minute apart. */}
+          {open === true ? (
+            <span className="lq-shopcard__state" data-open="true" suppressHydrationWarning>
+              {shop.hours
+                ? t(
+                    `مفتوح حتى ${clock(shop.hours.closesAt, "ar")}`,
+                    `Open until ${clock(shop.hours.closesAt, "en")}`,
+                  )
+                : t("مفتوح الآن", "Open now")}
+            </span>
+          ) : open === false ? (
+            <span className="lq-shopcard__state" data-open="false" suppressHydrationWarning>
+              {t("مغلق الآن", "Closed now")}
+            </span>
+          ) : null}
         </span>
-      ) : null}
 
-      <span className="lq-shopcard__terms">
-        <Distance points={[shop.location]} />
-        {shop.deliveryFee != null ? (
-          <span>
-            {t("التوصيل", "Delivery")}{" "}
-            <Money amount={shop.deliveryFee} locale={locale} />
+        {place ? (
+          <span className="lq-shopcard__place" data-bidi>
+            {place}
           </span>
         ) : null}
-        {hours ? (
-          <span dir="ltr" data-num>
-            {hours}
-          </span>
-        ) : null}
-        {typeof pieceCount === "number" ? (
-          <span data-num>
-            {pieceCount} {t("قطعة", "pieces")}
-          </span>
-        ) : null}
-      </span>
-    </Link>
+
+        {/* The rating and the delivery window only once the shop has them:
+            no stars for a shop nobody has rated, no window it never gave. */}
+        <span className="lq-shopcard__terms">
+          {rating ? (
+            <span className="lq-rating" data-num>
+              {rating}
+            </span>
+          ) : null}
+          <Distance points={[shop.location]} />
+          {eta ? <span>{eta}</span> : null}
+          {shop.deliveryFee != null ? (
+            <span>
+              {t("التوصيل", "Delivery")}{" "}
+              <Money amount={shop.deliveryFee} locale={locale} />
+            </span>
+          ) : null}
+          {hours ? (
+            <span dir="ltr" data-num>
+              {hours}
+            </span>
+          ) : null}
+          {typeof pieceCount === "number" ? (
+            <span data-num>
+              {pieceCount} {t("قطعة", "pieces")}
+            </span>
+          ) : null}
+        </span>
+      </Link>
+      {/* Beside the link, not in it: see fav-button.tsx. */}
+      <FavButton
+        className="lq-shopcard__fav"
+        label={shop.name}
+        target={{ kind: "shop", item: { id: shop.id, slug: shop.slug, name: shop.name } }}
+      />
+    </div>
   );
 }
