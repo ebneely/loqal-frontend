@@ -14,20 +14,23 @@
 
 :root {
   /* ── Ground ─────────────────────────────────────────────────────────────
-     White, because photography is the product and white is the only ground
-     that does not tint a garment. --raise is the one step off it: a summary
-     panel, a skeleton, an image well before the photo lands. */
+     White and green, and nothing else: every neutral below is tinted from the
+     brand green, so there is no warm grey anywhere to fight it. White because
+     photography is the product and white does not tint a garment. --raise is
+     the one step off it, a pale green: a summary panel, a skeleton, an image
+     well before the photo lands. */
   --paper: #ffffff;
-  --raise: #f3f3ef;
+  --raise: #d8ebdf; /* a green you can see — panels, image wells, skeletons */
   --field: #ffffff;
-  --line-hair: #e2e2dc; /* the 1px between rows */
-  --line-ink: #c9cac1; /* an input's edge, a hairline that must be found */
+  --line-hair: #c7dccf; /* the 1px between rows */
+  --line-ink: #a9c3b4; /* an input's edge, a hairline that must be found */
 
   /* ── Ink ────────────────────────────────────────────────────────────────
-     TEXT COLOUR IS NEVER SET WITH OPACITY. Ratios are against white. */
-  --ink: #121311; /* 18.6:1 */
-  --ink-2: #55574f; /* 7.4:1 — secondary text, meta */
-  --ink-3: #75776e; /* 4.6:1 — still body-safe, the quietest text allowed */
+     Green-black, not grey-black. TEXT COLOUR IS NEVER SET WITH OPACITY.
+     Ratios: on white / on --raise. */
+  --ink: #0f1a15; /* 17.8 / 14.3 */
+  --ink-2: #4b5a52; /* 7.3 / 5.9 — secondary text, meta */
+  --ink-3: #526058; /* 6.6 / 5.3 — the quietest text allowed */
   --ink-band: #0b3d2e; /* the footer band is the brand green */
 
   /* ── The brand ──────────────────────────────────────────────────────────
@@ -35,7 +38,7 @@
      footer, the primary button — and white text on it is 12.4:1. */
   --green: #0b3d2e;
   --green-2: #145a45; /* hover, and green as text on white (8.4:1) */
-  --green-soft: #e9f1ec; /* a chosen option's wash */
+  --green-soft: #c6e2d0; /* a chosen option's wash — a step deeper than --raise */
   --green-line: #cfe3d6; /* mint: the footer wordmark, a confirmed tag */
 
   /* Red is a signal with two meanings: a price that dropped, and something
@@ -69,9 +72,9 @@
 
   /* ── State tones, one per order stage ───────────────────────────────────
      Every tag also carries a word: colour is never the only carrier. */
-  --state-neutral-fg: #45473f;
-  --state-neutral-bg: #f3f3ef;
-  --state-neutral-border: #e2e2dc;
+  --state-neutral-fg: #3f4d46;
+  --state-neutral-bg: #d8ebdf;
+  --state-neutral-border: #c7dccf;
   --state-wait-fg: #7a5000;
   --state-wait-bg: #fbf0d9;
   --state-wait-border: #f0dcae;

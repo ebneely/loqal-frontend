@@ -121,9 +121,11 @@ export function StateWayOn({
                 href={`/shop/${shop.slug}`}
               >
                 <span className="lq-wayon__logo" aria-hidden="true">
-                  {shop.logoUrl ? (
+                  {/* The shop's photo, not its logo: most logos are a block of
+                      initials and read as a broken badge. */}
+                  {shop.images[0] ?? shop.coverUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={shop.logoUrl} alt="" loading="lazy" />
+                    <img src={shop.images[0] ?? shop.coverUrl ?? undefined} alt="" loading="lazy" />
                   ) : (
                     <b>{shop.name.slice(0, 2)}</b>
                   )}
@@ -148,7 +150,7 @@ export function StateWayOn({
                 </span>
                 {shop.isPromoted ? (
                   <span className="lq-wayon__tag">
-                    {t("مموّل", "Promoted")}
+                    {t("إعلان", "Promoted")}
                   </span>
                 ) : null}
                 <span

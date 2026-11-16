@@ -240,9 +240,8 @@
   inline-size: 40px;
   block-size: 40px;
   overflow: hidden;
-  border: var(--border-width) solid var(--line);
-  border-radius: var(--radius-full);
-  background: var(--field);
+  border-radius: 0;
+  background: var(--raise);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   color: var(--ink-2);
@@ -250,7 +249,7 @@
 .lq-wayon__logo img {
   inline-size: 100%;
   block-size: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 .lq-wayon__shopbody {
   display: grid;

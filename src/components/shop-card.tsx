@@ -139,7 +139,7 @@ export function ShopCard({
         {/* Placement we sold is labelled wherever it renders. */}
         {shop.isPromoted ? (
           <span className="lq-shopcard__promo lq-badge lq-badge--tint">
-            {t("مموّل", "Promoted")}
+            {t("إعلان", "Promoted")}
           </span>
         ) : null}
       </span>

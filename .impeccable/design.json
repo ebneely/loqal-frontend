@@ -4,20 +4,20 @@
   "title": "Design System: loqaaal storefront",
   "extensions": {
     "colorMeta": {
-      "green": { "role": "primary", "displayName": "Bottle Green", "canonical": "#0b3d2e", "tonalRamp": ["#062219", "#0b3d2e", "#145a45", "#1f7a5e", "#3d9a7c", "#73b89f", "#cfe3d6", "#e9f1ec"] },
-      "green-2": { "role": "primary", "displayName": "Green, Lifted", "canonical": "#145a45", "tonalRamp": ["#062219", "#0b3d2e", "#145a45", "#1f7a5e", "#3d9a7c", "#73b89f", "#cfe3d6", "#e9f1ec"] },
-      "green-soft": { "role": "primary", "displayName": "Green Wash", "canonical": "#e9f1ec" },
+      "green": { "role": "primary", "displayName": "Bottle Green", "canonical": "#0b3d2e", "tonalRamp": ["#062219", "#0b3d2e", "#145a45", "#1f7a5e", "#3d9a7c", "#73b89f", "#cfe3d6", "#c6e2d0"] },
+      "green-2": { "role": "primary", "displayName": "Green, Lifted", "canonical": "#145a45", "tonalRamp": ["#062219", "#0b3d2e", "#145a45", "#1f7a5e", "#3d9a7c", "#73b89f", "#cfe3d6", "#c6e2d0"] },
+      "green-soft": { "role": "primary", "displayName": "Green Wash", "canonical": "#c6e2d0" },
       "green-line": { "role": "primary", "displayName": "Mint", "canonical": "#cfe3d6" },
       "on-green-2": { "role": "primary", "displayName": "Mint Muted", "canonical": "#c6dacd" },
       "signal": { "role": "tertiary", "displayName": "Signal Red", "canonical": "#a5122a", "tonalRamp": ["#3d0610", "#6e0c1c", "#a5122a", "#c73a50", "#de6f80", "#eca3ae", "#f5cdd3", "#fbe6e9"] },
       "signal-soft": { "role": "tertiary", "displayName": "Signal Wash", "canonical": "#fbe6e9" },
-      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#121311", "tonalRamp": ["#121311", "#2b2c28", "#45473f", "#55574f", "#75776e", "#a3a59c", "#c9cac1", "#f3f3ef"] },
-      "ink-2": { "role": "neutral", "displayName": "Ink Secondary", "canonical": "#55574f" },
-      "ink-3": { "role": "neutral", "displayName": "Ink Quiet", "canonical": "#75776e" },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0f1a15", "tonalRamp": ["#0f1a15", "#2b2c28", "#3f4d46", "#4b5a52", "#526058", "#a3a59c", "#a9c3b4", "#d8ebdf"] },
+      "ink-2": { "role": "neutral", "displayName": "Ink Secondary", "canonical": "#4b5a52" },
+      "ink-3": { "role": "neutral", "displayName": "Ink Quiet", "canonical": "#526058" },
       "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff" },
-      "raise": { "role": "neutral", "displayName": "Shelf", "canonical": "#f3f3ef" },
-      "line-hair": { "role": "neutral", "displayName": "Hairline", "canonical": "#e2e2dc" },
-      "line-ink": { "role": "neutral", "displayName": "Field Edge", "canonical": "#c9cac1" }
+      "raise": { "role": "neutral", "displayName": "Shelf", "canonical": "#d8ebdf" },
+      "line-hair": { "role": "neutral", "displayName": "Hairline", "canonical": "#c7dccf" },
+      "line-ink": { "role": "neutral", "displayName": "Field Edge", "canonical": "#a9c3b4" }
     },
     "typographyMeta": {
       "display": { "displayName": "Display (Reem Kufi)", "purpose": "A shop's name on its own page, the featured shop name, index page titles." },
@@ -57,7 +57,7 @@
       "refersTo": "button-primary",
       "description": "The screen's main action: a square green slab that only changes colour.",
       "html": "<button class=\"ds-btn ds-btn-primary\">أضف إلى السلة</button>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding-inline: 24px; border: 1px solid transparent; border-radius: 0; font-family: Alexandria, sans-serif; font-size: 16px; font-weight: 500; line-height: 1; cursor: pointer; transition: background 160ms cubic-bezier(0.4,0,0.2,1), border-color 160ms, color 160ms; } .ds-btn:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-btn-primary { background: var(--green, #0b3d2e); color: #fff; } .ds-btn-primary:hover { background: var(--green-2, #145a45); } .ds-btn-primary[disabled] { background: var(--line-hair, #e2e2dc); color: var(--ink-2, #55574f); cursor: not-allowed; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding-inline: 24px; border: 1px solid transparent; border-radius: 0; font-family: Alexandria, sans-serif; font-size: 16px; font-weight: 500; line-height: 1; cursor: pointer; transition: background 160ms cubic-bezier(0.4,0,0.2,1), border-color 160ms, color 160ms; } .ds-btn:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-btn-primary { background: var(--green, #0b3d2e); color: #fff; } .ds-btn-primary:hover { background: var(--green-2, #145a45); } .ds-btn-primary[disabled] { background: var(--line-hair, #c7dccf); color: var(--ink-2, #4b5a52); cursor: not-allowed; }"
     },
     {
       "name": "Secondary Button",
@@ -65,7 +65,7 @@
       "refersTo": "button-secondary",
       "description": "The second action: a square ink outline that takes the shelf wash on hover.",
       "html": "<button class=\"ds-btn-secondary\">عرض المتجر</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding-inline: 24px; border: 1px solid var(--ink, #121311); border-radius: 0; background: transparent; color: var(--ink, #121311); font-family: Alexandria, sans-serif; font-size: 16px; font-weight: 500; line-height: 1; cursor: pointer; transition: background 160ms; } .ds-btn-secondary:hover { background: var(--raise, #f3f3ef); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; }"
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding-inline: 24px; border: 1px solid var(--ink, #0f1a15); border-radius: 0; background: transparent; color: var(--ink, #0f1a15); font-family: Alexandria, sans-serif; font-size: 16px; font-weight: 500; line-height: 1; cursor: pointer; transition: background 160ms; } .ds-btn-secondary:hover { background: var(--raise, #d8ebdf); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; }"
     },
     {
       "name": "Text Field",
@@ -73,7 +73,7 @@
       "refersTo": "input",
       "description": "A square field with a hairline edge; focus thickens it to 2px green without growing.",
       "html": "<label class=\"ds-field\"><span class=\"ds-label\">رقم الهاتف</span><input class=\"ds-input\" placeholder=\"01xxxxxxxxx\"></label>",
-      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; font-family: Alexandria, sans-serif; } .ds-label { font-size: 14px; font-weight: 400; color: var(--ink, #121311); } .ds-input { min-height: 48px; padding: 12px 16px; border: 1px solid var(--line-ink, #c9cac1); border-radius: 0; background: #fff; color: var(--ink, #121311); font: inherit; font-size: 16px; font-weight: 300; transition: border-color 160ms, box-shadow 160ms; } .ds-input::placeholder { color: var(--ink-3, #75776e); } .ds-input:hover { border-color: var(--ink-3, #75776e); } .ds-input:focus { outline: none; border-color: var(--green-2, #145a45); box-shadow: inset 0 0 0 1px var(--green-2, #145a45); }"
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; font-family: Alexandria, sans-serif; } .ds-label { font-size: 14px; font-weight: 400; color: var(--ink, #0f1a15); } .ds-input { min-height: 48px; padding: 12px 16px; border: 1px solid var(--line-ink, #a9c3b4); border-radius: 0; background: #fff; color: var(--ink, #0f1a15); font: inherit; font-size: 16px; font-weight: 300; transition: border-color 160ms, box-shadow 160ms; } .ds-input::placeholder { color: var(--ink-3, #526058); } .ds-input:hover { border-color: var(--ink-3, #526058); } .ds-input:focus { outline: none; border-color: var(--green-2, #145a45); box-shadow: inset 0 0 0 1px var(--green-2, #145a45); }"
     },
     {
       "name": "Search Field",
@@ -81,7 +81,7 @@
       "refersTo": "search-field",
       "description": "No box: a line on a form, 2px ink underline turning green on focus.",
       "html": "<div class=\"ds-search\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M15.5 15.5 21 21\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg><input placeholder=\"ابحث عن قطعة أو متجر\"></div>",
-      "css": ".ds-search { position: relative; display: flex; align-items: center; font-family: Alexandria, sans-serif; color: var(--ink, #121311); } .ds-search svg { position: absolute; inset-inline-start: 0; } .ds-search input { width: 100%; min-height: 52px; padding-inline: 34px 4px; border: 0; border-bottom: 2px solid var(--ink, #121311); border-radius: 0; background: transparent; color: inherit; font: inherit; font-size: 18px; font-weight: 300; transition: border-color 280ms cubic-bezier(0.22,1,0.36,1); } .ds-search input::placeholder { color: var(--ink-2, #55574f); } .ds-search input:focus { outline: none; border-bottom-color: var(--green-2, #145a45); }"
+      "css": ".ds-search { position: relative; display: flex; align-items: center; font-family: Alexandria, sans-serif; color: var(--ink, #0f1a15); } .ds-search svg { position: absolute; inset-inline-start: 0; } .ds-search input { width: 100%; min-height: 52px; padding-inline: 34px 4px; border: 0; border-bottom: 2px solid var(--ink, #0f1a15); border-radius: 0; background: transparent; color: inherit; font: inherit; font-size: 18px; font-weight: 300; transition: border-color 280ms cubic-bezier(0.22,1,0.36,1); } .ds-search input::placeholder { color: var(--ink-2, #4b5a52); } .ds-search input:focus { outline: none; border-bottom-color: var(--green-2, #145a45); }"
     },
     {
       "name": "Size Chip",
@@ -89,7 +89,7 @@
       "refersTo": "chip",
       "description": "Square hairline chip; selected fills ink, sold out is struck through.",
       "html": "<div class=\"ds-chips\"><button class=\"ds-chip\">S</button><button class=\"ds-chip\" aria-pressed=\"true\">M</button><button class=\"ds-chip\" data-out=\"true\">L</button></div>",
-      "css": ".ds-chips { display: flex; gap: 6px; font-family: Alexandria, sans-serif; } .ds-chip { min-width: 56px; min-height: 46px; padding: 0 16px; border: 1px solid var(--line-hair, #e2e2dc); border-radius: 0; background: #fff; color: var(--ink, #121311); font: inherit; font-size: 14px; font-weight: 400; cursor: pointer; transition: border-color 160ms, background 160ms, color 160ms; } .ds-chip:hover { border-color: var(--ink, #121311); } .ds-chip:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-chip[aria-pressed=\"true\"] { background: var(--ink, #121311); border-color: var(--ink, #121311); color: #fff; } .ds-chip[data-out=\"true\"] { background: var(--raise, #f3f3ef); color: var(--ink-3, #75776e); text-decoration: line-through; cursor: not-allowed; }"
+      "css": ".ds-chips { display: flex; gap: 6px; font-family: Alexandria, sans-serif; } .ds-chip { min-width: 56px; min-height: 46px; padding: 0 16px; border: 1px solid var(--line-hair, #c7dccf); border-radius: 0; background: #fff; color: var(--ink, #0f1a15); font: inherit; font-size: 14px; font-weight: 400; cursor: pointer; transition: border-color 160ms, background 160ms, color 160ms; } .ds-chip:hover { border-color: var(--ink, #0f1a15); } .ds-chip:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-chip[aria-pressed=\"true\"] { background: var(--ink, #0f1a15); border-color: var(--ink, #0f1a15); color: #fff; } .ds-chip[data-out=\"true\"] { background: var(--raise, #d8ebdf); color: var(--ink-3, #526058); text-decoration: line-through; cursor: not-allowed; }"
     },
     {
       "name": "Desktop Header",
@@ -97,7 +97,7 @@
       "refersTo": "navigation",
       "description": "Three columns: destinations, the centred wordmark, tools. Hover draws an underline from the inline start.",
       "html": "<header class=\"ds-head\" dir=\"rtl\"><nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\">المتاجر</a><a href=\"#\">الأقسام</a></nav><a class=\"ds-mark\" href=\"#\">loqaaal</a><div class=\"ds-nav ds-tools\"><a href=\"#\">السلة (2)</a></div></header>",
-      "css": ".ds-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 32px; min-height: 72px; padding: 12px 32px; background: #fff; border-bottom: 1px solid var(--line-hair, #e2e2dc); font-family: Alexandria, sans-serif; } .ds-nav { display: flex; gap: 28px; } .ds-tools { justify-content: flex-end; } .ds-nav a { position: relative; display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 400; color: var(--ink, #121311); text-decoration: none; } .ds-nav a::after { content: \"\"; position: absolute; bottom: 8px; inset-inline: 0; height: 1px; background: currentColor; scale: 0 1; transform-origin: right; transition: scale 280ms cubic-bezier(0.22,1,0.36,1); } .ds-nav a:hover::after, .ds-nav a[aria-current=\"page\"]::after { scale: 1 1; } .ds-nav a:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-mark { direction: ltr; font-family: 'Reem Kufi', Alexandria, sans-serif; font-weight: 700; font-size: 34px; line-height: 1; color: var(--ink, #121311); text-decoration: none; }"
+      "css": ".ds-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 32px; min-height: 72px; padding: 12px 32px; background: #fff; border-bottom: 1px solid var(--line-hair, #c7dccf); font-family: Alexandria, sans-serif; } .ds-nav { display: flex; gap: 28px; } .ds-tools { justify-content: flex-end; } .ds-nav a { position: relative; display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 400; color: var(--ink, #0f1a15); text-decoration: none; } .ds-nav a::after { content: \"\"; position: absolute; bottom: 8px; inset-inline: 0; height: 1px; background: currentColor; scale: 0 1; transform-origin: right; transition: scale 280ms cubic-bezier(0.22,1,0.36,1); } .ds-nav a:hover::after, .ds-nav a[aria-current=\"page\"]::after { scale: 1 1; } .ds-nav a:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-mark { direction: ltr; font-family: 'Reem Kufi', Alexandria, sans-serif; font-weight: 700; font-size: 34px; line-height: 1; color: var(--ink, #0f1a15); text-decoration: none; }"
     },
     {
       "name": "Big List Row",
@@ -105,7 +105,7 @@
       "refersTo": "big-list-row",
       "description": "Signature: a name in huge display type on a hairline; hover opens a thumbnail beside it by width.",
       "html": "<ul class=\"ds-biglist\" dir=\"rtl\"><li><a class=\"ds-big\" href=\"#\"><span class=\"ds-big__name\">مصر الجديدة</span><span class=\"ds-big__thumb\"></span><span class=\"ds-big__n\">14 متجرًا</span></a></li><li><a class=\"ds-big\" href=\"#\"><span class=\"ds-big__name\">المعادي</span><span class=\"ds-big__thumb\"></span><span class=\"ds-big__n\">9 متاجر</span></a></li></ul>",
-      "css": ".ds-biglist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-hair, #e2e2dc); font-family: Alexandria, sans-serif; } .ds-big { display: flex; align-items: center; gap: 20px; padding-block: 13px; border-bottom: 1px solid var(--line-hair, #e2e2dc); color: var(--ink, #121311); text-decoration: none; transition: color 280ms cubic-bezier(0.22,1,0.36,1); } .ds-big__name { font-family: 'Reem Kufi', Alexandria, sans-serif; font-weight: 500; font-size: 56px; line-height: 1.2; } .ds-big__thumb { order: 1; flex: none; width: 0; height: 72px; background: var(--raise, #f3f3ef); opacity: 0; overflow: hidden; transition: width 550ms cubic-bezier(0.22,1,0.36,1), opacity 300ms cubic-bezier(0.22,1,0.36,1); } .ds-big__n { order: 2; margin-inline-start: auto; font-size: 15px; font-weight: 400; color: var(--ink-2, #55574f); } .ds-big:hover, .ds-big:focus-visible, .ds-big:hover .ds-big__n, .ds-big:focus-visible .ds-big__n { color: var(--green-2, #145a45); } .ds-big:hover .ds-big__thumb, .ds-big:focus-visible .ds-big__thumb { width: 150px; opacity: 1; } .ds-big:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; }"
+      "css": ".ds-biglist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-hair, #c7dccf); font-family: Alexandria, sans-serif; } .ds-big { display: flex; align-items: center; gap: 20px; padding-block: 13px; border-bottom: 1px solid var(--line-hair, #c7dccf); color: var(--ink, #0f1a15); text-decoration: none; transition: color 280ms cubic-bezier(0.22,1,0.36,1); } .ds-big__name { font-family: 'Reem Kufi', Alexandria, sans-serif; font-weight: 500; font-size: 56px; line-height: 1.2; } .ds-big__thumb { order: 1; flex: none; width: 0; height: 72px; background: var(--raise, #d8ebdf); opacity: 0; overflow: hidden; transition: width 550ms cubic-bezier(0.22,1,0.36,1), opacity 300ms cubic-bezier(0.22,1,0.36,1); } .ds-big__n { order: 2; margin-inline-start: auto; font-size: 15px; font-weight: 400; color: var(--ink-2, #4b5a52); } .ds-big:hover, .ds-big:focus-visible, .ds-big:hover .ds-big__n, .ds-big:focus-visible .ds-big__n { color: var(--green-2, #145a45); } .ds-big:hover .ds-big__thumb, .ds-big:focus-visible .ds-big__thumb { width: 150px; opacity: 1; } .ds-big:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; }"
     },
     {
       "name": "Green Footer Band",

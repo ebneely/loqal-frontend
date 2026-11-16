@@ -519,14 +519,14 @@ html[data-greeted="1"] .lq-open{display:none}
 .lq-catrail__art,.lq-catrail__name,.lq-catrail__in{transition:opacity var(--dur-base) var(--ease)}
 .lq-catrail__art{display:grid;place-items:center;inline-size:clamp(72px,8cqi,96px);block-size:clamp(72px,8cqi,96px)}
 .lq-catrail__art svg{inline-size:100%;block-size:100%}
-/* The shop card's plate at rail size: a 16:10 band of the shop's photograph,
-   the logo on a stone notch in its corner, initials alone when there is no
-   photograph. The logo is never the whole tile — five brand logos side by side
-   are five colour schemes, and the rail is stone. */
+/* A 16:10 band of the shop's photograph, or its initials when there is none.
+   No logo on it: a badge in the corner of a photo is a picture inside a
+   picture. */
 .lq-catrail__sign{position:relative;inline-size:clamp(104px,12cqi,150px);block-size:auto;aspect-ratio:16/10;border:0;border-radius:0;background:var(--line-hair);overflow:hidden}
 .lq-catrail__shot{inline-size:100%;block-size:100%;object-fit:cover}
-.lq-catrail__notch{position:absolute;inset-block-end:0;inset-inline-start:0;inline-size:38%;aspect-ratio:1;display:grid;place-items:center;padding:4px;background:#fff}
-.lq-catrail__notch img{max-inline-size:100%;max-block-size:100%;object-fit:contain}
+/* In the shops menu the photo IS the tile: edge to edge, the name under it. */
+.lq-catrail__item:has(.lq-catrail__sign){padding:0 0 var(--space-4);gap:var(--space-3)}
+.lq-catrail__art.lq-catrail__sign{inline-size:100%;block-size:auto}
 .lq-catrail__sign b{font-family:var(--font-display);font-size:var(--text-2xl);font-weight:var(--weight-bold);letter-spacing:0;color:var(--ink-3)}
 .lq-catrail__name{font-size:var(--text-sm);font-weight:var(--weight-regular);text-align:center;line-height:var(--leading-snug)}
 .lq-catrail__in{font-size:var(--text-xs);font-weight:var(--weight-light);color:var(--ink-2)}
@@ -739,7 +739,16 @@ html[data-greeted="1"] .lq-open{display:none}
 /* The mark: the three a's carry the brand colour. On the ink footer the
    brand green is 2.1:1 and unreadable, so it lightens there rather than
    being dropped — the mark is the same mark on both grounds. */
-.lq-mark__a{color:inherit}
+/* The three a's light up green one after another, then rest. A true, vivid
+   green — the brand's bottle green beside near-black ink is too close to see,
+   and a pale mint reads as washed out. One value on white and on the photo.
+   The keyframes name only the green moment; before and after it the letter
+   keeps whatever colour its mark has. */
+.lq-mark__a{--mark-green:#14a057;animation:lq-mark-a 7s var(--ease-in-out) infinite}
+.lq-mark__a+.lq-mark__a{animation-delay:.35s}
+.lq-mark__a+.lq-mark__a+.lq-mark__a{animation-delay:.7s}
+@keyframes lq-mark-a{6%,13%{color:var(--mark-green)}}
+@media (prefers-reduced-motion:reduce){.lq-mark__a{animation:none}}
 
 /* ══ The switch ═══════════════════════════════════════════════════════════ */
 @container (min-width:720px){

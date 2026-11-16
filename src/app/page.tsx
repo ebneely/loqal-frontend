@@ -313,7 +313,7 @@ function Featured({ shop, locale }: { shop: PublicBrand; locale: "ar" | "en" }) 
       <div className="lq-feature__tx">
         <div>
           {shop.isPromoted ? (
-            <span className="lq-badge lq-badge--tint">{t("مموّل", "Promoted")}</span>
+            <span className="lq-badge lq-badge--tint">{t("إعلان", "Promoted")}</span>
           ) : null}
           <h2 className="lq-feature__name" id="home-feature" data-bidi>
             {shop.name}

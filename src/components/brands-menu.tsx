@@ -86,23 +86,18 @@ export function BrandsMenu() {
                   data-none={shop.images[0] ?? shop.coverUrl ? undefined : "true"}
                   aria-hidden="true"
                 >
+                  {/* The photo alone. A logo stamped on its corner put a second,
+                      smaller picture inside the first — and most logos are a
+                      block of initials, which read as a broken badge. */}
                   {shop.images[0] ?? shop.coverUrl ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        className="lq-catrail__shot"
-                        src={shop.images[0] ?? shop.coverUrl ?? undefined}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      {shop.logoUrl ? (
-                        <span className="lq-catrail__notch">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={shop.logoUrl} alt="" loading="lazy" decoding="async" />
-                        </span>
-                      ) : null}
-                    </>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      className="lq-catrail__shot"
+                      src={shop.images[0] ?? shop.coverUrl ?? undefined}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <b>{initialsOf(shop.name)}</b>
                   )}
