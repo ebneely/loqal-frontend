@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T00:00:00Z",
+  "title": "Design System: loqaaal storefront",
+  "extensions": {
+    "colorMeta": {
+      "green": { "role": "primary", "displayName": "Bottle Green", "canonical": "#0b3d2e", "tonalRamp": ["#062219", "#0b3d2e", "#145a45", "#1f7a5e", "#3d9a7c", "#73b89f", "#cfe3d6", "#e9f1ec"] },
+      "green-2": { "role": "primary", "displayName": "Green, Lifted", "canonical": "#145a45", "tonalRamp": ["#062219", "#0b3d2e", "#145a45", "#1f7a5e", "#3d9a7c", "#73b89f", "#cfe3d6", "#e9f1ec"] },
+      "green-soft": { "role": "primary", "displayName": "Green Wash", "canonical": "#e9f1ec" },
+      "green-line": { "role": "primary", "displayName": "Mint", "canonical": "#cfe3d6" },
+      "on-green-2": { "role": "primary", "displayName": "Mint Muted", "canonical": "#c6dacd" },
+      "signal": { "role": "tertiary", "displayName": "Signal Red", "canonical": "#a5122a", "tonalRamp": ["#3d0610", "#6e0c1c", "#a5122a", "#c73a50", "#de6f80", "#eca3ae", "#f5cdd3", "#fbe6e9"] },
+      "signal-soft": { "role": "tertiary", "displayName": "Signal Wash", "canonical": "#fbe6e9" },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#121311", "tonalRamp": ["#121311", "#2b2c28", "#45473f", "#55574f", "#75776e", "#a3a59c", "#c9cac1", "#f3f3ef"] },
+      "ink-2": { "role": "neutral", "displayName": "Ink Secondary", "canonical": "#55574f" },
+      "ink-3": { "role": "neutral", "displayName": "Ink Quiet", "canonical": "#75776e" },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff" },
+      "raise": { "role": "neutral", "displayName": "Shelf", "canonical": "#f3f3ef" },
+      "line-hair": { "role": "neutral", "displayName": "Hairline", "canonical": "#e2e2dc" },
+      "line-ink": { "role": "neutral", "displayName": "Field Edge", "canonical": "#c9cac1" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Reem Kufi)", "purpose": "A shop's name on its own page, the featured shop name, index page titles." },
+      "headline": { "displayName": "Headline (Reem Kufi)", "purpose": "Page titles and the product name." },
+      "title": { "displayName": "Title (Reem Kufi)", "purpose": "Section heads; shop-card names and sheet titles at smaller sizes." },
+      "body": { "displayName": "Body (Alexandria 300)", "purpose": "Everything read. Prose caps at 62ch." },
+      "lede": { "displayName": "Lede (Alexandria 300)", "purpose": "The sentence under a title; the search field." },
+      "label": { "displayName": "Label (Alexandria 400)", "purpose": "Nav links, chips, meta, captions. 12px floor for badges and counts." },
+      "figure": { "displayName": "Figure (Alexandria 500, tabular)", "purpose": "Prices, totals, order numbers, phones, dates. Latin numerals always." }
+    },
+    "shadows": [
+      { "name": "float", "value": "0 26px 44px -22px rgb(0 0 0 / 0.5)", "purpose": "The inset photo straddling the home hero's plate edge." },
+      { "name": "menu", "value": "0 24px 48px -24px rgb(11 20 16 / 0.32)", "purpose": "The brands mega panel and the select popover." },
+      { "name": "sheet", "value": "0 -20px 40px -24px rgb(11 20 16 / 0.3)", "purpose": "A bottom sheet, cast upward." },
+      { "name": "overlay", "value": "rgb(11 20 16 / 0.45)", "purpose": "Scrim behind menus, sheets and the phone drawer." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "The one curve for everything that arrives." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Button colour changes, sheets leaving, skeleton fill." },
+      { "name": "dur-fast", "value": "160ms", "purpose": "Hover and colour." },
+      { "name": "dur-base", "value": "280ms", "purpose": "Panels, disclosures, sheets." },
+      { "name": "dur-slow", "value": "550ms", "purpose": "Reveals and the big-list thumbnail widening." },
+      { "name": "dur-settle", "value": "1100ms", "purpose": "A photo settling into its frame on hover." },
+      { "name": "stagger", "value": "70ms", "purpose": "Delay between sibling reveals." }
+    ],
+    "breakpoints": [
+      { "name": "chrome", "value": "720px (container query on .lq-shell)" },
+      { "name": "md", "value": "768px (container)" },
+      { "name": "pdp", "value": "900px (container)" },
+      { "name": "lg", "value": "1024px (container)" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The screen's main action: a square green slab that only changes colour.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">أضف إلى السلة</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding-inline: 24px; border: 1px solid transparent; border-radius: 0; font-family: Alexandria, sans-serif; font-size: 16px; font-weight: 500; line-height: 1; cursor: pointer; transition: background 160ms cubic-bezier(0.4,0,0.2,1), border-color 160ms, color 160ms; } .ds-btn:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-btn-primary { background: var(--green, #0b3d2e); color: #fff; } .ds-btn-primary:hover { background: var(--green-2, #145a45); } .ds-btn-primary[disabled] { background: var(--line-hair, #e2e2dc); color: var(--ink-2, #55574f); cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The second action: a square ink outline that takes the shelf wash on hover.",
+      "html": "<button class=\"ds-btn-secondary\">عرض المتجر</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding-inline: 24px; border: 1px solid var(--ink, #121311); border-radius: 0; background: transparent; color: var(--ink, #121311); font-family: Alexandria, sans-serif; font-size: 16px; font-weight: 500; line-height: 1; cursor: pointer; transition: background 160ms; } .ds-btn-secondary:hover { background: var(--raise, #f3f3ef); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A square field with a hairline edge; focus thickens it to 2px green without growing.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-label\">رقم الهاتف</span><input class=\"ds-input\" placeholder=\"01xxxxxxxxx\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; font-family: Alexandria, sans-serif; } .ds-label { font-size: 14px; font-weight: 400; color: var(--ink, #121311); } .ds-input { min-height: 48px; padding: 12px 16px; border: 1px solid var(--line-ink, #c9cac1); border-radius: 0; background: #fff; color: var(--ink, #121311); font: inherit; font-size: 16px; font-weight: 300; transition: border-color 160ms, box-shadow 160ms; } .ds-input::placeholder { color: var(--ink-3, #75776e); } .ds-input:hover { border-color: var(--ink-3, #75776e); } .ds-input:focus { outline: none; border-color: var(--green-2, #145a45); box-shadow: inset 0 0 0 1px var(--green-2, #145a45); }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "No box: a line on a form, 2px ink underline turning green on focus.",
+      "html": "<div class=\"ds-search\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M15.5 15.5 21 21\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg><input placeholder=\"ابحث عن قطعة أو متجر\"></div>",
+      "css": ".ds-search { position: relative; display: flex; align-items: center; font-family: Alexandria, sans-serif; color: var(--ink, #121311); } .ds-search svg { position: absolute; inset-inline-start: 0; } .ds-search input { width: 100%; min-height: 52px; padding-inline: 34px 4px; border: 0; border-bottom: 2px solid var(--ink, #121311); border-radius: 0; background: transparent; color: inherit; font: inherit; font-size: 18px; font-weight: 300; transition: border-color 280ms cubic-bezier(0.22,1,0.36,1); } .ds-search input::placeholder { color: var(--ink-2, #55574f); } .ds-search input:focus { outline: none; border-bottom-color: var(--green-2, #145a45); }"
+    },
+    {
+      "name": "Size Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Square hairline chip; selected fills ink, sold out is struck through.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\">S</button><button class=\"ds-chip\" aria-pressed=\"true\">M</button><button class=\"ds-chip\" data-out=\"true\">L</button></div>",
+      "css": ".ds-chips { display: flex; gap: 6px; font-family: Alexandria, sans-serif; } .ds-chip { min-width: 56px; min-height: 46px; padding: 0 16px; border: 1px solid var(--line-hair, #e2e2dc); border-radius: 0; background: #fff; color: var(--ink, #121311); font: inherit; font-size: 14px; font-weight: 400; cursor: pointer; transition: border-color 160ms, background 160ms, color 160ms; } .ds-chip:hover { border-color: var(--ink, #121311); } .ds-chip:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-chip[aria-pressed=\"true\"] { background: var(--ink, #121311); border-color: var(--ink, #121311); color: #fff; } .ds-chip[data-out=\"true\"] { background: var(--raise, #f3f3ef); color: var(--ink-3, #75776e); text-decoration: line-through; cursor: not-allowed; }"
+    },
+    {
+      "name": "Desktop Header",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Three columns: destinations, the centred wordmark, tools. Hover draws an underline from the inline start.",
+      "html": "<header class=\"ds-head\" dir=\"rtl\"><nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\">المتاجر</a><a href=\"#\">الأقسام</a></nav><a class=\"ds-mark\" href=\"#\">loqaaal</a><div class=\"ds-nav ds-tools\"><a href=\"#\">السلة (2)</a></div></header>",
+      "css": ".ds-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 32px; min-height: 72px; padding: 12px 32px; background: #fff; border-bottom: 1px solid var(--line-hair, #e2e2dc); font-family: Alexandria, sans-serif; } .ds-nav { display: flex; gap: 28px; } .ds-tools { justify-content: flex-end; } .ds-nav a { position: relative; display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 400; color: var(--ink, #121311); text-decoration: none; } .ds-nav a::after { content: \"\"; position: absolute; bottom: 8px; inset-inline: 0; height: 1px; background: currentColor; scale: 0 1; transform-origin: right; transition: scale 280ms cubic-bezier(0.22,1,0.36,1); } .ds-nav a:hover::after, .ds-nav a[aria-current=\"page\"]::after { scale: 1 1; } .ds-nav a:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; } .ds-mark { direction: ltr; font-family: 'Reem Kufi', Alexandria, sans-serif; font-weight: 700; font-size: 34px; line-height: 1; color: var(--ink, #121311); text-decoration: none; }"
+    },
+    {
+      "name": "Big List Row",
+      "kind": "custom",
+      "refersTo": "big-list-row",
+      "description": "Signature: a name in huge display type on a hairline; hover opens a thumbnail beside it by width.",
+      "html": "<ul class=\"ds-biglist\" dir=\"rtl\"><li><a class=\"ds-big\" href=\"#\"><span class=\"ds-big__name\">مصر الجديدة</span><span class=\"ds-big__thumb\"></span><span class=\"ds-big__n\">14 متجرًا</span></a></li><li><a class=\"ds-big\" href=\"#\"><span class=\"ds-big__name\">المعادي</span><span class=\"ds-big__thumb\"></span><span class=\"ds-big__n\">9 متاجر</span></a></li></ul>",
+      "css": ".ds-biglist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-hair, #e2e2dc); font-family: Alexandria, sans-serif; } .ds-big { display: flex; align-items: center; gap: 20px; padding-block: 13px; border-bottom: 1px solid var(--line-hair, #e2e2dc); color: var(--ink, #121311); text-decoration: none; transition: color 280ms cubic-bezier(0.22,1,0.36,1); } .ds-big__name { font-family: 'Reem Kufi', Alexandria, sans-serif; font-weight: 500; font-size: 56px; line-height: 1.2; } .ds-big__thumb { order: 1; flex: none; width: 0; height: 72px; background: var(--raise, #f3f3ef); opacity: 0; overflow: hidden; transition: width 550ms cubic-bezier(0.22,1,0.36,1), opacity 300ms cubic-bezier(0.22,1,0.36,1); } .ds-big__n { order: 2; margin-inline-start: auto; font-size: 15px; font-weight: 400; color: var(--ink-2, #55574f); } .ds-big:hover, .ds-big:focus-visible, .ds-big:hover .ds-big__n, .ds-big:focus-visible .ds-big__n { color: var(--green-2, #145a45); } .ds-big:hover .ds-big__thumb, .ds-big:focus-visible .ds-big__thumb { width: 150px; opacity: 1; } .ds-big:focus-visible { outline: 2px solid var(--green-2, #145a45); outline-offset: 3px; }"
+    },
+    {
+      "name": "Green Footer Band",
+      "kind": "custom",
+      "refersTo": "footer-band",
+      "description": "The page ends on a green band, closed by the huge mint wordmark cut by the bottom edge.",
+      "html": "<footer class=\"ds-foot\" dir=\"rtl\"><div class=\"ds-foot__cols\"><div><strong>loqaaal</strong><p>متاجر حيّك، على الإنترنت.</p></div><div><h3>تسوّق</h3><a href=\"#\">المتاجر</a></div></div><p class=\"ds-foot__huge\" aria-hidden=\"true\">loqaaal</p></footer>",
+      "css": ".ds-foot { background: var(--green, #0b3d2e); color: #fff; overflow: hidden; font-family: Alexandria, sans-serif; } .ds-foot__cols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; padding: 64px 32px 32px; } .ds-foot strong { display: block; margin-bottom: 12px; font-family: 'Reem Kufi', Alexandria, sans-serif; font-size: 28px; font-weight: 500; } .ds-foot p { color: #c6dacd; font-weight: 300; } .ds-foot h3 { margin: 0 0 16px; font-size: 14px; font-weight: 500; color: var(--green-line, #cfe3d6); } .ds-foot a { color: #fff; font-size: 14px; font-weight: 300; text-decoration: none; transition: color 160ms; } .ds-foot a:hover { color: var(--green-line, #cfe3d6); text-decoration: underline; text-underline-offset: 4px; } .ds-foot a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; } .ds-foot__huge { direction: ltr; margin: 0; padding-bottom: .1em; font-family: 'Reem Kufi', Alexandria, sans-serif; font-size: 160px; font-weight: 700; line-height: 1.1; text-align: center; color: var(--green-line, #cfe3d6); user-select: none; }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "Square tag with a word and a 6px dot; the tone is a second carrier, never the only one.",
+      "html": "<span class=\"ds-pill\" data-tone=\"live\"><i></i>في الطريق</span> <span class=\"ds-pill\" data-tone=\"good\"><i></i>تم التسليم</span> <span class=\"ds-pill\" data-tone=\"bad\"><i></i>فشل الدفع</span>",
+      "css": ".ds-pill { display: inline-flex; align-items: center; gap: 8px; padding: 3px 12px; border: 1px solid; border-radius: 0; font-family: Alexandria, sans-serif; font-size: 14px; font-weight: 500; white-space: nowrap; } .ds-pill i { width: 6px; height: 6px; border-radius: 9999px; background: currentColor; } .ds-pill[data-tone=\"live\"] { background: #e3ecf7; border-color: #bcd0ea; color: #1f4f8f; } .ds-pill[data-tone=\"good\"] { background: #cfe3d6; border-color: #b3d3be; color: #0b3d2e; } .ds-pill[data-tone=\"bad\"] { background: #fbe6e9; border-color: #efc0c8; color: #a5122a; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Neighbourhood Fashion House",
+    "overview": "Neighbourhood shops, presented the way a serious fashion house presents a collection: a white wall, near-black type, photographs given room, and one deep bottle green that takes whole bands of the page instead of being sprinkled as accents. The shop is still a place on a street. The presentation just stops looking like a delivery app.\n\nThe structure is lines, not boxes. Rows sit on 1px hairlines, grids share their seams, and a card is almost never a bordered rectangle. The type does the shouting: Reem Kufi set very large, like a shop sign, on page titles, section heads, shop names and the big list rows, with Alexandria at weight 300 for everything a shopper reads or taps. Corners are square everywhere. Depth exists only on the few things that really float over the page.\n\nVisual rejections, confirmed by the owner: the cream-plus-serif look, the stone-plus-grain look this storefront used before, rounded cards, soft decorative gradients, and Talabat's saturated orange, promo-banner register.",
+    "keyCharacteristics": [
+      "White ground, near-black ink, one bottle green that owns whole regions.",
+      "Square corners; round only for things that are round by nature.",
+      "Hairline rules instead of boxes; shared-seam grids.",
+      "Reem Kufi display set huge; Alexandria 300 body; tabular Latin figures.",
+      "Red means a price drop or a failure. Nothing else.",
+      "Shadows only on what floats: the inset hero photo, menus, sheets.",
+      "RTL by `dir` alone; layout by container queries on `.lq-shell`."
+    ],
+    "rules": [
+      { "name": "The Whole Band Rule", "body": "Green arrives as a region (a band, a plate, a filled button), never as scattered accent text, icons or borders. If a screen has green confetti on it, it is wrong.", "section": "colors" },
+      { "name": "The Go / Stop Rule", "body": "GREEN = go: available, open now, confirmed, add to cart, focus ring, cart count, checked filter, primary action. RED = stop: a price that dropped, and something that failed. Nothing else. A red focus ring or cart badge reads as an error on the one control the shopper is meant to use.", "section": "colors" },
+      { "name": "The No-Opacity Text Rule", "body": "Text colour is never set with `opacity`. Use `ink-2` or `ink-3`. A disabled row steps its title to muted colour; it does not fade.", "section": "colors" },
+      { "name": "The Shop Sign Rule", "body": "Reem Kufi is for names and titles set large. Never for body text, labels, buttons or prices.", "section": "typography" },
+      { "name": "The Untracked Arabic Rule", "body": "Never letter-space or uppercase Arabic. Tracking pulls a cursive script apart at the joins and uppercase does nothing to it. Every tracking token in the system is 0.", "section": "typography" },
+      { "name": "The Latin Figures Rule", "body": "Numerals are Latin in both languages, always tabular and lining. `450 ج.م` in Arabic, `EGP 450` in English. A shelf price has no decimals; anything being reconciled (a total, a fee, a refund) has two. An order number must be readable over the phone (`LQ-4821-7730`).", "section": "typography" },
+      { "name": "The Brand Name Rule", "body": "The brand is written `loqaaal`, in Latin letters, in every language. The wordmark is set `direction: ltr` so an RTL page does not reverse it.", "section": "typography" },
+      { "name": "The Container Rule", "body": "Layout switches are container queries on `.lq-shell` (`container-type: inline-size`), never width media queries. A 430px phone frame embedded in a desktop page must still lay out like a phone. The chrome switch is 720; wide is 1024.", "section": "layout" },
+      { "name": "The Logical Properties Rule", "body": "`dir=\"rtl\"` is the only switch. Logical properties throughout (`inset-inline-start`, `margin-inline-end`, `border-block-end`), no `left`/`right`, not one mirrored rule. Directional icons mirror with `scale(-1, 1)` under RTL. Titles and paragraphs set `unicode-bidi: plaintext` so a Latin shop name in an Arabic row keeps its own punctuation.", "section": "layout" },
+      { "name": "The Only-What-Floats Rule", "body": "If it does not sit above other content, it has no shadow. Cards, rows, buttons, tiles and grid cells never cast one, and nothing moves on press.", "section": "elevation" },
+      { "name": "The Square Rule", "body": "A rounded rectangle anywhere is a regression.", "section": "shapes" },
+      { "name": "The Shared Hairline Rule", "body": "Grid cells share borders: a 1px gap over a `line-hair` background, closed top and bottom. Never a border per cell, which draws every interior edge twice.", "section": "shapes" }
+    ],
+    "dos": [
+      "**Do** give green whole regions: the featured band, the footer, the primary button.",
+      "**Do** separate content with 1px hairlines and section spacing, not boxes.",
+      "**Do** set titles, shop names and big rows in Reem Kufi, large.",
+      "**Do** set body in Alexandria 300 and every figure tabular and lining, in Latin numerals.",
+      "**Do** keep every pair at WCAG 2.2 AA: body text 4.5:1 or better, `ink-3` (4.6:1) is the floor.",
+      "**Do** keep hit targets at 44px, 52px for the screen's primary action.",
+      "**Do** carry state with a word as well as a colour.",
+      "**Do** switch layout with container queries on `.lq-shell` and write logical properties only.",
+      "**Do** focus with a 2px `green-2` outline at 3px offset.",
+      "**Do** write the brand as `loqaaal`, and Arabic copy in Modern Standard Arabic."
+    ],
+    "donts": [
+      "**Don't** round a corner, except the round-by-nature set in Shapes.",
+      "**Don't** put a shadow on anything that does not float, and never a hard offset shadow.",
+      "**Don't** use red for anything but a price drop or a failure.",
+      "**Don't** letter-space or uppercase Arabic, and don't put a small tracked label above a section.",
+      "**Don't** set text colour with opacity.",
+      "**Don't** use a decorative gradient; the only gradient is a legibility scrim over a photograph.",
+      "**Don't** return to stone and paper grain, cream with a serif, rounded cards, or Talabat orange.",
+      "**Don't** use a native `<select>`, a centred modal, or a spinner over content.",
+      "**Don't** use a width media query for layout, or `left`/`right` properties.",
+      "**Don't** disable pinch-zoom."
+    ]
+  }
+}

@@ -37,8 +37,9 @@ garment arriving the same day from that shop's own shelf.
 
 **Plain, local, unembarrassed.** Never startup-optimistic.
 
-- Arabic is the original, not a translation. Egyptian colloquial where it reads
-  more naturally than Modern Standard.
+- Arabic is the original, not a translation. All Arabic copy is Modern Standard
+  Arabic (فصحى), not Egyptian colloquial, and the brand is always written
+  `loqaaal` in Latin letters (owner decision, 2026-11-01).
 - Second person, present tense. "إنت اللي بتطلب المندوب."
 - Concrete about money and effort. A number beats an adjective.
 - Say the consequence, not the caution. "المحل بيراجع الرف قبل ما يأكد الأوردر"

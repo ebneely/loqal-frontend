@@ -414,8 +414,7 @@ html[data-greeted="1"] .lq-open{display:none}
    where it lies over the hero (see `.lq-shell[data-home]` below). */
 .lq-head{position:sticky;inset-block-start:0;z-index:var(--z-header);background:#fff;border-block-end:var(--border-width) solid var(--line)}
 .lq-head__bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--space-8);max-inline-size:var(--content-max);margin-inline:auto;padding:var(--space-3) var(--pad);min-block-size:72px}
-.lq-mark{font-family:var(--font-display);font-weight:var(--weight-bold);font-size:2.125rem;letter-spacing:0;line-height:1;color:var(--ink);transition:opacity var(--dur-fast)}
-.lq-mark:hover{opacity:.7}
+.lq-mark{font-family:var(--font-display);font-weight:var(--weight-bold);font-size:2.125rem;letter-spacing:0;line-height:1;color:var(--ink)}
 /* Destinations and tools share one link style: 15px text, and the hover is an
    underline drawn from the inline start, never a colour change. */
 .lq-head__nav,.lq-tools{display:flex;align-items:center;gap:clamp(1rem,2.2vw,2rem)}
