@@ -72,13 +72,13 @@ export function StateWayOn({
         <div className="lq-wayon__say">
           <h1 className="lq-wayon__title">
             {t(
-              `«${categoryName}» موجودة، بس الباب ده لسه مقفول`,
+              `«${categoryName}» على الرفوف، لكن هذا الطريق إليها لم يُفتح بعد`,
               `${categoryName} are on the shelf. This door to them is not open yet`,
             )}
           </h1>
           <p className="lq-wayon__body">
             {t(
-              "السيرفر ده بيرد على البحث بالاسم مش بالقسم. دوّر بالاسم وهترجع تلاقيها، والمحلات تحت شغالة دلوقتي.",
+              "يجيب هذا الخادم عن البحث بالاسم لا بالقسم. ابحث بالاسم لتظهر القطع نفسها، والمتاجر أدناه تعمل الآن.",
               "This server answers a search by name but not by shelf. Search the name and the same pieces come back; the shops below are trading now.",
             )}
           </p>
@@ -88,10 +88,10 @@ export function StateWayOn({
               className="lq-btn lq-btn--primary"
               onClick={onSearchName}
             >
-              {t(`دوّر على «${categoryName}»`, `Search for “${categoryName}”`)}
+              {t(`ابحث عن «${categoryName}»`, `Search for “${categoryName}”`)}
             </button>
             <Link className="lq-btn lq-btn--secondary" href="/shops">
-              {t("اتفرّج على المحلات", "Browse the shops")}
+              {t("تصفّح المتاجر", "Browse the shops")}
             </Link>
           </div>
         </div>
@@ -107,10 +107,10 @@ export function StateWayOn({
         <section className="lq-wayon__sec">
           <div className="lq-sec__row">
             <h2 className="lq-sec__title">
-              {t("محلات شغالة دلوقتي", "Shops trading now")}
+              {t("متاجر تعمل الآن", "Shops trading now")}
             </h2>
             <Link className="lq-sec__more" href="/shops">
-              {t("كل المحلات", "All shops")}
+              {t("كل المتاجر", "All shops")}
             </Link>
           </div>
           <div className="lq-rows">
@@ -141,7 +141,7 @@ export function StateWayOn({
                       </>
                     ) : null}
                     {t(
-                      `مرتجع خلال ${shop.returnWindowDays} يوم`,
+                      `الاسترجاع خلال ${shop.returnWindowDays} ${shop.returnWindowDays >= 3 && shop.returnWindowDays <= 10 ? "أيام" : "يومًا"}`,
                       `${shop.returnWindowDays}-day returns`,
                     )}
                   </span>
@@ -166,7 +166,7 @@ export function StateWayOn({
         <section className="lq-wayon__sec">
           <div className="lq-sec__row">
             <h2 className="lq-sec__title">
-              {t("رفوف جنبها", "Shelves next door")}
+              {t("رفوف مجاورة", "Shelves next door")}
             </h2>
             <Link className="lq-sec__more" href="/categories">
               {t("كل الأقسام", "All categories")}

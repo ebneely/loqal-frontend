@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { OrdersView } from "./orders-view";
 
 /**
- * أوردراتي.
+ * طلباتي.
  *
  * `force-dynamic` because there is nothing here worth caching and because the
  * screen is about one shopper's own order — an ISR'd shell for a lookup would
@@ -16,9 +16,9 @@ import { OrdersView } from "./orders-view";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "أوردراتي",
+  title: "طلباتي",
   description:
-    "افتح أوردرك برقمه ورقم الموبايل اللي طلبت بيه — من غير حساب. كل محل في الأوردر ليه حالته لوحده.",
+    "افتح طلبك برقمه ورقم الهاتف الذي طلبت به، دون حساب. لكل متجر في الطلب حالته الخاصة.",
   /**
    * NOINDEX, and not as boilerplate. The order number plus the phone IS the
    * credential on the lookup route, so a crawled or shared URL from this

@@ -86,7 +86,7 @@ export function OrderView({ orderNumber }: { orderNumber: string }) {
     phoneParam
   );
 
-  const title = t("الأوردر", "Order");
+  const title = t("الطلب", "Order");
 
   if (!phoneParam) {
     return (
@@ -99,7 +99,7 @@ export function OrderView({ orderNumber }: { orderNumber: string }) {
   if (isPending) {
     return (
       <Shell title={title}>
-        <div className="lq-wrap lq-pad">
+        <div className="lq-wrap lq-opage">
           <OrderSkeleton />
         </div>
       </Shell>
@@ -110,45 +110,49 @@ export function OrderView({ orderNumber }: { orderNumber: string }) {
     const notFound = error instanceof ApiError && error.isNotFound;
     return (
       <Shell title={title}>
-        <div className="lq-wrap lq-pad lq-sec">
-          <h1 className="lq-phead__title">{title}</h1>
-          {notFound ? (
-            /* ONE SENTENCE FOR BOTH POSSIBILITIES. The API deliberately cannot
-               tell them apart for us — a 403 on a real order number would
-               confirm that order exists to anybody typing numbers — so the
-               screen does not guess which one happened either. */
-            <>
+        <div className="lq-wrap lq-opage">
+          <header className="lq-ophead">
+            <h1 className="lq-pagetitle">{title}</h1>
+          </header>
+          <div className="lq-oempty">
+            {notFound ? (
+              /* ONE SENTENCE FOR BOTH POSSIBILITIES. The API deliberately
+                 cannot tell them apart for us — a 403 on a real order number
+                 would confirm that order exists to anybody typing numbers — so
+                 the screen does not guess which one happened either. */
+              <>
+                <p className="lq-hint lq-hint--error" role="alert">
+                  {t(
+                    "لا يُفتح طلب بهذا الرقم مع رقم الهاتف هذا. إما أن رقم الطلب غير صحيح، وإما أن الهاتف ليس الذي طلبت به.",
+                    "No order opens with that number and that phone. Either the number is off, or the phone is not the one you ordered with."
+                  )}
+                </p>
+                <p className="lq-oempty__body">
+                  {t(
+                    "تجد رقم الطلب في رسالة التأكيد، بهذا الشكل: LQ-4821-7730.",
+                    "The order number is in your confirmation message, shaped like LQ-4821-7730."
+                  )}
+                </p>
+              </>
+            ) : (
               <p className="lq-hint lq-hint--error" role="alert">
                 {t(
-                  "مفيش أوردر بالرقم ده مع رقم الموبايل ده. يا إما الرقم مش مظبوط، يا إما الموبايل مش اللي طلبت بيه.",
-                  "No order opens with that number and that phone. Either the number is off, or the phone is not the one you ordered with."
+                  "تعذّر تحميل الطلب الآن. الطلب على حاله، وإنما انقطع الاتصال.",
+                  "We cannot load the order right now. The order is where it was — the connection was not."
                 )}
               </p>
-              <p className="lq-prose">
-                {t(
-                  "رقم الأوردر في رسالة التأكيد، بالشكل ده: LQ-4821-7730.",
-                  "The order number is in your confirmation message, shaped like LQ-4821-7730."
-                )}
-              </p>
-            </>
-          ) : (
-            <p className="lq-hint lq-hint--error" role="alert">
-              {t(
-                "مش قادرين نجيب الأوردر دلوقتي. الأوردر مكانه — الاتصال هو اللي وقع.",
-                "We cannot load the order right now. The order is where it was — the connection was not."
-              )}
-            </p>
-          )}
-          <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
-            {!notFound ? (
-              <button type="button" className="lq-btn lq-btn--secondary" onClick={() => refetch()}>
-                <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
-                {t("جرّب تاني", "Try again")}
-              </button>
-            ) : null}
-            <Link href="/orders" className="lq-btn lq-btn--ghost">
-              {t("افتح أوردر تاني", "Open a different order")}
-            </Link>
+            )}
+            <div className="lq-oempty__acts">
+              {!notFound ? (
+                <button type="button" className="lq-btn lq-btn--secondary" onClick={() => refetch()}>
+                  <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
+                  {t("حاول مرة أخرى", "Try again")}
+                </button>
+              ) : null}
+              <Link href="/orders" className="lq-btn lq-btn--secondary">
+                {t("افتح طلبًا آخر", "Open a different order")}
+              </Link>
+            </div>
           </div>
         </div>
       </Shell>
@@ -211,122 +215,131 @@ function Loaded({
   );
 
   return (
-    <Shell title={t("الأوردر", "Order")}>
-      <div className="lq-wrap lq-pad">
-        <header className="lq-sec">
-          <div className="lq-sec__head">
-            <div style={STACK}>
-              <div className="lq-onum">
-                <h1 className="lq-phead__title">
-                  {t("الأوردر", "Order")}{" "}
-                  <span className="lq-onum__no" data-num>
-                    {order.orderNumber}
-                  </span>
-                </h1>
-                <CopyOrderNumber value={order.orderNumber} locale={locale} />
-              </div>
-              <p className="lq-hint">
-                <span data-num>{formatDate(order.placedAt, locale)}</span>
-                {order.deliveryMethod ? (
-                  <> {" · "} {deliveryLabel(order.deliveryMethod, locale)}</>
-                ) : null}
-              </p>
+    <Shell title={t("الطلب", "Order")}>
+      <div className="lq-wrap lq-opage">
+        <header className="lq-orderhead">
+          <div className="lq-orderhead__id">
+            <div className="lq-onum">
+              {/* The number IS the heading: it is what the shopper reads out
+                  on the phone. Isolated ltr so its hyphens stay put in an
+                  Arabic line. */}
+              <h1 className="lq-onum__no">
+                <span className="lq-vh">{t("الطلب ", "Order ")}</span>
+                <bdi dir="ltr">{order.orderNumber}</bdi>
+              </h1>
+              <CopyOrderNumber value={order.orderNumber} locale={locale} />
             </div>
-            <Money className="lq-money" amount={order.grandTotal} locale={locale} reconciled />
+            <p className="lq-orderhead__meta">
+              <span data-num>{formatDate(order.placedAt, locale)}</span>
+            </p>
           </div>
-
-          <p className="lq-prose">
-            {order.brandOrders.length > 1
-              ? t(
-                  "الأوردر ده من أكتر من محل. كل محل بيجهّز ويبعت نصّه لوحده، وكل نص ليه حالته — مفيش حالة واحدة بتتكلم عن الأوردر كله.",
-                  "This order is from more than one shop. Each shop packs and sends its own half, and each half has its own status — no single status speaks for the whole order."
-                )
-              : t(
-                  "المحل بيجهّز ويبعت بنفسه، والحالة اللي تحت هي حالة المحل ده.",
-                  "The shop packs and sends it itself, and the status below is that shop's own."
-                )}
-          </p>
+          <Link href="/orders" className="lq-btn lq-btn--secondary">
+            {t("افتح طلبًا آخر", "Open another order")}
+          </Link>
         </header>
 
-        {awaitingVerification ? (
-          <VerificationGate order={order} phone={phone} locale={locale} />
-        ) : null}
-        {awaitingPayment ? <PaymentRecovery order={order} locale={locale} /> : null}
+        <p className="lq-lede lq-orderhead__lede">
+          {order.brandOrders.length > 1
+            ? t(
+                "هذا الطلب من أكثر من متجر. يجهّز كل متجر جزءه ويرسله بنفسه، ولكل جزء حالته، فلا توجد حالة واحدة تعبّر عن الطلب كله.",
+                "This order is from more than one shop. Each shop packs and sends its own half, and each half has its own status — no single status speaks for the whole order."
+              )
+            : t(
+                "يجهّز المتجر الطلب ويرسله بنفسه، والحالة أدناه هي حالة هذا المتجر.",
+                "The shop packs and sends it itself, and the status below is that shop's own."
+              )}
+        </p>
 
-        {/* ── One section per shop ─────────────────────────────────────────── */}
-        {order.brandOrders.map((half, index) => (
-          <ShopHalf
-            key={half.id}
-            half={half}
-            shop={shops.get(half.brandId) ?? null}
-            locale={locale}
-            delayMs={index * 70}
-            orderId={order.id}
-            orderNumber={order.orderNumber}
-            phone={phone}
-          />
-        ))}
-
-        {/* Said ONCE, under the shops, rather than as a shrug on each unnamed
-            header. It explains a gap the shopper can see instead of leaving
-            them to wonder whether the shop is real. */}
-        {unnamed > 0 ? (
-          <p className="lq-hint">
-            {t(
-              "فيه محل في الأوردر ده مش ظاهر اسمه: الأوردر بيرجّع رقم المحل بس، والمحل ده مش في دليل المحلات دلوقتي — غالبًا وقف البيع بعد ما طلبت. حالته ومبلغه فوق زي أي محل تاني.",
-              "One of the shops here has no name on it: an order carries only the shop's id, and this one is not in the shop index right now — most likely it stopped selling after you ordered. Its status and its money are above like any other shop's."
-            )}
-          </p>
-        ) : null}
-
-        {/* ── The figures that DO speak for the whole order ────────────────── */}
-        <section className="lq-sec" aria-label={t("الحساب", "The total")}>
-          <hr className="lq-rule" />
-          <h2 className="lq-sec__title">{t("الحساب", "The total")}</h2>
-
-          <div className="lq-sum__row">
-            <span className="lq-hint">{t("القطع", "Items")}</span>
-            <Money className="lq-money" amount={order.itemsSubtotal} locale={locale} reconciled />
-          </div>
-          <div className="lq-sum__row">
-            <span className="lq-hint">
-              {t("التوصيل — كل محل لوحده", "Delivery — each shop separately")}
-            </span>
-            <Money className="lq-money" amount={order.shippingTotal} locale={locale} reconciled />
-          </div>
-          {/* Drawn only when there IS one. A zero discount row on every order
-              advertises a coupon field the shopper did not use. */}
-          {Number(order.discountTotal) > 0 ? (
-            <div className="lq-sum__row">
-              <span className="lq-hint">{t("الخصم", "Discount")}</span>
-              <span className="lq-money lq-money--credit" data-num>
-                {"− "}
-                {formatPrice(order.discountTotal, locale, { decimals: true })}
-              </span>
-            </div>
-          ) : null}
-          <div className="lq-sum__row lq-sum__row--total">
-            <span className="lq-sec__title">{t("الإجمالي", "Total")}</span>
-            <Money className="lq-money" amount={order.grandTotal} locale={locale} reconciled />
-          </div>
-        </section>
-
-        {/* ── Keep the number you just used ───────────────────────────────── */}
-        {/* The one place asking for an account is not a tax on the sale: the
-            order is already placed and the phone is already proved. It draws
-            nothing for a shopper who is signed in, or where a code cannot be
-            delivered. */}
-        <KeepNumber phone={order.shippingAddress.phone} />
-
-        {/* ── Where it is going ───────────────────────────────────────────── */}
-        <section className="lq-sec" aria-label={t("العنوان", "The address")}>
-          <hr className="lq-rule" />
-          <h2 className="lq-sec__title">{t("العنوان", "The address")}</h2>
-          <div style={STACK}>
-            {order.shippingAddress.fullName ? (
-              <span data-bidi>{order.shippingAddress.fullName}</span>
+        <div className="lq-twocol">
+          <div className="lq-twocol__main">
+            {awaitingVerification ? (
+              <VerificationGate order={order} phone={phone} locale={locale} />
             ) : null}
-            <span className="lq-hint" data-bidi>
+            {awaitingPayment ? <PaymentRecovery order={order} locale={locale} /> : null}
+
+            {/* ── One group per shop ───────────────────────────────────────── */}
+            {order.brandOrders.map((half, index) => (
+              <ShopHalf
+                key={half.id}
+                half={half}
+                shop={shops.get(half.brandId) ?? null}
+                locale={locale}
+                delayMs={index * 70}
+                orderId={order.id}
+                orderNumber={order.orderNumber}
+                phone={phone}
+              />
+            ))}
+
+            {/* Said ONCE, under the shops, rather than as a shrug on each
+                unnamed header. */}
+            {unnamed > 0 ? (
+              <p className="lq-prose">
+                {t(
+                  "أحد المتاجر في هذا الطلب بلا اسم ظاهر: لا يحمل الطلب إلا رقم المتجر، وهذا المتجر ليس في دليل المتاجر الآن، والأرجح أنه توقف عن البيع بعد طلبك. حالته ومبلغه أعلاه كأي متجر آخر.",
+                  "One of the shops here has no name on it: an order carries only the shop's id, and this one is not in the shop index right now — most likely it stopped selling after you ordered. Its status and its money are above like any other shop's."
+                )}
+              </p>
+            ) : null}
+
+            {/* The one place asking for an account is not a tax on the sale:
+                the order is already placed and the phone is already proved.
+                It draws nothing for a shopper who is signed in, or where a
+                code cannot be delivered. */}
+            <KeepNumber phone={order.shippingAddress.phone} />
+          </div>
+
+          {/* ── The figures that DO speak for the whole order, and where it
+              is going ─────────────────────────────────────────────────── */}
+          <aside className="lq-panel" aria-label={t("الحساب", "The total")}>
+            <h2 className="lq-panel__title">{t("الحساب", "The total")}</h2>
+
+            <div className="lq-sum__row">
+              <span>{t("القطع", "Items")}</span>
+              <Money className="lq-money" amount={order.itemsSubtotal} locale={locale} reconciled />
+            </div>
+            <div className="lq-sum__row">
+              <span>{t("التوصيل، لكل متجر على حدة", "Delivery, each shop separately")}</span>
+              <Money className="lq-money" amount={order.shippingTotal} locale={locale} reconciled />
+            </div>
+            {/* Drawn only when there IS one. A zero discount row on every
+                order advertises a coupon field the shopper did not use. */}
+            {Number(order.discountTotal) > 0 ? (
+              <div className="lq-sum__row">
+                <span>{t("الخصم", "Discount")}</span>
+                <span className="lq-money lq-money--credit" data-num>
+                  {"− "}
+                  {formatPrice(order.discountTotal, locale, { decimals: true })}
+                </span>
+              </div>
+            ) : null}
+            <div className="lq-sum__row lq-sum__row--total">
+              <span>{t("الإجمالي", "Total")}</span>
+              <Money className="lq-money" amount={order.grandTotal} locale={locale} reconciled />
+            </div>
+
+            <div className="lq-panel__block">
+              {order.deliveryMethod ? (
+                <div className="lq-sum__row">
+                  <span>{t("التوصيل", "Delivery")}</span>
+                  <span>{deliveryLabel(order.deliveryMethod, locale)}</span>
+                </div>
+              ) : null}
+              {order.shippingAddress.fullName ? (
+                <div className="lq-sum__row">
+                  <span>{t("المستلم", "Recipient")}</span>
+                  <span data-bidi>{order.shippingAddress.fullName}</span>
+                </div>
+              ) : null}
+              <div className="lq-sum__row">
+                <span>{t("الهاتف", "Phone")}</span>
+                <bdi dir="ltr" data-num>
+                  {order.shippingAddress.phone}
+                </bdi>
+              </div>
+            </div>
+
+            <p className="lq-panel__addr" data-bidi>
               {[
                 order.shippingAddress.street,
                 order.shippingAddress.building,
@@ -334,24 +347,21 @@ function Loaded({
                 order.shippingAddress.governorate,
               ]
                 .filter(Boolean)
-                .join(" · ")}
-            </span>
-            <span className="lq-hint" data-num dir="ltr" style={{ textAlign: "start" }}>
-              {order.shippingAddress.phone}
-            </span>
+                .join("، ")}
+            </p>
             {order.shippingAddress.notes ? (
-              <span className="lq-hint" data-bidi>
+              <p className="lq-panel__note" data-bidi>
                 {order.shippingAddress.notes}
-              </span>
+              </p>
             ) : null}
-          </div>
-          <p className="lq-hint">
-            {t(
-              "العنوان اتسجّل مع الأوردر. لو فيه غلطة فيه، كلّم المحل — هو اللي بيطلب المندوب.",
-              "The address is frozen onto the order. If something in it is wrong, message the shop — the shop books the rider."
-            )}
-          </p>
-        </section>
+            <p className="lq-panel__note">
+              {t(
+                "سُجِّل العنوان مع الطلب. إن كان فيه خطأ فتواصل مع المتجر، فهو من يحجز المندوب.",
+                "The address is frozen onto the order. If something in it is wrong, message the shop — the shop books the rider."
+              )}
+            </p>
+          </aside>
+        </div>
       </div>
     </Shell>
   );
@@ -387,30 +397,28 @@ function ShopHalf({
 
   return (
     <section
-      className="lq-sec lq-rv"
-      aria-label={shop ? shop.name : t("محل في الأوردر", "A shop in this order")}
+      className="lq-group lq-rv"
+      aria-label={shop ? shop.name : t("متجر في هذا الطلب", "A shop in this order")}
       style={{ "--lq-d": `${delayMs}ms` } as CSSProperties}
     >
-      <hr className="lq-rule" />
-
-      <div className="lq-sec__head">
-        <span style={STACK}>
+      <div className="lq-ghead">
+        <div className="lq-ghead__id">
           {/* The shop is a place, so a shop we can name is a link to it. One we
               cannot name is not a link to anywhere, because there is nowhere
               to go: without a slug there is no shop page to open. */}
           {shop ? (
-            <Link href={`/shop/${shop.slug}`} className="lq-sec__title" data-bidi>
+            <Link href={`/shop/${shop.slug}`} className="lq-ghead__name" data-bidi>
               {shop.name}
             </Link>
           ) : (
-            <span className="lq-sec__title">{t("محل", "Shop")}</span>
+            <span className="lq-ghead__name">{t("متجر", "Shop")}</span>
           )}
           {!shop ? (
-            <span className="lq-hint">
-              {t("رقم المحل", "Shop reference")} <span data-num>{reference}</span>
+            <span className="lq-ghead__meta">
+              {t("رقم المتجر", "Shop reference")} <span data-num>{reference}</span>
             </span>
           ) : null}
-        </span>
+        </div>
 
         {/* THE ONE MAP. No screen invents a status word or a tone. */}
         <StatusPill status={half.status} locale={locale} />
@@ -420,45 +428,47 @@ function ShopHalf({
 
       {/* The consequence of the status, which the pill deliberately does not
           carry — one line, and only where there is something to say. */}
-      <p className="lq-hint">{consequence(half.status, locale)}</p>
+      <p className="lq-group__stage">{consequence(half.status, locale)}</p>
 
       {half.items.map((item) => (
         <OrderLine key={item.id} item={item} locale={locale} />
       ))}
 
-      <div className="lq-sum__row">
-        <span className="lq-hint">{t("مجموع المحل", "Shop subtotal")}</span>
-        <Money className="lq-money" amount={half.subtotal} locale={locale} reconciled />
-      </div>
-      <div className="lq-sum__row">
-        <span className="lq-hint">{t("توصيل المحل", "Shop delivery")}</span>
-        <Money className="lq-money" amount={half.shippingCost} locale={locale} reconciled />
-      </div>
-      {Number(half.discountAmount) > 0 ? (
+      <div className="lq-group__sums">
         <div className="lq-sum__row">
-          <span className="lq-hint">{t("الخصم", "Discount")}</span>
-          <span className="lq-money lq-money--credit" data-num>
-            {"− "}
-            {formatPrice(half.discountAmount, locale, { decimals: true })}
-          </span>
+          <span>{t("مجموع المتجر", "Shop subtotal")}</span>
+          <Money className="lq-money" amount={half.subtotal} locale={locale} reconciled />
         </div>
-      ) : null}
+        <div className="lq-sum__row">
+          <span>{t("توصيل هذا المتجر", "Shop delivery")}</span>
+          <Money className="lq-money" amount={half.shippingCost} locale={locale} reconciled />
+        </div>
+        {Number(half.discountAmount) > 0 ? (
+          <div className="lq-sum__row">
+            <span>{t("الخصم", "Discount")}</span>
+            <span className="lq-money lq-money--credit" data-num>
+              {"− "}
+              {formatPrice(half.discountAmount, locale, { decimals: true })}
+            </span>
+          </div>
+        ) : null}
 
-      {/* Cash the rider actually took. Null on every other route and on a cash
-          order nobody has collected from yet, so it is printed only when there
-          is a collection to report — a zero here would read as "took nothing"
-          rather than "not collected". */}
-      {half.codCollectedAmount != null ? (
-        <div className="lq-sum__row">
-          <span className="lq-hint">{t("اتدفع كاش للمندوب", "Paid to the rider in cash")}</span>
-          <Money
-            className="lq-money"
-            amount={half.codCollectedAmount}
-            locale={locale}
-            reconciled
-          />
-        </div>
-      ) : null}
+        {/* Cash the rider actually took. Null on every other route and on a
+            cash order nobody has collected from yet, so it is printed only
+            when there is a collection to report — a zero here would read as
+            "took nothing" rather than "not collected". */}
+        {half.codCollectedAmount != null ? (
+          <div className="lq-sum__row">
+            <span>{t("دُفع نقدًا للمندوب", "Paid to the rider in cash")}</span>
+            <Money
+              className="lq-money"
+              amount={half.codCollectedAmount}
+              locale={locale}
+              reconciled
+            />
+          </div>
+        ) : null}
+      </div>
 
       {/* ONLY DELIVERED OFFERS THIS. Every other state — including
           RETURN_REQUESTED and RETURNED — already has its own sentence above
@@ -493,7 +503,7 @@ function OrderLine({ item, locale }: { item: ShopperOrderItem; locale: Locale })
     .join(" · ");
 
   return (
-    <div className="lq-line">
+    <article className="lq-line">
       {/* THE DRAWING, NOT A PICTURE OF A MISSING PICTURE. `imageMediaId` is an
           id with no public resolver behind it, so there is no photograph to
           render — seeded from the variant id, or from the SKU once the variant
@@ -523,7 +533,7 @@ function OrderLine({ item, locale }: { item: ShopperOrderItem; locale: Locale })
           </span>
         ) : null}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -550,12 +560,11 @@ function PaymentRecovery({ order, locale }: { order: ShopperOrder; locale: Local
   const [empty, setEmpty] = useState(false);
 
   return (
-    <section className="lq-sec" aria-label={t("الدفع", "Payment")}>
-      <hr className="lq-rule" />
-      <h2 className="lq-sec__title">{t("لسه فاضل الدفع", "The payment is still open")}</h2>
+    <section className="lq-ogate" aria-label={t("الدفع", "Payment")}>
+      <h2 className="lq-ogate__title">{t("لم يكتمل الدفع بعد", "The payment is still open")}</h2>
       <p className="lq-prose">
         {t(
-          "الأوردر اتسجّل، والدفع لسه ماتمّش. المحل مش هيبدأ يجهّز قبل ما الدفع يتم.",
+          "سُجِّل الطلب، ولم يكتمل الدفع بعد. لن يبدأ المتجر التجهيز قبل اكتمال الدفع.",
           "The order is placed and the payment has not gone through. The shop does not start preparing before it does."
         )}
       </p>
@@ -581,7 +590,7 @@ function PaymentRecovery({ order, locale }: { order: ShopperOrder; locale: Local
           }}
         >
           <span className="lq-icon" data-icon="credit-card" aria-hidden="true" />
-          {link.isPending ? t("ثانية واحدة", "One moment") : t("ادفع دلوقتي", "Pay now")}
+          {link.isPending ? t("لحظة واحدة", "One moment") : t("ادفع الآن", "Pay now")}
         </button>
       </div>
 
@@ -590,7 +599,7 @@ function PaymentRecovery({ order, locale }: { order: ShopperOrder; locale: Local
       {link.isError ? (
         <p className="lq-hint lq-hint--error" role="alert">
           {t(
-            "مش قادرين نفتح صفحة الدفع دلوقتي. الأوردر مكانه — جرّب تاني بعد شوية.",
+            "تعذّر فتح صفحة الدفع الآن. الطلب على حاله، فحاول مرة أخرى بعد قليل.",
             "We cannot open the payment page right now. The order is fine — try again shortly."
           )}
         </p>
@@ -598,7 +607,7 @@ function PaymentRecovery({ order, locale }: { order: ShopperOrder; locale: Local
       {empty ? (
         <p className="lq-hint lq-hint--error" role="alert">
           {t(
-            "مفيش صفحة دفع للأوردر ده دلوقتي. كلّم المحل — الأوردر عنده بنفس الرقم.",
+            "لا توجد صفحة دفع لهذا الطلب الآن. تواصل مع المتجر، فالطلب لديه بالرقم نفسه.",
             "There is no payment page for this order right now. Message the shop — it has the order under the same number."
           )}
         </p>
@@ -624,29 +633,29 @@ function describeVerifyError(error: Error, locale: Locale): string {
   if (error instanceof ApiError) {
     const message = error.message;
     if (message.includes("Incorrect code")) {
-      return t("الكود غلط. جرّب تاني.", "That code is wrong. Try again.");
+      return t("الرمز غير صحيح. حاول مرة أخرى.", "That code is wrong. Try again.");
     }
     if (message.includes("Too many incorrect attempts")) {
       return t(
-        "حاولت كتير بكود غلط. اطلب كود جديد.",
+        "تجاوزت عدد المحاولات المسموح به. اطلب رمزًا جديدًا.",
         "Too many wrong attempts. Request a new code."
       );
     }
     if (message.includes("This code has expired")) {
-      return t("الكود ده خلص وقته. اطلب كود جديد.", "This code has expired. Request a new one.");
+      return t("انتهت صلاحية هذا الرمز. اطلب رمزًا جديدًا.", "This code has expired. Request a new one.");
     }
     if (message.includes("No verification code has been sent")) {
-      return t("لسه محبعتش كود. دوس ابعت الكود.", "No code has been sent yet. Tap Send code.");
+      return t("لم يُرسَل رمز بعد. اضغط «أرسل الرمز مجددًا».", "No code has been sent yet. Tap Resend code.");
     }
     if (error.isNotFound) {
       return t(
-        "مفيش أوردر بالرقم ده مع رقم الموبايل ده.",
+        "لا يُفتح طلب بهذا الرقم مع رقم الهاتف هذا.",
         "No order opens with that number and that phone."
       );
     }
   }
   return t(
-    "مش قادرين نتأكد من الكود دلوقتي. جرّب تاني بعد شوية.",
+    "تعذّر التحقق من الرمز الآن. حاول مرة أخرى بعد قليل.",
     "We cannot check the code right now. Try again shortly."
   );
 }
@@ -660,19 +669,19 @@ function describeResendError(error: Error, locale: Locale): string {
     if (waitMatch) {
       const seconds = waitMatch[1];
       return t(
-        `لسه بدري. استنى ${seconds} ثانية وابعت تاني.`,
+        `انتظر ${seconds} ثانية ثم أرسل الرمز مجددًا.`,
         `Too soon. Wait ${seconds}s and resend.`
       );
     }
     if (error.isNotFound) {
       return t(
-        "مفيش أوردر بالرقم ده مع رقم الموبايل ده.",
+        "لا يُفتح طلب بهذا الرقم مع رقم الهاتف هذا.",
         "No order opens with that number and that phone."
       );
     }
   }
   return t(
-    "مش قادرين نبعت كود دلوقتي. جرّب تاني بعد شوية.",
+    "تعذّر إرسال الرمز الآن. حاول مرة أخرى بعد قليل.",
     "We cannot send a code right now. Try again shortly."
   );
 }
@@ -707,18 +716,17 @@ function VerificationGate({
     queryClient.invalidateQueries({ queryKey: orderKeys.lookup(order.orderNumber, phone) });
 
   return (
-    <section className="lq-sec" aria-label={t("تأكيد الأوردر", "Order verification")}>
-      <hr className="lq-rule" />
-      <h2 className="lq-sec__title">{t("أكّد رقم موبايلك", "Confirm your phone")}</h2>
+    <section className="lq-ogate" aria-label={t("تأكيد الطلب", "Order verification")}>
+      <h2 className="lq-ogate__title">{t("أكّد رقم هاتفك", "Confirm your phone")}</h2>
       <p className="lq-prose">
         {t(
-          "بعتنالك كود على الموبايل اللي طلبت بيه. اكتبه هنا عشان الأوردر يوصل للمحل.",
+          "أرسلنا رمزًا إلى الهاتف الذي طلبت به. اكتبه هنا ليصل الطلب إلى المتجر.",
           "We sent a code to the phone you ordered with. Enter it here so the order reaches the shop."
         )}
       </p>
 
       <form
-        className="lq-vp"
+        className="lq-ogate__form"
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
@@ -730,7 +738,7 @@ function VerificationGate({
       >
         <div className="lq-field">
           <label className="lq-label" htmlFor={id}>
-            {t("كود التأكيد", "Verification code")}
+            {t("رمز التأكيد", "Verification code")}
           </label>
           <input
             id={id}
@@ -752,13 +760,13 @@ function VerificationGate({
           </p>
         ) : null}
 
-        <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+        <div className="lq-ogate__acts">
           <button
             type="submit"
             className="lq-btn lq-btn--primary lq-btn--lg"
             disabled={verify.isPending || code.trim().length !== 6}
           >
-            {verify.isPending ? t("ثانية واحدة", "One moment") : t("أكّد الكود", "Verify code")}
+            {verify.isPending ? t("لحظة واحدة", "One moment") : t("أكّد الرمز", "Verify code")}
           </button>
           <button
             type="button"
@@ -773,7 +781,7 @@ function VerificationGate({
             }}
           >
             <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
-            {resend.isPending ? t("ثانية واحدة", "One moment") : t("ابعت الكود تاني", "Resend code")}
+            {resend.isPending ? t("لحظة واحدة", "One moment") : t("أرسل الرمز مجددًا", "Resend code")}
           </button>
         </div>
       </form>
@@ -785,7 +793,7 @@ function VerificationGate({
       ) : null}
       {sent && resend.isSuccess ? (
         <p className="lq-hint">
-          {t("بعتنا كود جديد على موبايلك.", "We sent a fresh code to your phone.")}
+          {t("أرسلنا رمزًا جديدًا إلى هاتفك.", "We sent a fresh code to your phone.")}
         </p>
       ) : null}
     </section>
@@ -812,19 +820,19 @@ function describeReturnError(error: Error, locale: Locale): string {
     if (windowMatch) {
       const days = windowMatch[1];
       return t(
-        `المدة اللي بتسمح بالاسترجاع (${days} يوم) خلصت.`,
+        `انقضت مدة الاسترجاع (${days} ${Number(days) >= 3 && Number(days) <= 10 ? "أيام" : "يومًا"}).`,
         `The return window (${days} days) has passed.`
       );
     }
     if (message.includes("already open for this order")) {
       return t(
-        "فيه طلب استرجاع مفتوح للأوردر ده بالفعل.",
+        "يوجد طلب استرجاع مفتوح لهذا الطلب بالفعل.",
         "A return is already open for this order."
       );
     }
     if (error.isNotFound) {
       return t(
-        "مفيش أوردر بالرقم ده مع رقم الموبايل ده.",
+        "لا يُفتح طلب بهذا الرقم مع رقم الهاتف هذا.",
         "No order opens with that number and that phone."
       );
     }
@@ -833,13 +841,13 @@ function describeReturnError(error: Error, locale: Locale): string {
       // reachable only by a race with the page's own status, since the
       // button is gated on DELIVERED already.
       return t(
-        "حالة الأوردر اتغيّرت. حدّث الصفحة وشوف حالته دلوقتي.",
+        "تغيّرت حالة الطلب. حدّث الصفحة لترى حالته الآن.",
         "The order's status changed. Refresh the page to see it now."
       );
     }
   }
   return t(
-    "مش قادرين نفتح طلب استرجاع دلوقتي. جرّب تاني بعد شوية.",
+    "تعذّر فتح طلب الاسترجاع الآن. حاول مرة أخرى بعد قليل.",
     "We cannot open a return right now. Try again shortly."
   );
 }
@@ -873,9 +881,9 @@ function ReturnRequest({
 
   if (!open) {
     return (
-      <div>
-        <button type="button" className="lq-btn lq-btn--ghost" onClick={() => setOpen(true)}>
-          {t("اطلب استرجاع", "Request a return")}
+      <div className="lq-group__act">
+        <button type="button" className="lq-btn lq-btn--secondary" onClick={() => setOpen(true)}>
+          {t("اطلب استرجاعًا", "Request a return")}
         </button>
       </div>
     );
@@ -883,7 +891,7 @@ function ReturnRequest({
 
   return (
     <form
-      className="lq-vp"
+      className="lq-ogate__form lq-group__act"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
@@ -927,17 +935,17 @@ function ReturnRequest({
         </p>
       ) : null}
 
-      <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+      <div className="lq-ogate__acts">
         <button
           type="submit"
           className="lq-btn lq-btn--primary"
           disabled={request.isPending || reason.trim().length === 0}
         >
-          {request.isPending ? t("ثانية واحدة", "One moment") : t("ابعت الطلب", "Submit request")}
+          {request.isPending ? t("لحظة واحدة", "One moment") : t("أرسل الطلب", "Submit request")}
         </button>
         <button
           type="button"
-          className="lq-btn lq-btn--ghost"
+          className="lq-btn lq-btn--secondary"
           onClick={() => setOpen(false)}
           disabled={request.isPending}
         >
@@ -965,7 +973,7 @@ function CopyOrderNumber({ value, locale }: { value: string; locale: Locale }) {
       <button
         type="button"
         className="lq-iconbtn lq-iconbtn--outline"
-        aria-label={t("انسخ رقم الأوردر", "Copy the order number")}
+        aria-label={t("انسخ رقم الطلب", "Copy the order number")}
         onClick={async () => {
           try {
             await navigator.clipboard.writeText(value);
@@ -983,7 +991,7 @@ function CopyOrderNumber({ value, locale }: { value: string; locale: Locale }) {
         />
       </button>
       <span className="lq-onum__done" role="status">
-        {copied ? t("اتنسخ", "Copied") : ""}
+        {copied ? t("نُسخ", "Copied") : ""}
       </span>
     </>
   );
@@ -1000,44 +1008,44 @@ function CopyOrderNumber({ value, locale }: { value: string; locale: Locale }) {
 function consequence(status: BrandOrderStatus, locale: Locale): string {
   const lines: Partial<Record<BrandOrderStatus, [string, string]>> = {
     PENDING_VERIFICATION: [
-      "بنتأكد من الأوردر قبل ما يروح للمحل.",
+      "نتحقق من الطلب قبل أن يصل إلى المتجر.",
       "We are checking the order before it reaches the shop.",
     ],
     PENDING_PAYMENT: [
-      "المحل مستني الدفع يتم عشان يبدأ.",
+      "ينتظر المتجر اكتمال الدفع ليبدأ.",
       "The shop is waiting for the payment before it starts.",
     ],
     PENDING_BRAND: [
-      "المحل بيراجع الرف قبل ما يأكد. لو قطعة خلصت، بتتلغي ومش بتتحاسب عليها.",
+      "يراجع المتجر الرف قبل التأكيد. إذا نفدت قطعة تُلغى ولا تُحاسب عليها.",
       "The shop is checking the shelf before it confirms. A piece that has sold out is dropped and not charged.",
     ],
     CONFIRMED: [
-      "القطعة موجودة، والمحل بدأ يجهّزها.",
+      "القطعة متوفرة، وبدأ المتجر تجهيزها.",
       "The piece is there and the shop has started preparing it.",
     ],
     PACKED: [
-      "متظبط ومستني المندوب يعدّي عليه.",
+      "الطلب جاهز وينتظر مرور المندوب.",
       "Packed, waiting for the rider to collect it.",
     ],
-    HANDED_OVER: ["المندوب ماشي بيه دلوقتي.", "The rider has it and is on the way."],
+    HANDED_OVER: ["المندوب في طريقه إليك الآن.", "The rider has it and is on the way."],
     DELIVERED: [
-      "وصل من المحل ده. باقي المحلات على حالتها.",
+      "وصل من هذا المتجر، وباقي المتاجر على حالتها.",
       "This shop's half arrived. The other shops keep their own status.",
     ],
     DELIVERY_FAILED: [
-      "المندوب مالقاش حد يستلم. كلّم المحل عشان يظبط ميعاد تاني.",
+      "لم يجد المندوب من يستلم الطلب. تواصل مع المتجر لتحديد موعد آخر.",
       "The rider found nobody to receive it. Message the shop to arrange another time.",
     ],
     RETURN_REQUESTED: [
-      "طلب الاسترجاع وصل للمحل، والمحل بيراجعه.",
+      "وصل طلب الاسترجاع إلى المتجر، وهو يراجعه الآن.",
       "The return request reached the shop and the shop is reviewing it.",
     ],
-    RETURNED: ["رجع للمحل.", "It is back at the shop."],
+    RETURNED: ["عادت القطع إلى المتجر.", "It is back at the shop."],
     CANCELLED: [
-      "النص ده اتلغى ومش بتتحاسب عليه.",
+      "أُلغي هذا الجزء من الطلب، ولا تُحاسب عليه.",
       "This half was cancelled and is not charged.",
     ],
-    REFUNDED: ["الفلوس رجعت.", "The money has been returned."],
+    REFUNDED: ["رُدّ إليك المبلغ.", "The money has been returned."],
   };
 
   const line = lines[status];
@@ -1062,19 +1070,24 @@ function PhonePrompt({ orderNumber, locale }: { orderNumber: string; locale: Loc
   const errorId = useId();
 
   return (
-    <div className="lq-wrap lq-pad lq-sec">
-      <h1 className="lq-phead__title">
-        {t("الأوردر", "Order")} <span data-num>{orderNumber}</span>
-      </h1>
-      <p className="lq-prose">
-        {t(
-          "اكتب رقم الموبايل اللي طلبت بيه. الرقم مع رقم الأوردر هما اللي بيفتحوه — من غير حساب.",
-          "Enter the phone you ordered with. That number and the order number are what open it — no account."
-        )}
-      </p>
+    <div className="lq-wrap lq-opage">
+      <header className="lq-orderhead">
+        <div className="lq-orderhead__id">
+          <h1 className="lq-onum__no">
+            <span className="lq-vh">{t("الطلب ", "Order ")}</span>
+            <bdi dir="ltr">{orderNumber}</bdi>
+          </h1>
+          <p className="lq-orderhead__meta">
+            {t(
+              "اكتب رقم الهاتف الذي طلبت به. هو ورقم الطلب معًا ما يفتح الطلب، دون حساب.",
+              "Enter the phone you ordered with. That number and the order number are what open it — no account."
+            )}
+          </p>
+        </div>
+      </header>
 
       <form
-        className="lq-vp"
+        className="lq-lookup__form lq-lookup__form--narrow"
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
@@ -1090,7 +1103,7 @@ function PhonePrompt({ orderNumber, locale }: { orderNumber: string; locale: Loc
       >
         <div className="lq-field">
           <label className="lq-label" htmlFor={id}>
-            {t("رقم الموبايل", "Phone number")}
+            {t("رقم الهاتف", "Phone number")}
           </label>
           <input
             id={id}
@@ -1112,13 +1125,15 @@ function PhonePrompt({ orderNumber, locale }: { orderNumber: string; locale: Loc
 
         {invalid ? (
           <p className="lq-hint lq-hint--error" id={errorId} role="alert">
-            {t("اكتب رقم الموبايل اللي طلبت بيه — 11 رقم.", "Enter the phone you ordered with — 11 digits.")}
+            {t("اكتب رقم الهاتف الذي طلبت به، من 11 رقمًا.", "Enter the phone you ordered with — 11 digits.")}
           </p>
         ) : null}
 
-        <button type="submit" className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block">
-          {t("افتح الأوردر", "Open the order")}
-        </button>
+        <div>
+          <button type="submit" className="lq-btn lq-btn--primary lq-btn--lg">
+            {t("افتح الطلب", "Open the order")}
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -1128,35 +1143,33 @@ function PhonePrompt({ orderNumber, locale }: { orderNumber: string; locale: Loc
 function OrderSkeleton() {
   return (
     <div aria-hidden="true">
-      <div className="lq-sec">
-        <span className="lq-skel" style={{ blockSize: 30, inlineSize: "14rem" }} />
-        <span className="lq-skel" style={{ blockSize: 14, inlineSize: "8rem" }} />
+      <div className="lq-orderhead">
+        <div className="lq-orderhead__id">
+          <span className="lq-skel" style={{ blockSize: 48, inlineSize: "18rem", maxInlineSize: "100%" }} />
+          <span className="lq-skel" style={{ blockSize: 14, inlineSize: "8rem" }} />
+        </div>
       </div>
-      {[0, 1].map((half) => (
-        <section className="lq-sec" key={half}>
-          <hr className="lq-rule" />
-          <div className="lq-sec__head">
-            <span className="lq-skel" style={{ blockSize: 20, inlineSize: "9rem" }} />
-            <span className="lq-skel" style={{ blockSize: 24, inlineSize: "7rem" }} />
-          </div>
-          <div className="lq-line">
-            <span className="lq-skel" style={{ aspectRatio: "var(--ratio-garment)" }} />
-            <span className="lq-line__body">
-              <span className="lq-skel" style={{ blockSize: 16, inlineSize: "70%" }} />
-              <span className="lq-skel" style={{ blockSize: 13, inlineSize: "40%" }} />
-            </span>
-            <span className="lq-skel" style={{ blockSize: 16, inlineSize: "4rem" }} />
-          </div>
-        </section>
-      ))}
+      <div className="lq-twocol">
+        <div className="lq-twocol__main">
+          {[0, 1].map((half) => (
+            <section className="lq-group" key={half}>
+              <div className="lq-ghead">
+                <span className="lq-skel" style={{ blockSize: 24, inlineSize: "9rem" }} />
+                <span className="lq-skel" style={{ blockSize: 24, inlineSize: "7rem" }} />
+              </div>
+              <div className="lq-line">
+                <span className="lq-line__well lq-skel" />
+                <span className="lq-line__body">
+                  <span className="lq-skel" style={{ blockSize: 16, inlineSize: "70%" }} />
+                  <span className="lq-skel" style={{ blockSize: 13, inlineSize: "40%" }} />
+                </span>
+                <span className="lq-skel" style={{ blockSize: 16, inlineSize: "4rem" }} />
+              </div>
+            </section>
+          ))}
+        </div>
+        <span className="lq-panel lq-skel" style={{ blockSize: 260 }} />
+      </div>
     </div>
   );
 }
-
-/* Still inline where the stack is NOT a cart line body: an order head, a shop
-   header, the address block. */
-const STACK: CSSProperties = {
-  display: "grid",
-  gap: "var(--space-1)",
-  minInlineSize: 0,
-};

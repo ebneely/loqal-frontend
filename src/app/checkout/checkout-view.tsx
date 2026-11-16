@@ -58,8 +58,8 @@ const HAS_PAYMENT_PAGE: ReadonlySet<PaymentMethod> = new Set<PaymentMethod>(["CA
 type Stage = 0 | 1 | 2;
 
 const STAGES: ReadonlyArray<{ ar: string; en: string }> = [
-  { ar: "التوصيل لفين", en: "Where it goes" },
-  { ar: "المحلات", en: "The shops" },
+  { ar: "العنوان", en: "Where it goes" },
+  { ar: "التوصيل", en: "Delivery" },
   { ar: "الدفع", en: "Payment" },
 ];
 
@@ -95,37 +95,37 @@ const PAYMENTS: ReadonlyArray<{
 }> = [
   {
     method: "CASH",
-    ar: "كاش عند الاستلام",
+    ar: "الدفع عند الاستلام",
     en: "Cash on delivery",
-    arNote: "بتدفع للمندوب وهو بيسلّمك. كل محل بياخد فلوس نصّه لوحده.",
+    arNote: "نقدًا للمندوب عند التسليم. يحصّل كل متجر ثمن جزئه على حدة.",
     enNote: "You pay the rider on handover. Each shop collects for its own half.",
   },
   {
     method: "CARD",
-    ar: "كارت",
+    ar: "بطاقة بنكية",
     en: "Card",
-    arNote: "هتتحوّل لصفحة الدفع، وترجع على الأوردر بعد ما تخلّص.",
+    arNote: "تُحوَّل إلى صفحة دفع آمنة، ثم تعود إلى طلبك.",
     enNote: "You are sent to the payment page and come back to the order.",
   },
   {
     method: "WALLET",
-    ar: "محفظة موبايل",
+    ar: "محفظة الهاتف",
     en: "Mobile wallet",
-    arNote: "الطريقة دي مفيش لها صفحة دفع هنا. الأوردر بيتسجّل، والتحويل بيتظبط مع المحل.",
+    arNote: "لا توجد صفحة دفع لهذه الطريقة هنا. يُسجَّل الطلب، ويُسوّى التحويل مع المتجر.",
     enNote: "There is no payment page for this one. The order is placed and the transfer is settled with the shop.",
   },
   {
     method: "INSTAPAY",
     ar: "إنستاباي",
     en: "InstaPay",
-    arNote: "الطريقة دي مفيش لها صفحة دفع هنا. الأوردر بيتسجّل، والتحويل بيتظبط مع المحل.",
+    arNote: "لا توجد صفحة دفع لهذه الطريقة هنا. يُسجَّل الطلب، ويُسوّى التحويل مع المتجر.",
     enNote: "There is no payment page for this one. The order is placed and the transfer is settled with the shop.",
   },
   {
     method: "VALU",
-    ar: "فاليو — تقسيط",
+    ar: "فاليو بالتقسيط",
     en: "ValU — instalments",
-    arNote: "هتتحوّل لفاليو عشان تظبط التقسيط، وترجع على الأوردر.",
+    arNote: "تُحوَّل إلى فاليو لترتيب الأقساط، ثم تعود إلى طلبك.",
     enNote: "You are sent to ValU to set up the instalments and come back to the order.",
   },
 ];
@@ -303,12 +303,15 @@ export function CheckoutView() {
     target.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [refusedAt]);
 
-  const title = t("إتمام الأوردر", "Checkout");
+  const title = t("إتمام الطلب", "Checkout");
 
   if (isPending || sessionPending) {
     return (
       <Shell title={title}>
-        <div className="lq-wrap lq-pad">
+        <div className="lq-wrap lq-opage">
+          <header className="lq-ophead">
+            <h1 className="lq-pagetitle">{title}</h1>
+          </header>
           <CheckoutSkeleton />
         </div>
       </Shell>
@@ -318,44 +321,53 @@ export function CheckoutView() {
   if (isError) {
     return (
       <Shell title={title}>
-        <div className="lq-wrap lq-pad lq-sec">
-          <h1 className="lq-phead__title">{title}</h1>
-          <p className="lq-hint lq-hint--error" role="alert">
-            {t(
-              "مش قادرين نجيب السلة دلوقتي. حاجاتك لسه مكانها — الاتصال هو اللي وقع.",
-              "We cannot load your bag right now. Nothing was lost — the connection was."
-            )}
-          </p>
-          <div>
-            <button type="button" className="lq-btn lq-btn--secondary" onClick={() => refetch()}>
-              <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
-              {t("جرّب تاني", "Try again")}
-            </button>
+        <div className="lq-wrap lq-opage">
+          <header className="lq-ophead">
+            <h1 className="lq-pagetitle">{title}</h1>
+          </header>
+          <div className="lq-oempty">
+            <p className="lq-hint lq-hint--error" role="alert">
+              {t(
+                "تعذّر تحميل السلة الآن. لم يضع شيء من قطعك، وإنما انقطع الاتصال.",
+                "We cannot load your bag right now. Nothing was lost — the connection was."
+              )}
+            </p>
+            <div className="lq-oempty__acts">
+              <button type="button" className="lq-btn lq-btn--secondary" onClick={() => refetch()}>
+                <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
+                {t("حاول مرة أخرى", "Try again")}
+              </button>
+            </div>
           </div>
         </div>
       </Shell>
     );
   }
 
-  /* An empty bag on a checkout screen is not an error state and not an empty
-     state: it is a shopper who has nothing to buy, so it describes the screen
-     they should be on and links there. */
+  /* An empty bag on a checkout screen is a shopper who has nothing to buy, so
+     it describes the screen they should be on and links there. */
   if (!cart || cart.brands.length === 0) {
     return (
       <Shell title={title}>
-        <div className="lq-wrap lq-pad lq-sec">
-          <h1 className="lq-phead__title">{title}</h1>
-          <p className="lq-prose">
-            {t(
-              "الأوردر بيتعمل من السلة. اختار حاجات من أي محل، وارجع هنا تكتب العنوان وتختار طريقة الدفع.",
-              "An order is placed from the bag. Pick pieces from any shop and come back here for the address and the payment method."
-            )}
-          </p>
-          <div>
-            <Link href="/shops" className="lq-btn lq-btn--primary lq-btn--lg">
-              <span className="lq-icon" data-icon="store" aria-hidden="true" />
-              {t("اتفرّج على المحلات", "Browse shops")}
-            </Link>
+        <div className="lq-wrap lq-opage">
+          <header className="lq-ophead">
+            <h1 className="lq-pagetitle">{title}</h1>
+          </header>
+          <div className="lq-oempty">
+            <h2 className="lq-oempty__title">
+              {t("لا يوجد ما يمكن طلبه بعد", "Nothing to order yet")}
+            </h2>
+            <p className="lq-oempty__body">
+              {t(
+                "يبدأ الطلب من السلة. اختر قطعًا من أي متجر، ثم عد إلى هنا لكتابة العنوان واختيار طريقة الدفع.",
+                "An order is placed from the bag. Pick pieces from any shop and come back here for the address and the payment method."
+              )}
+            </p>
+            <div className="lq-oempty__acts">
+              <Link href="/shops" className="lq-btn lq-btn--primary lq-btn--lg">
+                {t("تصفّح المتاجر", "Browse shops")}
+              </Link>
+            </div>
           </div>
         </div>
       </Shell>
@@ -561,34 +573,36 @@ export function CheckoutView() {
 
   return (
     <Shell title={title}>
-      <form ref={formRef} method="post" className="lq-wrap lq-pad" onSubmit={submit} noValidate>
-        <header className="lq-sec">
-          <h1 className="lq-phead__title">{title}</h1>
-          <p className="lq-prose">
+      <form ref={formRef} method="post" className="lq-wrap lq-opage" onSubmit={submit} noValidate>
+        <header className="lq-ophead">
+          <h1 className="lq-pagetitle">{title}</h1>
+          <p className="lq-lede">
             {t(
-              "الأوردر ده رايح لأكتر من محل لو اخترت من أكتر من محل. كل محل بيراجع الرف، ويجهّز، ويبعت نصّه لوحده.",
+              "إذا اخترت من أكثر من متجر، يتجه الطلب إلى كل متجر منها. يراجع كل متجر الرف ويجهّز جزءه ويرسله بنفسه.",
               "This order goes to more than one shop if you picked from more than one. Each shop checks its shelf, packs and sends its own half."
             )}
           </p>
+
+          {/* ── Where you are ─────────────────────────────────────────────
+              The order screen's track — three stages read the same as three
+              fulfilment steps, and a second stepper would be a second
+              vocabulary for the same idea. */}
+          <ol className="lq-steps lq-steps--stages" aria-label={t("مراحل إتمام الطلب", "Checkout stages")}>
+            {STAGES.map((entry, at) => (
+              <li
+                key={entry.en}
+                className="lq-steps__step"
+                data-state={at < stage ? "done" : at === stage ? "now" : "next"}
+                aria-current={at === stage ? "step" : undefined}
+              >
+                <span className="lq-steps__name">{t(entry.ar, entry.en)}</span>
+              </li>
+            ))}
+          </ol>
         </header>
 
-        {/* ── Where you are ───────────────────────────────────────────────
-            The order screen's rail, unchanged — three stages read the same as
-            three fulfilment steps and a second stepper would be a second
-            vocabulary for the same idea. */}
-        <ol className="lq-steps" aria-label={t("مراحل الأوردر", "Checkout stages")}>
-          {STAGES.map((entry, at) => (
-            <li
-              key={entry.en}
-              className="lq-steps__step"
-              data-state={at < stage ? "done" : at === stage ? "now" : "next"}
-              aria-current={at === stage ? "step" : undefined}
-            >
-              <i className="lq-steps__dot" aria-hidden="true" />
-              <span className="lq-steps__name">{t(entry.ar, entry.en)}</span>
-            </li>
-          ))}
-        </ol>
+        <div className="lq-twocol">
+        <div className="lq-twocol__main">
 
         {/* ── 1 · Who is ordering, on the stage that asks where it goes ───
             Guests only. A signed-in shopper already has a name, an email and
@@ -596,39 +610,38 @@ export function CheckoutView() {
             session — asking again would be a form field whose only effect is
             a 400. */}
         {stage === 0 && anonymous ? (
-          <section className="lq-sec" aria-label={t("مين بيطلب", "Who is ordering")}>
-            <hr className="lq-rule" />
-            <h2 className="lq-sec__title">{t("مين بيطلب", "Who is ordering")}</h2>
-            <p className="lq-hint">
+          <section className="lq-cksec" aria-label={t("من يطلب؟", "Who is ordering")}>
+            <h2 className="lq-cksec__title">{t("من يطلب؟", "Who is ordering")}</h2>
+            <p className="lq-cksec__hint">
               {t(
-                "من غير حساب. بنستخدم الإيميل عشان نبعتلك رقم الأوردر، والموبايل عشان تفتحه بيه بعد كده.",
+                "دون حساب. نرسل رقم الطلب إلى بريدك الإلكتروني، وبرقم الهاتف تفتح الطلب لاحقًا.",
                 "No account. The email carries your order number, and the phone is how you open the order later."
               )}
             </p>
 
-            <div className="lq-vp">
+            <div className="lq-ckgrid">
               <Field
-                label={t("الاسم", "First name")}
+                label={t("الاسم الأول", "First name")}
                 value={firstName}
                 onChange={setFirstName}
                 invalid={invalid("firstName")}
-                error={t("اكتب اسمك.", "Enter your first name.")}
+                error={t("اكتب اسمك الأول.", "Enter your first name.")}
                 autoComplete="given-name"
               />
               <Field
-                label={t("اسم العيلة", "Last name")}
+                label={t("اسم العائلة", "Last name")}
                 optional={t("اختياري", "optional")}
                 value={lastName}
                 onChange={setLastName}
                 autoComplete="family-name"
               />
               <Field
-                label={t("الإيميل", "Email")}
+                label={t("البريد الإلكتروني", "Email")}
                 value={email}
                 onChange={setEmail}
                 invalid={invalid("email")}
                 error={t(
-                  "اكتب إيميل صح — رقم الأوردر بيروح عليه.",
+                  "اكتب بريدًا إلكترونيًا صحيحًا، فإليه يُرسَل رقم الطلب.",
                   "Enter a working email — the order number is sent to it."
                 )}
                 type="email"
@@ -637,11 +650,11 @@ export function CheckoutView() {
                 dir="ltr"
               />
               <Field
-                label={t("رقم الموبايل", "Phone number")}
+                label={t("رقم الهاتف", "Phone number")}
                 value={guestPhone}
                 onChange={setGuestPhone}
                 invalid={invalid("guestPhone")}
-                error={t("اكتب رقم موبايل — 11 رقم.", "Enter a mobile number — 11 digits.")}
+                error={t("اكتب رقم هاتف محمول من 11 رقمًا.", "Enter a mobile number — 11 digits.")}
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
@@ -654,31 +667,30 @@ export function CheckoutView() {
 
         {/* ── 1 · Where it goes ───────────────────────────────────────────── */}
         {stage === 0 ? (
-          <section className="lq-sec" aria-label={t("التوصيل لفين", "Where it goes")}>
-            <hr className="lq-rule" />
-            <h2 className="lq-sec__title">{t("التوصيل لفين", "Where it goes")}</h2>
-            <p className="lq-hint">
+          <section className="lq-cksec" aria-label={t("إلى أين يصل الطلب؟", "Where it goes")}>
+            <h2 className="lq-cksec__title">{t("إلى أين يصل الطلب؟", "Where it goes")}</h2>
+            <p className="lq-cksec__hint">
               {t(
-                "المندوب بيقرا العنوان ده. الاسم والرقم ممكن يكونوا لحد تاني هو اللي هيستلم.",
+                "يقرأ المندوب هذا العنوان. يمكن أن يكون الاسم والرقم لشخص آخر يستلم الطلب.",
                 "The rider reads this. The name and number can belong to whoever is receiving."
               )}
             </p>
 
-            <div className="lq-vp">
+            <div className="lq-ckgrid">
               <Field
-                label={t("اسم اللي هيستلم", "Name of whoever receives it")}
+                label={t("اسم المستلم", "Name of whoever receives it")}
                 value={fullName}
                 onChange={setFullName}
                 invalid={invalid("fullName")}
-                error={t("اكتب اسم اللي هيستلم.", "Enter the name of whoever receives it.")}
+                error={t("اكتب اسم من سيستلم الطلب.", "Enter the name of whoever receives it.")}
                 autoComplete="name"
               />
               <Field
-                label={t("رقم الموبايل للمندوب", "Phone for the rider")}
+                label={t("رقم هاتف المستلم", "Phone for the rider")}
                 value={phone}
                 onChange={setPhone}
                 invalid={invalid("phone")}
-                error={t("اكتب رقم موبايل — 11 رقم.", "Enter a mobile number — 11 digits.")}
+                error={t("اكتب رقم هاتف محمول من 11 رقمًا.", "Enter a mobile number — 11 digits.")}
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
@@ -691,7 +703,7 @@ export function CheckoutView() {
                   anonymous
                     ? undefined
                     : t(
-                        "ده كمان الرقم اللي بتفتح بيه الأوردر بعد كده.",
+                        "وبهذا الرقم أيضًا تفتح الطلب لاحقًا.",
                         "This is also the number that opens the order later."
                       )
                 }
@@ -724,18 +736,19 @@ export function CheckoutView() {
                 autoComplete="street-address"
               />
               <Field
-                label={t("العمارة والدور", "Building and floor")}
+                label={t("المبنى والطابق", "Building and floor")}
                 optional={t("اختياري", "optional")}
                 value={building}
                 onChange={setBuilding}
               />
               <Field
+                full
                 label={t("ملاحظات للمندوب", "Notes for the rider")}
                 optional={t("اختياري", "optional")}
                 value={notes}
                 onChange={setNotes}
                 hint={t(
-                  "علامة مميزة، أو ميعاد يعدّي فيه.",
+                  "علامة مميزة، أو موعد مناسب للتسليم.",
                   "A landmark, or a time to come."
                 )}
               />
@@ -756,21 +769,20 @@ export function CheckoutView() {
             reach this screen with none chosen, and the API reads it off the
             cart at create time. */}
         {stage === 1 ? (
-          <section className="lq-sec" aria-label={t("المحلات", "The shops")}>
-            <hr className="lq-rule" />
-            <h2 className="lq-sec__title">{t("المحلات", "The shops")}</h2>
-            <p className="lq-hint">
+          <section className="lq-cksec" aria-label={t("التوصيل", "Delivery")}>
+            <h2 className="lq-cksec__title">{t("التوصيل", "Delivery")}</h2>
+            <p className="lq-cksec__hint">
               {t(
-                "إنت اللي بتحدّد مين يجيبه. loqaaal مش بتطلب المندوب عنك.",
-                "You decide who brings it. Loqaaal does not book the rider for you."
+                "أنت من يحدد من يوصل الطلب، ولا تحجز loqaaal المندوب نيابة عنك.",
+                "You decide who brings it. loqaaal does not book the rider for you."
               )}
             </p>
 
             <DeliveryPicker cart={cart} locale={locale} />
 
-            <p className="lq-hint">
+            <p className="lq-cksec__hint">
               {t(
-                "الاختيار ده بيتطبق على كل محل في السلة. السلة بتمشي كقرار واحد.",
+                "ينطبق هذا الاختيار على كل متاجر السلة، فالسلة تُشحن بقرار واحد.",
                 "This one choice applies to every shop in the bag. The basket ships as one decision."
               )}
             </p>
@@ -778,7 +790,7 @@ export function CheckoutView() {
             {invalid("delivery") ? (
               <p className="lq-hint lq-hint--error" role="alert">
                 {t(
-                  "اختار طريقة التوصيل الأول — مصاريف كل محل بتتحسب منها.",
+                  "اختر طريقة التوصيل أولًا، فمنها تُحسب رسوم كل متجر.",
                   "Pick a delivery method first — each shop's fee comes from it."
                 )}
               </p>
@@ -797,24 +809,19 @@ export function CheckoutView() {
 
         {/* ── 3 · Payment ─────────────────────────────────────────────────── */}
         {stage === 2 ? (
-          <section ref={payRef} className="lq-sec" aria-label={t("الدفع", "Payment")}>
-            <hr className="lq-rule" />
-            <h2 className="lq-sec__title">{t("الدفع", "Payment")}</h2>
+          <section ref={payRef} className="lq-cksec" aria-label={t("الدفع", "Payment")}>
+            <h2 className="lq-cksec__title">{t("الدفع", "Payment")}</h2>
 
             {cart.deliveryMethod === "RIDER_PER_BRAND" ? (
-              <p className="lq-hint">
+              <p className="lq-cksec__hint">
                 {t(
-                  "إنت طلبت المندوب بنفسك، فمفيش حد عند الباب يحصّل. اللي بيتدفع مقدّم بس هو المتاح.",
+                  "حجزت المندوب بنفسك، فلا أحد عند الباب لتحصيل المبلغ. المتاح هو الدفع المسبق فقط.",
                   "You booked the rider yourself, so nobody is at the door to collect. Only the prepaid routes are open."
                 )}
               </p>
             ) : null}
 
-            <div
-              role="radiogroup"
-              aria-label={t("الدفع", "Payment")}
-              style={{ display: "grid", gap: "var(--space-2)" }}
-            >
+            <div role="radiogroup" aria-label={t("الدفع", "Payment")} className="lq-paygroup">
               {PAYMENTS.map((option) => {
                 const chosen = option.method === paymentMethod;
                 const offered = paymentOffered(option.method, cart.deliveryMethod);
@@ -835,7 +842,7 @@ export function CheckoutView() {
                         {offered
                           ? t(option.arNote, option.enNote)
                           : t(
-                              "مش متاحة مع مندوب إنت طلبته — مفيش حد عند الباب ياخد الفلوس.",
+                              "غير متاحة مع مندوب حجزته بنفسك، إذ لا أحد عند الباب لتحصيل المبلغ.",
                               "Not available with a rider you booked — nobody is at the door to take the money."
                             )}
                       </span>
@@ -851,12 +858,12 @@ export function CheckoutView() {
             Each one is a fact already collected, and each Edit reopens the
             stage that owns it rather than scrolling to a field. */}
         {stage === 2 ? (
-          <section className="lq-sec" aria-label={t("المراجعة", "The review")}>
-            <hr className="lq-rule" />
-            <h2 className="lq-sec__title">{t("راجع قبل ما تطلب", "Check before you order")}</h2>
+          <section className="lq-cksec" aria-label={t("المراجعة", "The review")}>
+            <h2 className="lq-cksec__title">{t("راجع طلبك قبل التأكيد", "Check before you order")}</h2>
 
+            <div>
             <ReviewRow
-              label={t("التوصيل لـ", "Delivering to")}
+              label={t("يصل إلى", "Delivering to")}
               edit={t("تعديل", "Edit")}
               onEdit={() => setStage(0)}
             >
@@ -886,86 +893,80 @@ export function CheckoutView() {
             >
               {payment ? t(payment.ar, payment.en) : "—"}
             </ReviewRow>
+            </div>
           </section>
         ) : null}
-
-        {/* ── The estimate, split the way the order will be ──────────────── */}
-        {stage === 2 ? <Estimate cart={cart} locale={locale} blocked={blocked} /> : null}
 
         {/* ── What went wrong, if anything did ───────────────────────────── */}
         {stage === 2 && create.isError ? (
           <Failure error={create.error} locale={locale} />
         ) : null}
 
-        <div className="lq-sec">
-          {/* One summary beside the button, because the button is where the
-              eyes are when a press does nothing — the field that refused can
-              be screens above it on a phone. The per-field lines still carry
-              the specifics; this only says that there ARE some. */}
+        <div className="lq-cknav">
+          {/* One summary beside the buttons, because that is where the eyes
+              are when a press does nothing — the field that refused can be
+              screens above it on a phone. The per-field lines still carry the
+              specifics; this only says that there ARE some. */}
           {Object.values(fieldErrors).some(Boolean) ? (
-            <p className="lq-hint lq-hint--error" role="alert">
+            <p className="lq-hint lq-hint--error lq-cknav__err" role="alert">
               {stage === 2
                 ? t(
-                    "الأوردر لسه ماتبعتش — راجع الحقول المعلّمة فوق.",
+                    "لم يُرسَل الطلب بعد. راجع الحقول المُعلَّمة أعلاه.",
                     "The order was not sent — check the marked fields above."
                   )
                 : t(
-                    "راجع الحقول المعلّمة فوق عشان تكمّل.",
+                    "راجع الحقول المُعلَّمة أعلاه لتتابع.",
                     "Check the marked fields above to carry on."
                   )}
             </p>
           ) : null}
 
-          <div className="lq-cknav">
-            {stage > 0 ? (
-              <button
-                type="button"
-                className="lq-btn lq-btn--ghost"
-                onClick={() => setStage((at) => Math.max(at - 1, 0) as Stage)}
-              >
-                {t("رجوع", "Back")}
-              </button>
-            ) : null}
-
-            {stage < 2 ? (
-              <button type="submit" className="lq-btn lq-btn--primary lq-btn--lg lq-cknav__end">
-                {t("كمّل", "Continue")}
-              </button>
-            ) : (
-              /* Hidden below 720 by `.lq-cksubmit`, where the sticky bar below
-                 carries the same submit against the same form. */
-              <span className="lq-cksubmit lq-cknav__end">
-                <button
-                  type="submit"
-                  className="lq-btn lq-btn--primary lq-btn--lg"
-                  aria-disabled={busy || blocked.length > 0}
-                >
-                  {busy ? t("ثانية واحدة", "One moment") : t("اطلب", "Place the order")}
-                </button>
-              </span>
-            )}
-          </div>
-
-          {stage === 2 ? (
-            <p className="lq-prose">
-              {t(
-                "كل محل بيراجع الرف قبل ما يأكد نصّه. لو قطعة خلصت، بنلغيها ومش بتتحاسب عليها — وباقي الأوردر بيكمّل عادي.",
-                "Each shop checks its shelf before it confirms its half. A piece that has sold out is dropped and not charged, and the rest of the order carries on."
-              )}
-            </p>
+          {stage > 0 ? (
+            <button
+              type="button"
+              className="lq-btn lq-btn--secondary"
+              onClick={() => setStage((at) => Math.max(at - 1, 0) as Stage)}
+            >
+              {t("رجوع", "Back")}
+            </button>
           ) : null}
+
+          {stage < 2 ? (
+            <button type="submit" className="lq-btn lq-btn--primary lq-btn--lg lq-cknav__end">
+              {t("متابعة", "Continue")}
+            </button>
+          ) : null}
+        </div>
+        </div>
+
+        {/* ── The estimate, split the way the order will be ──────────────── */}
+        <Estimate cart={cart} locale={locale} blocked={blocked}>
+          {/* Hidden below 720 by `.lq-cksubmit`, where the sticky bar below
+              carries the same submit against the same form. */}
+          {stage === 2 ? (
+            <span className="lq-cksubmit">
+              <button
+                type="submit"
+                className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                aria-disabled={busy || blocked.length > 0}
+              >
+                {busy ? t("لحظة واحدة", "One moment") : t("أكّد الطلب", "Place the order")}
+              </button>
+            </span>
+          ) : null}
+        </Estimate>
         </div>
 
         {/* ── The one action, kept in reach ────────────────────────────────
             The button and the figure it commits to are three screens apart at
             390px, and a shopper should never have to scroll to find out what
             they are about to pay. Narrow containers only — above 720 the
-            in-flow button is already on screen. */}
+            panel's button is already on screen. */}
         {stage === 2 ? (
           <div className="lq-actionbar lq-ckbar">
             <div className="lq-actionbar__info">
               <span className="lq-actionbar__label">
-                {t("الإجمالي التقريبي", "Estimated total")}
+                {t("الإجمالي التقديري", "Estimated total")}
               </span>
               <Money
                 className="lq-money"
@@ -979,7 +980,7 @@ export function CheckoutView() {
               className="lq-btn lq-btn--primary lq-btn--lg"
               aria-disabled={busy || blocked.length > 0}
             >
-              {busy ? t("ثانية واحدة", "One moment") : t("اطلب", "Place the order")}
+              {busy ? t("لحظة واحدة", "One moment") : t("أكّد الطلب", "Place the order")}
             </button>
           </div>
         ) : null}
@@ -1010,47 +1011,65 @@ function ShopCard({
   const pieces = brand.items.reduce((sum, line) => sum + line.quantity, 0);
 
   return (
-    <section className="lq-card lq-ckshop" aria-label={brand.brandName}>
-      <div className="lq-ckshop__head">
-        <span className="lq-sec__title" data-bidi>
+    <section className="lq-group" aria-label={brand.brandName}>
+      <div className="lq-ghead">
+        <span className="lq-ghead__name" data-bidi>
           {brand.brandName}
         </span>
-        <span className="lq-hint">
-          <span data-num>{pieces}</span> {t("قطعة", "items")}
+        <span className="lq-ghead__meta">
+          <Pieces n={pieces} locale={locale} />
         </span>
       </div>
 
-      <div className="lq-ckshop__body">
+      <div className="lq-group__sums">
         <div className="lq-sum__row">
-          <span className="lq-hint">{t("مجموع المحل", "Shop subtotal")}</span>
+          <span>{t("مجموع المتجر", "Shop subtotal")}</span>
           <Money className="lq-money" amount={brand.subtotal} locale={locale} reconciled />
         </div>
 
         <div className="lq-sum__row">
-          <span className="lq-hint">
-            {t("توصيل المحل ده", "This shop's delivery")}
+          <span>
+            {t("توصيل هذا المتجر", "This shop's delivery")}
             {deliveryMethod ? ` · ${deliveryLabel(deliveryMethod, locale)}` : ""}
           </span>
           {/* Null until a method is chosen. `Money` draws the em dash; a zero
               would be a fee the shop never quoted. */}
           <Money className="lq-money" amount={brand.impliedFare} locale={locale} reconciled />
         </div>
-
-        {!brand.minimumOrderMet ? (
-          <p className="lq-hint lq-hint--error" role="alert">
-            {brand.minimumOrderValue && brand.amountToMinimum
-              ? t(
-                  `الحد الأدنى للمحل ده ${formatPrice(brand.minimumOrderValue, locale, { decimals: true })}، وفاضل ${formatPrice(brand.amountToMinimum, locale, { decimals: true })}. ارجع للسلة عشان تزوّد أو تشيل.`,
-                  `This shop's minimum is ${formatPrice(brand.minimumOrderValue, locale, { decimals: true })} and it is ${formatPrice(brand.amountToMinimum, locale, { decimals: true })} short. Go back to the bag to add or remove.`
-                )
-              : t(
-                  "المحل ده لسه تحت الحد الأدنى، فالأوردر مش هيعدّي.",
-                  "This shop is still under its minimum, so the order cannot go through."
-                )}
-          </p>
-        ) : null}
       </div>
+
+      {!brand.minimumOrderMet ? (
+        <p className="lq-hint lq-hint--error lq-group__note" role="alert">
+          {brand.minimumOrderValue && brand.amountToMinimum
+            ? t(
+                `الحد الأدنى لهذا المتجر ${formatPrice(brand.minimumOrderValue, locale, { decimals: true })}، ويتبقى ${formatPrice(brand.amountToMinimum, locale, { decimals: true })}. عد إلى السلة لتضيف قطعًا أو تزيلها.`,
+                `This shop's minimum is ${formatPrice(brand.minimumOrderValue, locale, { decimals: true })} and it is ${formatPrice(brand.amountToMinimum, locale, { decimals: true })} short. Go back to the bag to add or remove.`
+              )
+            : t(
+                "لم يبلغ هذا المتجر الحد الأدنى بعد، فلا يمكن إتمام الطلب.",
+                "This shop is still under its minimum, so the order cannot go through."
+              )}
+        </p>
+      ) : null}
     </section>
+  );
+}
+
+/** "قطعة واحدة / قطعتان / 3 قطع / 11 قطعة", Latin digits, tabular. */
+function Pieces({ n, locale }: { n: number; locale: Locale }) {
+  if (locale === "en") {
+    return (
+      <>
+        <span data-num>{n}</span> {n === 1 ? "item" : "items"}
+      </>
+    );
+  }
+  if (n === 1) return <>قطعة واحدة</>;
+  if (n === 2) return <>قطعتان</>;
+  return (
+    <>
+      <span data-num>{n}</span> {n <= 10 ? "قطع" : "قطعة"}
+    </>
   );
 }
 
@@ -1068,13 +1087,11 @@ function ReviewRow({
 }) {
   return (
     <div className="lq-ckrow">
-      <span>
-        <span className="lq-hint">{label}</span>
-        <span className="lq-ckrow__val" data-bidi>
-          {children}
-        </span>
+      <span className="lq-ckrow__label">{label}</span>
+      <span className="lq-ckrow__val" data-bidi>
+        {children}
       </span>
-      <button type="button" className="lq-btn lq-btn--ghost lq-btn--sm" onClick={onEdit}>
+      <button type="button" className="lq-ckrow__edit" onClick={onEdit}>
         {edit}
       </button>
     </div>
@@ -1093,66 +1110,76 @@ function Estimate({
   cart,
   locale,
   blocked,
+  children,
 }: {
   cart: CartSummary;
   locale: Locale;
   blocked: CartBrand[];
+  /** The place-order button, on the stage that has one. */
+  children?: ReactNode;
 }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
   return (
-    <section className="lq-sec" aria-label={t("الحساب", "The total")}>
-      <hr className="lq-rule" />
-      <h2 className="lq-sec__title">{t("الحساب", "The total")}</h2>
+    <aside className="lq-panel" aria-label={t("طلبك", "Your order")}>
+      <h2 className="lq-panel__title">{t("طلبك", "Your order")}</h2>
 
-      <div className="lq-sum__row">
-        <span className="lq-hint">
-          {t("القطع", "Items")}
-          {" ("}
-          <span data-num>{cart.itemCount}</span>
-          {")"}
-        </span>
-        <Money className="lq-money" amount={cart.subtotal} locale={locale} reconciled />
-      </div>
-
-      {/* One row per shop, named, so the two fees are two facts rather than
-          one figure a shopper has to take apart. */}
+      {/* One row per shop, named, for its pieces and then for its delivery,
+          so the two fees are two facts rather than one figure a shopper has
+          to take apart. */}
       {cart.brands.map((brand) => (
         <div className="lq-sum__row" key={brand.brandId}>
-          <span className="lq-hint" data-bidi>
-            {t(`توصيل ${brand.brandName}`, `${brand.brandName} delivery`)}
+          {/* <bdi>, so a Latin shop name does not turn the Arabic row ltr. */}
+          <span>
+            <bdi>{brand.brandName}</bdi> ·{" "}
+            <Pieces n={brand.items.reduce((sum, line) => sum + line.quantity, 0)} locale={locale} />
           </span>
+          <Money className="lq-money" amount={brand.subtotal} locale={locale} reconciled />
+        </div>
+      ))}
+
+      {cart.brands.map((brand) => (
+        <div className="lq-sum__row" key={`${brand.brandId}-fee`}>
+          <span data-bidi>{t(`توصيل ${brand.brandName}`, `${brand.brandName} delivery`)}</span>
           {brand.impliedFare ? (
             <Money className="lq-money" amount={brand.impliedFare} locale={locale} reconciled />
           ) : (
             <span className="lq-hint">
-              {t("بيتحدد لما تختار طريقة التوصيل", "Set when you pick a delivery method")}
+              {t("يُحدَّد عند اختيار طريقة التوصيل", "Set when you pick a delivery method")}
             </span>
           )}
         </div>
       ))}
 
       <div className="lq-sum__row lq-sum__row--total">
-        <span className="lq-sec__title">{t("الإجمالي التقريبي", "Estimated total")}</span>
+        <span>{t("الإجمالي التقديري", "Estimated total")}</span>
         <Money className="lq-money" amount={cart.grandTotalEstimate} locale={locale} reconciled />
       </div>
 
-      <p className="lq-hint">
-        {t(
-          "الحساب النهائي بيتعمل على السيرفر وقت ما تطلب، فالرقم ده تقديري.",
-          "Everything is repriced on the server when you order, so this figure is an estimate."
-        )}
-      </p>
+      {children ? <div className="lq-panel__go">{children}</div> : null}
 
       {blocked.length > 0 ? (
         <p className="lq-hint lq-hint--error" role="alert">
           {t(
-            `${blocked.map((brand) => brand.brandName).join(" و")} لسه تحت الحد الأدنى، فالأوردر مش هيكمّل. ارجع للسلة عشان تزوّد أو تشيل.`,
+            `لم يبلغ ${blocked.map((brand) => brand.brandName).join(" و")} الحد الأدنى للطلب بعد، فلا يمكن إتمام الطلب. عد إلى السلة لتضيف قطعًا أو تزيلها.`,
             `${blocked.map((brand) => brand.brandName).join(" and ")} ${blocked.length === 1 ? "is" : "are"} still under the minimum, so the order cannot go through. Go back to the bag to add or remove.`
           )}
         </p>
       ) : null}
-    </section>
+
+      <p className="lq-panel__note">
+        {t(
+          "يُعاد حساب كل مبلغ على الخادم عند تأكيد الطلب، لذا فهذا الرقم تقديري.",
+          "Everything is repriced on the server when you order, so this figure is an estimate."
+        )}
+      </p>
+      <p className="lq-panel__note">
+        {t(
+          "يراجع كل متجر الرف قبل التأكيد. إذا نفدت قطعة تُلغى ولا تُحاسب عليها، ويستمر باقي الطلب.",
+          "Each shop checks its shelf before it confirms its half. A piece that has sold out is dropped and not charged, and the rest of the order carries on."
+        )}
+      </p>
+    </aside>
   );
 }
 
@@ -1169,10 +1196,10 @@ function Failure({ error, locale }: { error: Error; locale: Locale }) {
       return (
         <p className="lq-hint lq-hint--error" role="alert">
           {t(
-            "حاجة في السلة اتغيّرت من ساعة ما فتحت الصفحة — قطعة خلصت أو محل قفل. افتح السلة، هتلاقي المتغيّر متعلّم.",
+            "تغيّر شيء في سلتك منذ فتحت هذه الصفحة: نفدت قطعة أو أُغلق متجر. افتح السلة لترى التغيير مُعلَّمًا.",
             "Something in your bag changed since you opened this page — a piece sold out or a shop closed. Open the bag; the change is marked there."
           )}{" "}
-          <Link href="/bag" className="lq-sec__more">
+          <Link href="/bag" className="lq-textlink">
             {t("افتح السلة", "Open the bag")}
           </Link>
         </p>
@@ -1183,7 +1210,7 @@ function Failure({ error, locale }: { error: Error; locale: Locale }) {
       return (
         <p className="lq-hint lq-hint--error" role="alert">
           {t(
-            "الجلسة خلصت قبل ما الأوردر يتسجّل. ادخل تاني وحاجاتك هتلاقيها زي ما هي.",
+            "انتهت الجلسة قبل تسجيل الطلب. سجّل دخولك مرة أخرى، وستجد سلتك كما تركتها.",
             "The session ended before the order was placed. Sign in again; your bag is as you left it."
           )}
         </p>
@@ -1195,10 +1222,10 @@ function Failure({ error, locale }: { error: Error; locale: Locale }) {
        ours and is readable, and the API's own words are still the fastest way
        for a shopper to tell somebody what happened. */
     return (
-      <div className="lq-sec" role="alert">
+      <div className="lq-ckfail" role="alert">
         <p className="lq-hint lq-hint--error">
           {t(
-            "الأوردر مامشيش. راجع البيانات فوق وجرّب تاني.",
+            "لم يُرسَل الطلب. راجع البيانات أعلاه وحاول مرة أخرى.",
             "The order did not go through. Check the details above and try again."
           )}
         </p>
@@ -1217,16 +1244,16 @@ function Failure({ error, locale }: { error: Error; locale: Locale }) {
    * which is the double order this whole flow is built to prevent.
    */
   return (
-    <div className="lq-sec" role="alert">
+    <div className="lq-ckfail" role="alert">
       <p className="lq-hint lq-hint--error">
         {t(
-          "مارجعش رد من السيرفر. يمكن الأوردر اتسجّل ويمكن لأ.",
+          "لم يصل رد من الخادم، وقد يكون الطلب سُجِّل وقد لا يكون.",
           "The server did not answer. The order may or may not have been placed."
         )}
       </p>
       <p className="lq-prose">
         {t(
-          "اضغط «اطلب» تاني. لو كان اتسجّل فعلاً، الضغطة دي هتفتحهولك — مش هتعمل أوردر تاني ومش هتتحاسب مرتين.",
+          "اضغط «أكّد الطلب» مرة أخرى. إن كان قد سُجِّل فستفتحه هذه الضغطة، ولن تُنشئ طلبًا ثانيًا ولن تُحاسَب مرتين.",
           "Press Place the order again. If it was placed, that press opens it — it does not create a second order and you are not charged twice."
         )}
       </p>
@@ -1260,7 +1287,10 @@ function Field({
   placeholder,
   numeric = false,
   dir,
+  full = false,
 }: {
+  /** Spans both columns of `.lq-ckgrid`. */
+  full?: boolean;
   label: string;
   optional?: string;
   value: string;
@@ -1281,7 +1311,7 @@ function Field({
   const hintId = useId();
 
   return (
-    <div className="lq-field">
+    <div className={full ? "lq-field lq-ckgrid__full" : "lq-field"}>
       <label className="lq-label" htmlFor={id}>
         {label}
         {optional ? <span className="lq-vp__aside"> · {optional}</span> : null}
@@ -1361,7 +1391,7 @@ function GovernorateSelect({
           onClick={() => setOpen((previous) => !previous)}
         >
           <span className="lq-seltrigger__val">
-            {value === "" ? t("اختار المحافظة", "Choose a governorate") : value}
+            {value === "" ? t("اختر المحافظة", "Choose a governorate") : value}
           </span>
           <span className="lq-icon lq-chev" data-icon="chevron-down" aria-hidden="true" />
         </button>
@@ -1410,7 +1440,7 @@ function GovernorateSelect({
 
       {invalid ? (
         <p className="lq-hint lq-hint--error" id={errorId} role="alert">
-          {t("اختار المحافظة.", "Choose a governorate.")}
+          {t("اختر المحافظة.", "Choose a governorate.")}
         </p>
       ) : null}
     </div>
@@ -1420,12 +1450,17 @@ function GovernorateSelect({
 /** The shape of the form while it arrives — never a spinner over content. */
 function CheckoutSkeleton() {
   return (
-    <div className="lq-sec" aria-hidden="true">
-      <span className="lq-skel" style={{ blockSize: 30, inlineSize: "12rem" }} />
-      {[0, 1, 2, 3, 4].map((row) => (
-        <span key={row} className="lq-skel" style={{ blockSize: 44 }} />
-      ))}
-      <span className="lq-skel" style={{ blockSize: 52 }} />
+    <div className="lq-twocol" aria-hidden="true">
+      <div className="lq-cksec">
+        <span className="lq-skel" style={{ blockSize: 30, inlineSize: "12rem" }} />
+        <div className="lq-ckgrid">
+          {[0, 1, 2, 3, 4, 5].map((row) => (
+            <span key={row} className="lq-skel" style={{ blockSize: 48 }} />
+          ))}
+        </div>
+        <span className="lq-skel" style={{ blockSize: 52, inlineSize: "10rem" }} />
+      </div>
+      <span className="lq-panel lq-skel" style={{ blockSize: 260 }} />
     </div>
   );
 }

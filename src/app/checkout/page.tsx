@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CheckoutView } from "./checkout-view";
 
 /**
- * إتمام الأوردر.
+ * إتمام الطلب.
  *
  * `force-dynamic` and noindex, for the reasons the bag states: the screen is
  * keyed to a session cookie and to one shopper's basket, so an ISR entry would
@@ -13,9 +13,9 @@ import { CheckoutView } from "./checkout-view";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "إتمام الأوردر",
+  title: "إتمام الطلب",
   description:
-    "العنوان وطريقة الدفع. كل محل في الأوردر بيراجع الرف ويجهّز ويبعت نصّه لوحده.",
+    "العنوان وطريقة الدفع. يراجع كل متجر في الطلب الرف ويجهّز جزءه ويرسله بنفسه.",
   robots: { index: false, follow: false },
 };
 

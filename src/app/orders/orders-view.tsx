@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
@@ -11,11 +12,10 @@ import { StatusPill } from "@/components/status-pill";
 /**
  * Finding an order.
  *
- * THIS IS A LOOKUP, NOT A LIST, and that is a backend gap rather than a design
- * choice. The API has `GET /v1/orders/:orderId` and
- * `GET /v1/orders/lookup/:orderNumber?phone=` — there is no "every order this
- * shopper placed" endpoint at all, so a signed-in order history cannot be
- * built yet however the screen is drawn.
+ * THIS IS A LOOKUP, NOT A LIST. A signed-in shopper's history lives on
+ * /account (`my-orders.tsx`), and this screen points there in one line; what
+ * it is FOR is `GET /v1/orders/lookup/:orderNumber?phone=`, the only key a
+ * guest holds.
  *
  * Lookup is what genuinely exists, and it is also what the design system's own
  * entry flow assumes: most Loqal shoppers check out as guests, and "the order
@@ -52,27 +52,27 @@ import { StatusPill } from "@/components/status-pill";
 const JOURNEY: ReadonlyArray<{ status: BrandOrderStatus; ar: string; en: string }> = [
   {
     status: "PENDING_BRAND",
-    ar: "المحل بيراجع الرف قبل ما يأكد الأوردر.",
+    ar: "يراجع المتجر الرف قبل تأكيد الطلب.",
     en: "The shop checks the shelf before it confirms the order.",
   },
   {
     status: "CONFIRMED",
-    ar: "القطعة موجودة، والمحل بدأ يجهّزها.",
+    ar: "القطعة متوفرة، وبدأ المتجر تجهيزها.",
     en: "The piece is there and the shop has started preparing it.",
   },
   {
     status: "PACKED",
-    ar: "الأوردر متظبط ومستني المندوب يعدّي عليه.",
+    ar: "الطلب جاهز وينتظر مرور المندوب.",
     en: "Packed, waiting for the rider to collect it.",
   },
   {
     status: "HANDED_OVER",
-    ar: "المندوب ماشي بيه دلوقتي.",
+    ar: "المندوب في طريقه إليك الآن.",
     en: "The rider has it and is on the way.",
   },
   {
     status: "DELIVERED",
-    ar: "وصل من المحل ده. باقي المحلات لسه على حالتها.",
+    ar: "وصل من هذا المتجر، وباقي المتاجر تبقى على حالتها.",
     en: "This shop's half arrived. The other shops keep their own status.",
   },
 ];
@@ -89,54 +89,41 @@ export function OrdersView() {
   const errorId = useId();
 
   const t = {
-    title: locale === "ar" ? "أوردراتي" : "My orders",
+    title: locale === "ar" ? "طلباتي" : "My orders",
     lead:
       locale === "ar"
-        ? "كل محل بيجهّز نصّه لوحده، وكل نص ليه حالته."
-        : "Each shop prepares its own half, and each half has its own status.",
-    lookup: locale === "ar" ? "افتح أوردر" : "Open an order",
-    lookupHint:
-      locale === "ar"
-        ? "برقم الأوردر ورقم الموبايل اللي طلبت بيه. من غير حساب."
-        : "By order number and the phone you ordered with. No account.",
-    number: locale === "ar" ? "رقم الأوردر" : "Order number",
+        ? "افتح طلبك برقمه ورقم الهاتف الذي طلبت به، دون الحاجة إلى حساب."
+        : "Open your order by its number and the phone you ordered with. No account needed.",
+    lookup: locale === "ar" ? "افتح طلبًا" : "Open an order",
+    number: locale === "ar" ? "رقم الطلب" : "Order number",
     numberHint:
       locale === "ar"
-        ? "مكتوب في رسالة التأكيد، بالشكل ده: LQ-4821-7730"
+        ? "تجده في رسالة التأكيد، بهذا الشكل: LQ-4821-7730"
         : "It is in your confirmation message, shaped like LQ-4821-7730",
-    phone: locale === "ar" ? "رقم الموبايل" : "Phone number",
-    find: locale === "ar" ? "افتح الأوردر" : "Open the order",
+    phone: locale === "ar" ? "رقم الهاتف" : "Phone number",
+    find: locale === "ar" ? "افتح الطلب" : "Open the order",
     numberError:
       locale === "ar"
-        ? "اكتب رقم الأوردر زي ما هو في رسالة التأكيد."
+        ? "اكتب رقم الطلب كما ورد في رسالة التأكيد."
         : "Enter the order number exactly as it is in your confirmation message.",
     phoneError:
       locale === "ar"
-        ? "اكتب رقم الموبايل اللي طلبت بيه — 11 رقم."
+        ? "اكتب رقم الهاتف الذي طلبت به، من 11 رقمًا."
         : "Enter the phone you ordered with — 11 digits.",
     /* The empty state teaches. It never mentions the emptiness. */
-    coming: locale === "ar" ? "اللي هيظهر لما تفتح أوردر" : "What you see when you open an order",
-    comingLead:
-      locale === "ar"
-        ? "رقم الأوردر وتاريخه فوق، وتحته كل محل لوحده: حالته والمبلغ اللي عليه."
-        : "The order number and date on top, and under it each shop on its own: its status and its own total.",
-    journeyLead:
-      locale === "ar"
-        ? "الحالات اللي كل محل بيعدّي بيها:"
-        : "The statuses each shop moves through:",
+    journey:
+      locale === "ar" ? "الحالات التي يمر بها كل متجر" : "The stages each shop moves through",
     perShop:
       locale === "ar"
-        ? "لو محل اتأخر أو التوصيل فشل، ده بيبان على المحل ده لوحده — مفيش حالة واحدة بتتكلم عن الأوردر كله."
+        ? "إذا تأخر متجر أو تعذّر التسليم، يظهر ذلك على هذا المتجر وحده، فلا توجد حالة واحدة تعبّر عن الطلب كله."
         : "If one shop is late or a delivery fails, that shows on that shop alone — no single status speaks for the whole order.",
-    /*
-      Said out loud rather than left as an empty list. A history screen that
-      renders nothing tells a returning shopper they never ordered, which is
-      worse than telling them the truth.
-    */
-    noHistory:
+    /* A signed-in shopper's orders live on /account; a guest's only key is
+       the number and phone, which is what this form takes. */
+    account:
       locale === "ar"
-        ? "لسه مفيش سجل بكل أوردراتك. الأوردر بيتفتح برقمه ورقم الموبايل، وده اللي بيخلي الضيف يتابع من غير ما يعمل حساب."
-        : "There is no full order history yet. An order is opened by its number and phone, which is what lets a guest follow it without an account.",
+        ? "إن كان لديك حساب، تجد طلباتك كلها في صفحة حسابك."
+        : "With an account, every order you placed is on your account page.",
+    accountLink: locale === "ar" ? "حسابي" : "My account",
   };
 
   const submit = (event: React.FormEvent) => {
@@ -175,27 +162,19 @@ export function OrdersView() {
 
   return (
     <Shell title={t.title}>
-      <div className="lq-wrap lq-pad">
-        <section className="lq-sec">
-          <div className="lq-sec__head">
-            <div>
-              <h1 className="lq-phead__title">{t.title}</h1>
-              <p className="lq-eyebrow">{t.lead}</p>
-            </div>
-          </div>
+      <div className="lq-wrap lq-opage">
+        <header className="lq-ophead">
+          <h1 className="lq-pagetitle">{t.title}</h1>
+          <p className="lq-lede">{t.lead}</p>
+        </header>
 
-          <hr className="lq-rule" />
-
+        <div className="lq-lookup">
           {/* ── The lookup ──────────────────────────────────────────────── */}
-          <div className="lq-sec__head">
-            <h2 className="lq-sec__title">{t.lookup}</h2>
-          </div>
-          <p className="lq-hint">{t.lookupHint}</p>
-
           <form
-            className="lq-vp lq-rv"
+            className="lq-lookup__form"
             onSubmit={submit}
             noValidate
+            aria-label={t.lookup}
             aria-describedby={error ? errorId : undefined}
           >
             <div className="lq-field">
@@ -258,68 +237,38 @@ export function OrdersView() {
               </p>
             )}
 
-            <button
-              type="submit"
-              className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
-            >
-              {t.find}
-            </button>
+            <div>
+              <button type="submit" className="lq-btn lq-btn--primary lq-btn--lg">
+                {t.find}
+              </button>
+            </div>
+
+            <p className="lq-lookup__aside">
+              {t.account}{" "}
+              <Link href="/account" className="lq-textlink">
+                {t.accountLink}
+              </Link>
+            </p>
           </form>
 
-          <hr className="lq-rule" />
-
-          {/* ── What appears, or the shape of it while it arrives ───────── */}
-              <div className="lq-sec__head">
-                <h2 className="lq-sec__title">{t.coming}</h2>
-              </div>
-              <p className="lq-hint">{t.comingLead}</p>
-              <p className="lq-hint">{t.journeyLead}</p>
-
-              {/* The hairline stack: cells share their borders. `.lq-rows` and
-                  not `.lq-cells` because this is a SEQUENCE — `.lq-cells` steps
-                  to two across at 520 and three at 720, and the order of the
-                  steps would stop being the order of the reading. The list
-                  reset stays inline: `.lq-rows` is a grid, not a list. */}
-              <ol
-                className="lq-rows"
-                style={{ listStyle: "none", margin: 0, padding: 0 }}
-              >
-                {JOURNEY.map((step, index) => (
-                  /* NOT `.lq-row`. That class is a tappable destination — it
-                     carries a pointer cursor and a `--raise` hover — and these
-                     steps go nowhere. It also has no `flex-wrap`, and the
-                     sentence beside the pill is `flex:1 1 16rem` precisely so
-                     it drops to its own line on a phone. */
-                  <li
-                    key={step.status}
-                    className="lq-rv"
-                    style={
-                      {
-                        "--lq-d": `${index * 70}ms`,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "var(--space-3)",
-                        flexWrap: "wrap",
-                        padding: "var(--space-4)",
-                      } as React.CSSProperties
-                    }
-                  >
-                    {/* The ONE map. No screen invents its own wording or tone. */}
-                    <StatusPill status={step.status} locale={locale} />
-                    <span
-                      className="lq-hint"
-                      data-bidi
-                      style={{ flex: "1 1 16rem", minInlineSize: 0 }}
-                    >
-                      {locale === "ar" ? step.ar : step.en}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-
-              <p className="lq-hint">{t.perShop}</p>
-              <p className="lq-hint">{t.noHistory}</p>
-        </section>
+          {/* ── What appears: one status per shop ─────────────────────────
+              A sequence, read in order, on hairlines. */}
+          <div>
+            <h2 className="lq-lookup__title">{t.journey}</h2>
+            <ol className="lq-stagelist">
+              {JOURNEY.map((step) => (
+                <li key={step.status}>
+                  {/* The ONE map. No screen invents its own wording or tone. */}
+                  <StatusPill status={step.status} locale={locale} />
+                  <span className="lq-stagelist__note" data-bidi>
+                    {locale === "ar" ? step.ar : step.en}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p className="lq-lookup__aside">{t.perShop}</p>
+          </div>
+        </div>
       </div>
     </Shell>
   );

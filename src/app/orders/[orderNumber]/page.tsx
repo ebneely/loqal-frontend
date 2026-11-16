@@ -18,7 +18,7 @@ import { OrderView } from "./order-view";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "الأوردر",
+  title: "الطلب",
   robots: { index: false, follow: false, nocache: true },
 };
 

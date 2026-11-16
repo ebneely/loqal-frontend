@@ -79,7 +79,7 @@ export function KeepNumber({ phone }: { phone: string }) {
       if (result.error) {
         setError(
           result.error.message ??
-            t("مش قادرين نبعت الكود دلوقتي.", "We cannot send a code right now.")
+            t("تعذّر إرسال الرمز الآن.", "We cannot send a code right now.")
         );
         setPending(false);
         return;
@@ -91,7 +91,7 @@ export function KeepNumber({ phone }: { phone: string }) {
     } catch {
       setError(
         t(
-          "مش قادرين نوصل للسيرفر دلوقتي.",
+          "تعذّر الوصول إلى الخادم الآن.",
           "We cannot reach the server right now."
         )
       );
@@ -110,7 +110,7 @@ export function KeepNumber({ phone }: { phone: string }) {
       if (result.error) {
         setError(
           result.error.message ??
-            t("الكود مش مظبوط. جرّب تاني.", "That code is not right. Try again.")
+            t("الرمز غير صحيح. حاول مرة أخرى.", "That code is not right. Try again.")
         );
         setAttempt((n) => n + 1);
         setPending(false);
@@ -125,7 +125,7 @@ export function KeepNumber({ phone }: { phone: string }) {
     } catch {
       setError(
         t(
-          "مش قادرين نوصل للسيرفر دلوقتي.",
+          "تعذّر الوصول إلى الخادم الآن.",
           "We cannot reach the server right now."
         )
       );
@@ -139,11 +139,11 @@ export function KeepNumber({ phone }: { phone: string }) {
         <span className="lq-icon lq-keep__tick" data-icon="circle-check" aria-hidden="true" />
         <div className="lq-keep__body">
           <span className="lq-keep__title">
-            {t("اتحفظ. أهلاً بيك في loqaaal.", "Kept. Welcome to loqaaal.")}
+            {t("حُفظ رقمك. أهلًا بك في loqaaal.", "Kept. Welcome to loqaaal.")}
           </span>
           <p className="lq-keep__lede">
             {t(
-              "المرة الجاية ادخل برقمك وكود، وهتلاقي أوردراتك وعناوينك مستنياك.",
+              "في المرة القادمة ادخل برقمك ورمز، وستجد طلباتك وعناوينك محفوظة.",
               "Next time it is your number and a code, with your orders and addresses waiting."
             )}
           </p>
@@ -156,16 +156,16 @@ export function KeepNumber({ phone }: { phone: string }) {
     <div className="lq-keep">
       <div className="lq-keep__body">
         <span className="lq-keep__title">
-          {t("احفظ رقمك للمرة الجاية", "Keep this number for next time")}
+          {t("احفظ رقمك للمرة القادمة", "Keep this number for next time")}
         </span>
         <p className="lq-keep__lede">
           {step === "offer"
             ? t(
-                `المرة الجاية بضغطتين: رقمك وكود، من غير باسورد. العنوان والأوردرات بيفضلوا محفوظين على ${masked}.`,
+                `في المرة القادمة يكفيك رقمك ورمز، دون كلمة مرور. يبقى عنوانك وطلباتك محفوظة على ${masked}.`,
                 `Next time is two taps: your number and a code, no password. Your address and your orders stay on ${masked}.`
               )
             : t(
-                `بعتنا كود على ${masked}. اكتبه وخلاص.`,
+                `أرسلنا رمزًا إلى ${masked}. اكتبه لإتمام الحفظ.`,
                 `We sent a code to ${masked}. Type it and you are done.`
               )}
         </p>
@@ -175,7 +175,7 @@ export function KeepNumber({ phone }: { phone: string }) {
             <CodeBoxes onComplete={verify} pending={pending} autoFocus resetKey={attempt} />
             {pending ? (
               <p className="lq-hint" role="status">
-                {t("بنتأكد…", "Checking…")}
+                {t("جارٍ التحقق…", "Checking…")}
               </p>
             ) : null}
           </>
@@ -195,7 +195,7 @@ export function KeepNumber({ phone }: { phone: string }) {
           onClick={() => void send()}
           disabled={pending}
         >
-          {pending ? t("بنبعت الكود", "Sending the code") : t("ابعت الكود", "Send the code")}
+          {pending ? t("جارٍ إرسال الرمز", "Sending the code") : t("أرسل الرمز", "Send the code")}
         </button>
       ) : (
         <button
@@ -204,7 +204,7 @@ export function KeepNumber({ phone }: { phone: string }) {
           onClick={() => void send()}
           disabled={pending}
         >
-          {t("ابعت تاني", "Send again")}
+          {t("أرسل مجددًا", "Send again")}
         </button>
       )}
     </div>

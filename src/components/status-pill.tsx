@@ -37,25 +37,25 @@ type Tone = "neutral" | "wait" | "act" | "live" | "good" | "bad";
 
 const STATUS: Record<BrandOrderStatus, { tone: Tone; ar: string; en: string }> = {
   /* Loqal is checking the order is real — a guest cash order on a new number. */
-  PENDING_VERIFICATION: { tone: "wait", ar: "بنتأكد من الأوردر", en: "Verifying" },
+  PENDING_VERIFICATION: { tone: "wait", ar: "قيد التحقق", en: "Verifying" },
   /* The shopper owes an action: the card did not go through yet. */
-  PENDING_PAYMENT: { tone: "act", ar: "محتاج تدفع", en: "Payment needed" },
+  PENDING_PAYMENT: { tone: "act", ar: "بانتظار الدفع", en: "Payment needed" },
   /* The shop is checking the shelf. This is the wait the copy explains rather
      than apologises for. */
-  PENDING_BRAND: { tone: "wait", ar: "المحل بيراجع الرف", en: "Shop checking the shelf" },
-  CONFIRMED: { tone: "good", ar: "اتأكد", en: "Confirmed" },
-  PACKED: { tone: "live", ar: "متجهّز", en: "Packed" },
+  PENDING_BRAND: { tone: "wait", ar: "بانتظار التأكيد", en: "Shop checking the shelf" },
+  CONFIRMED: { tone: "good", ar: "قيد التجهيز", en: "Confirmed" },
+  PACKED: { tone: "live", ar: "جاهز", en: "Packed" },
   /* Handed to the rider the shopper booked. */
-  HANDED_OVER: { tone: "live", ar: "مع المندوب", en: "With the rider" },
-  DELIVERED: { tone: "good", ar: "اتسلّم", en: "Delivered" },
+  HANDED_OVER: { tone: "live", ar: "في الطريق", en: "With the rider" },
+  DELIVERED: { tone: "good", ar: "تم التسليم", en: "Delivered" },
   /* Not a return: a refused cash order was never paid, so there is nothing to
      refund. It is a failure and it is coloured like one. */
-  DELIVERY_FAILED: { tone: "bad", ar: "التوصيل فشل", en: "Delivery failed" },
+  DELIVERY_FAILED: { tone: "bad", ar: "تعذّر التسليم", en: "Delivery failed" },
   /* The shopper asked, and it is proceeding. Not `bad`. */
-  RETURN_REQUESTED: { tone: "act", ar: "طلب استرجاع", en: "Return requested" },
-  RETURNED: { tone: "neutral", ar: "اترجّع", en: "Returned" },
-  CANCELLED: { tone: "neutral", ar: "اتلغى", en: "Cancelled" },
-  REFUNDED: { tone: "good", ar: "اترد الفلوس", en: "Refunded" },
+  RETURN_REQUESTED: { tone: "act", ar: "طُلب الاسترجاع", en: "Return requested" },
+  RETURNED: { tone: "neutral", ar: "تم الاسترجاع", en: "Returned" },
+  CANCELLED: { tone: "neutral", ar: "أُلغي", en: "Cancelled" },
+  REFUNDED: { tone: "good", ar: "رُدّ المبلغ", en: "Refunded" },
 };
 
 export function statusLabel(status: BrandOrderStatus, locale: Locale): string {
@@ -112,8 +112,8 @@ export function StatusRail({
 
   return (
     <ol
-      className="lq-steps"
-      aria-label={locale === "ar" ? "مراحل النص ده" : "This half's stages"}
+      className="lq-steps lq-steps--track"
+      aria-label={locale === "ar" ? "مراحل هذا الجزء من الطلب" : "This half's stages"}
     >
       {steps.map((step, at) => (
         <li
@@ -129,7 +129,6 @@ export function StatusRail({
           }
           aria-current={at === index ? "step" : undefined}
         >
-          <i className="lq-steps__dot" aria-hidden="true" />
           <span className="lq-steps__name">{statusLabel(step, locale)}</span>
         </li>
       ))}

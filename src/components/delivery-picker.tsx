@@ -1,7 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
-
 import type { CartSummary } from "@loqal/contracts/cart.contract";
 import type { DeliveryMethod } from "@loqal/contracts/enums";
 /* The routes that are actually live. SHIPPING_SERVICE is modelled and has no
@@ -52,20 +50,21 @@ export function DeliveryPicker({
   );
 
   return (
-    <div style={STACK}>
-      <span className="lq-hint">{t("طريقة التوصيل", "Delivery method")}</span>
+    <div className="lq-dpick">
+      <span className="lq-label">{t("طريقة التوصيل", "Delivery method")}</span>
 
       {options.length === 0 ? (
         /* Says WHY rather than showing an empty box. The shopper can act on
            this — dropping one shop can put a method back on the table. */
         <p className="lq-hint">
           {t(
-            "المحلات اللي في السلة مفيش بينها طريقة توصيل مشتركة. شيل محل عشان تكمّل، أو اطلب من كل محل لوحده.",
+            "لا تشترك المتاجر التي في سلتك في طريقة توصيل واحدة. أزل أحد المتاجر لتتابع، أو اطلب من كل متجر على حدة.",
             "The shops in your bag share no delivery method. Remove one to continue, or order from each shop separately."
           )}
         </p>
       ) : (
-        <div role="radiogroup" aria-label={t("طريقة التوصيل", "Delivery method")} style={STACK}>
+        /* No gap: `.lq-pay` rows share their edges. */
+        <div role="radiogroup" aria-label={t("طريقة التوصيل", "Delivery method")} className="lq-paygroup">
           {options.map((method) => {
             const chosen = cart.deliveryMethod === method;
             return (
@@ -97,7 +96,7 @@ export function DeliveryPicker({
       {setMethod.isError ? (
         <p className="lq-hint lq-hint--error" role="alert">
           {t(
-            "مش قادرين نحفظ طريقة التوصيل دلوقتي. جرّب تاني.",
+            "تعذّر حفظ طريقة التوصيل الآن. حاول مرة أخرى.",
             "We could not save the delivery method. Try again."
           )}
         </p>
@@ -115,12 +114,12 @@ export function DeliveryPicker({
 export function deliveryNote(method: DeliveryMethod, locale: Locale): string {
   const notes: Record<DeliveryMethod, [string, string]> = {
     RIDER_PER_BRAND: [
-      "كل محل بيطلب مندوب لنصّه، فمصاريف التوصيل بتتحسب لكل محل.",
+      "يحجز كل متجر مندوبًا لجزئه من الطلب، فتُحسب رسوم التوصيل لكل متجر على حدة.",
       "Each shop books a rider for its own half, so delivery is charged per shop.",
     ],
     SHIPPING_SERVICE: ["", ""],
     BRAND_OWN_DELIVERY: [
-      "المحل بيوصّل بنفسه. غالبًا أسرع، وبيشتغل جوّه منطقة المحل بس.",
+      "يوصّل المتجر الطلب بنفسه. غالبًا أسرع، ويقتصر على منطقة المتجر.",
       "The shop delivers itself. Usually faster, and only inside its own area.",
     ],
   };
@@ -130,18 +129,9 @@ export function deliveryNote(method: DeliveryMethod, locale: Locale): string {
 /** The shopper reads a method, not an enum. */
 export function deliveryLabel(method: DeliveryMethod, locale: Locale): string {
   const labels: Record<DeliveryMethod, [string, string]> = {
-    RIDER_PER_BRAND: ["مندوب من المحل", "A rider from the shop"],
+    RIDER_PER_BRAND: ["مندوب من المتجر", "A rider from the shop"],
     SHIPPING_SERVICE: ["شركة شحن", "A shipping company"],
-    BRAND_OWN_DELIVERY: ["توصيل المحل بنفسه", "The shop's own delivery"],
+    BRAND_OWN_DELIVERY: ["توصيل المتجر بنفسه", "The shop's own delivery"],
   };
   return labels[method][locale === "ar" ? 0 : 1];
 }
-
-/* Still inline where the stack is NOT a cart line body. `.lq-line__body` is the
-   same three declarations but it is named for the cart line and only belongs
-   there. */
-const STACK: CSSProperties = {
-  display: "grid",
-  gap: "var(--space-1)",
-  minInlineSize: 0,
-};

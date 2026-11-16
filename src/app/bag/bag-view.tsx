@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import type { CSSProperties, ReactNode } from "react";
 
 import type { CartBrand, CartLine, CartSummary } from "@loqal/contracts/cart.contract";
 import type { DeliveryMethod } from "@loqal/contracts/enums";
 import { useCart, useRemoveBagLine, useUpdateBagLine } from "@/lib/cart";
+import { fetchBrand, queryKeys } from "@/lib/catalog";
+import { clock, isOpenNow } from "@/lib/shop-hours";
 import { formatPrice, type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
 import { Shell } from "@/components/shell";
@@ -22,22 +25,18 @@ import { DeliveryPicker, deliveryLabel } from "@/components/delivery-picker";
  * THE SPLIT BY SHOP IS THE SCREEN, NOT A GROUPING FLOURISH. The backend makes
  * one `BrandOrder` per shop: each one is packed, booked, delivered, charged and
  * confirmed by that shop alone. So this page never draws a single basket with a
- * single delivery line under it — there is a section per shop, and inside each
- * section that shop's own subtotal and that shop's own delivery fee. Flattening
+ * single delivery line under it — there is a group per shop, and inside each
+ * group that shop's own subtotal and that shop's own delivery fee. Flattening
  * them into one figure would promise one parcel and deliver two.
  *
- * WHAT IS DELIBERATELY ABSENT: an ETA. `design/basket.html` puts a green pill
- * reading "يوصلك النهاردة قبل ٩ م" on every shop header, and the cart contract
- * carries no arrival time at all — not per shop and not for the basket. A
- * number invented here would be the one promise the system cannot keep, so the
- * pill is not drawn. When `cartBrandSchema` grows a per-shop ETA it goes in the
- * shop header, one per shop, never summed.
+ * WHAT IS DELIBERATELY ABSENT: an ETA. The cart contract carries no arrival
+ * time at all — not per shop and not for the basket. When `cartBrandSchema`
+ * grows a per-shop ETA it goes in the shop header, one per shop, never summed.
  *
- * MONEY DECIMALS follow the register's rule rather than taste: a shelf price is
- * printed as the shop wrote it on the tag and carries no decimals; anything
- * being reconciled against another figure — a line total, a shop subtotal, a
- * delivery fee, the estimate at the bottom — carries two. That is the whole
- * meaning of `reconciled` on `Money`.
+ * MONEY DECIMALS: a shelf price is printed as the shop wrote it on the tag and
+ * carries no decimals; anything reconciled against another figure — a line
+ * total, a shop subtotal, a delivery fee, the estimate — carries two. That is
+ * the whole meaning of `reconciled` on `Money`.
  */
 export function BagView() {
   const locale = useLocale();
@@ -48,7 +47,10 @@ export function BagView() {
   if (isPending) {
     return (
       <Shell title={title}>
-        <div className="lq-wrap lq-pad">
+        <div className="lq-wrap lq-opage">
+          <header className="lq-ophead">
+            <h1 className="lq-pagetitle">{title}</h1>
+          </header>
           <BagSkeleton />
         </div>
       </Shell>
@@ -58,25 +60,27 @@ export function BagView() {
   if (isError) {
     return (
       <Shell title={title}>
-        <div className="lq-wrap lq-pad lq-sec">
-          <h1 className="lq-phead__title">
-            {title}
-          </h1>
-          <p className="lq-hint lq-hint--error" role="alert">
-            {t(
-              "مش قادرين نجيب السلة دلوقتي. حاجاتك لسه مكانها — الاتصال هو اللي وقع.",
-              "We cannot load your bag right now. Nothing was lost — the connection was."
-            )}
-          </p>
-          <div>
-            <button
-              type="button"
-              className="lq-btn lq-btn--secondary"
-              onClick={() => refetch()}
-            >
-              <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
-              {t("جرّب تاني", "Try again")}
-            </button>
+        <div className="lq-wrap lq-opage">
+          <header className="lq-ophead">
+            <h1 className="lq-pagetitle">{title}</h1>
+          </header>
+          <div className="lq-oempty">
+            <p className="lq-hint lq-hint--error" role="alert">
+              {t(
+                "تعذّر تحميل السلة الآن. لم يضع شيء من قطعك، وإنما انقطع الاتصال.",
+                "We cannot load your bag right now. Nothing was lost — the connection was."
+              )}
+            </p>
+            <div className="lq-oempty__acts">
+              <button
+                type="button"
+                className="lq-btn lq-btn--secondary"
+                onClick={() => refetch()}
+              >
+                <span className="lq-icon" data-icon="refresh-cw" aria-hidden="true" />
+                {t("حاول مرة أخرى", "Try again")}
+              </button>
+            </div>
           </div>
         </div>
       </Shell>
@@ -93,46 +97,48 @@ export function BagView() {
 
   const blocked = cart.brands.filter((brand) => !brand.minimumOrderMet);
 
+  /* A LINK, and it stays one when blocked: a shopper under a shop's minimum
+     needs to READ why, and the reason is the red line beside it. Every shop's
+     minimum has to be met, because each one is a separate order that shop has
+     to be willing to fulfil. */
+  const checkout = (
+    <Link
+      href="/checkout"
+      className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+      aria-disabled={blocked.length > 0}
+      onClick={(event) => {
+        if (blocked.length > 0) event.preventDefault();
+      }}
+    >
+      {t("إتمام الطلب", "Checkout")}
+    </Link>
+  );
+
   return (
     <Shell title={title}>
-      <div className="lq-wrap lq-pad">
-        {/* ── The page head ───────────────────────────────────────────────
-            The count says pieces AND shops, because the number of shops is
+      <div className="lq-wrap lq-opage">
+        {/* The count says pieces AND shops, because the number of shops is
             what decides how many deliveries arrive and how many times
             delivery is charged. */}
-        <header className="lq-sec">
-          <h1 className="lq-phead__title">
-            {title}
-          </h1>
-          <p className="lq-hint">
-            <Counted
-              n={cart.itemCount}
-              locale={locale}
-              ar={{ one: "قطعة واحدة", two: "قطعتين", few: "قطع", many: "قطعة" }}
-              en={{ one: "item", other: "items" }}
-            />
-            {" — "}
-            {t("من", "from")}{" "}
-            <Counted
-              n={cart.brands.length}
-              locale={locale}
-              ar={{ one: "محل واحد", two: "محلين", few: "محلات", many: "محل" }}
-              en={{ one: "shop", other: "shops" }}
-            />
-          </p>
-          <p className="lq-prose">
+        <header className="lq-ophead">
+          <h1 className="lq-pagetitle">{title}</h1>
+          <p className="lq-lede">
             {t(
-              "كل محل بيجهّز ويبعت نصّه بنفسه، فبيوصلوك في وقتين مختلفين.",
-              "Each shop packs and sends its own half, so they arrive at different times."
+              "يجهّز كل متجر قطعه ويرسلها بنفسه، فقد تصلك في وقتين مختلفين.",
+              "Each shop packs and sends its own pieces, so they may arrive at different times."
             )}
+          </p>
+          <p className="lq-ophead__count">
+            <Counted n={cart.itemCount} locale={locale} ar={PIECES} en={{ one: "item", other: "items" }} />
+            {" · "}
+            <Counted n={cart.brands.length} locale={locale} ar={SHOPS} en={{ one: "shop", other: "shops" }} />
           </p>
         </header>
 
         {/* Warnings arrive from the API already written in both languages, so
-            nothing here maps a code to a sentence or invents wording for a
-            code it does not recognise. */}
+            nothing here maps a code to a sentence. */}
         {cart.warnings.length > 0 ? (
-          <section className="lq-sec">
+          <div className="lq-owarn">
             {cart.warnings.map((warning, index) => (
               <p
                 key={`${warning.code}-${index}`}
@@ -143,65 +149,43 @@ export function BagView() {
                 {warning.message[locale]}
               </p>
             ))}
-          </section>
+          </div>
         ) : null}
 
-        {cart.brands.map((brand, index) => (
-          <ShopLot
-            key={brand.brandId}
-            brand={brand}
-            locale={locale}
-            deliveryMethod={cart.deliveryMethod}
-            delayMs={index * 70}
-          />
-        ))}
+        <div className="lq-twocol">
+          <div className="lq-twocol__main">
+            {cart.brands.map((brand, index) => (
+              <ShopLot
+                key={brand.brandId}
+                brand={brand}
+                locale={locale}
+                deliveryMethod={cart.deliveryMethod}
+                delayMs={index * 70}
+              />
+            ))}
+          </div>
 
-        <Summary cart={cart} locale={locale} blocked={blocked} />
-
+          <Summary cart={cart} locale={locale} blocked={blocked} checkout={checkout} />
+        </div>
       </div>
 
-      {/* ── The one action of the screen ────────────────────────────────────
-          It carries the pieces figure, not the estimate: the estimate depends
-          on a delivery method that is chosen at checkout, and a total that
-          moves after the shopper taps is worse than one that was never
-          promised. */}
-      <div className="lq-actionbar">
+      {/* The one action, kept in reach on a phone. It carries the pieces
+          figure, not the estimate: the estimate depends on a delivery method
+          that may still change, and a total that moves after the tap is worse
+          than one that was never promised. */}
+      <div className="lq-actionbar lq-obar">
         <div className="lq-actionbar__info">
           <span className="lq-actionbar__label">{t("القطع", "Items")}</span>
           <Money className="lq-money" amount={cart.subtotal} locale={locale} reconciled />
         </div>
-        {/* A LINK, because /checkout now exists.
-
-            It was a button that revealed a sentence saying checkout was not
-            live: the primary action of the busiest screen in the app did
-            nothing, because there was no create-order contract to build
-            against. There is one now — `createOrderBodySchema` — so this is
-            the destination again.
-
-            `aria-disabled` rather than `disabled`, and it stays a link either
-            way: a shopper under a shop's minimum needs to READ why, and the
-            reason is the red line in the summary above. A dead control with
-            no explanation beside it is the failure this file already fixed
-            once. */}
-        <Link
-          href="/checkout"
-          className="lq-btn lq-btn--primary lq-btn--lg"
-          // Every shop's minimum has to be met, because each one is a separate
-          // order that shop has to be willing to fulfil.
-          aria-disabled={blocked.length > 0}
-          onClick={(event) => {
-            if (blocked.length > 0) event.preventDefault();
-          }}
-        >
-          {t("إتمام الأوردر", "Checkout")}
-        </Link>
+        {checkout}
       </div>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   One shop, one section, one delivery.
+   One shop, one group, one delivery.
    ══════════════════════════════════════════════════════════════════════════ */
 
 function ShopLot({
@@ -217,57 +201,64 @@ function ShopLot({
 }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
-  const pieces = brand.items.reduce((sum, line) => sum + line.quantity, 0);
+  /* The cart names the shop and nothing else, so where it is and whether it
+     is open come from the shop's own public record — the read its page makes.
+     Until it lands, or if it fails, the header simply says less. */
+  const { data: shop } = useQuery({
+    queryKey: queryKeys.brand(brand.brandSlug),
+    queryFn: () => fetchBrand(brand.brandSlug),
+    staleTime: 5 * 60_000,
+  });
+  const open = shop?.hours ? isOpenNow(shop.hours) : null;
 
   return (
     <section
-      className="lq-sec lq-rv"
+      className="lq-group lq-rv"
       aria-label={brand.brandName}
       style={{ "--lq-d": `${delayMs}ms` } as CSSProperties}
     >
-      <hr className="lq-rule" />
-
-      {/* The shop is a place, so its name is a link to it and not a label.
-          NO ETA PILL: see the note at the top of this file. */}
-      <div className="lq-sec__head">
-        <span style={STACK}>
-          <Link href={`/shop/${brand.brandSlug}`} className="lq-sec__title" data-bidi>
+      <div className="lq-ghead">
+        <div className="lq-ghead__id">
+          {/* The shop is a place, so its name is a link to it. */}
+          <Link href={`/shop/${brand.brandSlug}`} className="lq-ghead__name" data-bidi>
             {brand.brandName}
           </Link>
-          <span className="lq-hint">
-            <Counted
-              n={pieces}
-              locale={locale}
-              ar={{ one: "قطعة واحدة", two: "قطعتين", few: "قطع", many: "قطعة" }}
-              en={{ one: "item", other: "items" }}
-            />
-            {" · "}
-            {t("توصيل المحل ده لوحده", "delivered on its own")}
-          </span>
-        </span>
+          {shop?.neighbourhood ? (
+            <span className="lq-ghead__meta" data-bidi>
+              {shop.neighbourhood}
+            </span>
+          ) : null}
+        </div>
 
+        {/* A suspended shop outranks the clock: its lines are out of the
+            totals whatever the hour. "Open" is worked out from the clock, so
+            the server and the browser can read it a minute apart. */}
         {!brand.brandActive ? (
-          <span className="lq-badge lq-badge--neutral">{t("مقفول", "Closed")}</span>
+          <span className="lq-pill" data-tone="neutral">
+            {t("متوقف", "Suspended")}
+          </span>
+        ) : open === true && shop?.hours ? (
+          <span className="lq-ghead__open" data-open="true" suppressHydrationWarning>
+            {t(
+              `مفتوح حتى ${clock(shop.hours.closesAt, "ar")}`,
+              `Open until ${clock(shop.hours.closesAt, "en")}`
+            )}
+          </span>
+        ) : open === false ? (
+          <span className="lq-ghead__open" data-open="false" suppressHydrationWarning>
+            {t("مغلق الآن", "Closed now")}
+          </span>
         ) : null}
       </div>
 
       {/* Says the consequence, not the caution. A suspended shop's lines are
           excluded from every total by the API, so the figures below already
-          reflect this and the sentence explains a number the shopper can see. */}
+          reflect this. */}
       {!brand.brandActive ? (
-        <p className="lq-hint lq-hint--error">
+        <p className="lq-hint lq-hint--error lq-group__note">
           {t(
-            "المحل ده مقفول دلوقتي — حاجاته مش داخلة في الحساب.",
+            "هذا المتجر متوقف الآن، فقطعه غير محسوبة في المجموع.",
             "This shop is closed right now — its items are not counted."
-          )}
-        </p>
-      ) : null}
-
-      {!brand.minimumOrderMet && brand.amountToMinimum ? (
-        <p className="lq-hint">
-          {t(
-            `فاضل ${formatPrice(brand.amountToMinimum, locale, { decimals: true })} توصل للحد الأدنى بتاع المحل ده.`,
-            `Add ${formatPrice(brand.amountToMinimum, locale, { decimals: true })} to reach this shop's minimum.`
           )}
         </p>
       ) : null}
@@ -276,34 +267,39 @@ function ShopLot({
         <BagLine key={line.variantId} line={line} locale={locale} />
       ))}
 
-      <hr className="lq-rule" />
-
       {/* This shop's own two figures. They are here rather than in one basket
-          footer because the shop charges them, not Loqal. */}
-      <div className="lq-sum__row">
-        <span className="lq-hint">{t("مجموع المحل", "Shop subtotal")}</span>
-        <Money className="lq-money" amount={brand.subtotal} locale={locale} reconciled />
-      </div>
-
-      <div className="lq-sum__row">
-        <span style={STACK}>
-          <span className="lq-hint">{t("توصيل المحل", "Shop delivery")}</span>
-          {deliveryMethod ? (
-            <span className="lq-hint">{deliveryLabel(deliveryMethod, locale)}</span>
-          ) : null}
-        </span>
-
-        {/* Null until a method is chosen, and a fee is a figure somebody
-            checks — so the screen says WHEN it will exist instead of printing
-            a zero the shop never quoted. */}
-        {brand.impliedFare ? (
-          <Money className="lq-money" amount={brand.impliedFare} locale={locale} reconciled />
-        ) : (
-          <span className="lq-hint">
-            {t("بيتحدد لما تختار طريقة التوصيل", "Set when you pick a delivery method")}
+          footer because the shop charges them, not loqaaal. */}
+      <div className="lq-group__sums">
+        <div className="lq-sum__row">
+          <span>{t("مجموع المتجر", "Shop subtotal")}</span>
+          <Money className="lq-money" amount={brand.subtotal} locale={locale} reconciled />
+        </div>
+        <div className="lq-sum__row">
+          <span>
+            {t("توصيل هذا المتجر", "This shop's delivery")}
+            {deliveryMethod ? ` · ${deliveryLabel(deliveryMethod, locale)}` : ""}
           </span>
-        )}
+          {/* Null until a method is chosen, and a fee is a figure somebody
+              checks — so the screen says WHEN it will exist instead of
+              printing a zero the shop never quoted. */}
+          {brand.impliedFare ? (
+            <Money className="lq-money" amount={brand.impliedFare} locale={locale} reconciled />
+          ) : (
+            <span className="lq-hint">
+              {t("يُحدَّد عند اختيار طريقة التوصيل", "Set when you pick a delivery method")}
+            </span>
+          )}
+        </div>
       </div>
+
+      {!brand.minimumOrderMet && brand.amountToMinimum ? (
+        <p className="lq-hint lq-hint--error lq-group__note" role="alert">
+          {t(
+            `يتبقى ${formatPrice(brand.amountToMinimum, locale, { decimals: true })} لبلوغ الحد الأدنى لهذا المتجر.`,
+            `Add ${formatPrice(brand.amountToMinimum, locale, { decimals: true })} to reach this shop's minimum.`
+          )}
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -324,29 +320,18 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
     .join(" · ");
 
   return (
-    <div className="lq-line">
-      {/* The product's own photo, so the piece in the bag looks like the one
-          the shopper picked. `ProductPhoto`, as on a product card: with no
-          configured media host or a file that fails to load it degrades to the
-          drawing rather than throwing. The drawing is the fallback for a line
-          with no photo, seeded from the product's own id so the piece keeps one
-          drawing across reloads. */}
+    <article className="lq-line">
+      {/* The product's own photo where there is one; `ProductPhoto` degrades
+          to the drawing on a failed load. The drawing is seeded from the
+          product id so the piece keeps one drawing across reloads. */}
       <span className="lq-line__well">
         {line.coverUrl ? (
-          <ProductPhoto
-            src={line.coverUrl}
-            alt={name}
-            productId={line.productId}
-            // `.lq-line` gives the well a fixed 72px column.
-            sizes="72px"
-          />
+          <ProductPhoto src={line.coverUrl} alt={name} productId={line.productId} sizes="92px" />
         ) : (
           <Garment className="lq-garment" kind={garmentFor(line.productId)} />
         )}
       </span>
 
-      {/* A grid stack, because `.lq-line__name` and `.lq-line__meta` are both
-          inline and would otherwise run together on one line. */}
       <div className="lq-line__body">
         <span className="lq-line__name" data-bidi>
           {name}
@@ -359,32 +344,34 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
 
         {/* A line the shop cannot currently supply says so with the number it
             CAN supply. "Out of stock" on something already in the bag is not
-            actionable; "only 2 left" is. */}
+            actionable; "only 2 left" is. At the ceiling it is a note, not a
+            failure. */}
         {!line.available ? (
           <span className="lq-hint lq-hint--error">
             {line.availableQuantity > 0
-              ? t(`فاضل ${line.availableQuantity} بس`, `Only ${line.availableQuantity} left`)
-              : t("خلص من المحل", "Out of stock")}
+              ? t(`المتبقي ${line.availableQuantity} فقط`, `Only ${line.availableQuantity} left`)
+              : t("نفدت من المتجر", "Out of stock")}
+          </span>
+        ) : line.quantity >= line.availableQuantity ? (
+          <span className="lq-line__meta">
+            {t(`المتبقي ${line.availableQuantity} فقط`, `Only ${line.availableQuantity} left`)}
           </span>
         ) : null}
 
         {/* Excluded from the shop's subtotal by the API — reported rather than
             silently priced, so the figures add up on screen. */}
         {!line.includedInTotals ? (
-          <span className="lq-hint">
-            {t("مش داخلة في الحساب", "Not counted in the total")}
+          <span className="lq-line__meta">
+            {t("غير محسوبة في المجموع", "Not counted in the total")}
           </span>
         ) : null}
 
         <div className="lq-line__foot">
-          {/* Bare buttons inside .lq-qty, which sizes them at 44x44 itself.
-              An .lq-iconbtn nested in here would have drawn a second hairline
-              inside the stepper's own frame. */}
           <div className="lq-qty">
             <button
               type="button"
               disabled={busy}
-              aria-label={t("أقل", "Decrease")}
+              aria-label={t("إنقاص الكمية", "Decrease")}
               onClick={() => {
                 // One is the floor: going below it is a removal, and the API's
                 // own schema refuses a quantity of zero.
@@ -406,7 +393,7 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
               type="button"
               // The shop's own availability is the ceiling, not 99.
               disabled={busy || line.quantity >= line.availableQuantity}
-              aria-label={t("أكتر", "Increase")}
+              aria-label={t("زيادة الكمية", "Increase")}
               onClick={() =>
                 update.mutate({ variantId: line.variantId, quantity: line.quantity + 1 })
               }
@@ -415,23 +402,20 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
             </button>
           </div>
 
-          {/* A destructive control never carries an icon alone — the word is
-              the label and .lq-btn holds the 44px floor. */}
+          {/* A destructive control is a word, never an icon alone. */}
           <button
             type="button"
-            className="lq-btn lq-btn--ghost"
+            className="lq-line__rm"
             disabled={busy}
             onClick={() => remove.mutate({ variantId: line.variantId })}
           >
-            <span className="lq-icon" data-icon="trash-2" aria-hidden="true" />
-            {t("شيل", "Remove")}
+            {t("إزالة", "Remove")}
           </button>
         </div>
       </div>
 
-      {/* The third column. A line total is reconciled into the shop subtotal
-          under it, so two decimals; the unit price beneath is the figure on the
-          tag on the shelf, so none. */}
+      {/* A line total is reconciled into the shop subtotal, so two decimals;
+          the unit price beneath is the figure on the tag, so none. */}
       <div className="lq-line__end">
         <Money className="lq-money" amount={line.lineTotal} locale={locale} reconciled />
         {line.quantity > 1 ? (
@@ -442,45 +426,45 @@ function BagLine({ line, locale }: { line: CartLine; locale: Locale }) {
           </span>
         ) : null}
       </div>
-    </div>
+    </article>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   The summary.
+   The summary panel.
    ══════════════════════════════════════════════════════════════════════════ */
 
 function Summary({
   cart,
   locale,
   blocked,
+  checkout,
 }: {
   cart: CartSummary;
   locale: Locale;
   blocked: CartBrand[];
+  checkout: ReactNode;
 }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
   return (
-    <section className="lq-sec" aria-label={t("الملخص", "Summary")}>
-      <hr className="lq-rule" />
-      <h2 className="lq-sec__title">{t("الملخص", "Summary")}</h2>
+    <aside className="lq-panel" aria-label={t("الملخص", "Summary")}>
+      <h2 className="lq-panel__title">{t("الملخص", "Summary")}</h2>
+
+      {/* The method first: every delivery figure under it comes from it. */}
+      <div className="lq-panel__pick">
+        <DeliveryPicker cart={cart} locale={locale} />
+      </div>
 
       <div className="lq-sum__row">
-        <span className="lq-hint">
-          {t("القطع", "Items")}{" ("}
-          <span data-num>{cart.itemCount}</span>
-          {")"}
+        <span>
+          {t("القطع", "Items")} (<span data-num>{cart.itemCount}</span>)
         </span>
         <Money className="lq-money" amount={cart.subtotal} locale={locale} reconciled />
       </div>
 
-      <DeliveryPicker cart={cart} locale={locale} />
-
       <div className="lq-sum__row">
-        <span className="lq-hint">
-          {t("التوصيل — كل محل لوحده", "Delivery — each shop separately")}
-        </span>
+        <span>{t("التوصيل، لكل متجر على حدة", "Delivery, each shop separately")}</span>
         {cart.estimatedDeliveryTotal ? (
           <Money
             className="lq-money"
@@ -489,52 +473,47 @@ function Summary({
             reconciled
           />
         ) : (
-          <span className="lq-hint">
-            {t("بيتحدد عند الدفع", "Set at checkout")}
-          </span>
+          <span className="lq-hint">{t("يُحدَّد عند إتمام الطلب", "Set at checkout")}</span>
         )}
       </div>
 
-      <div className="lq-sum__row">
-        <span className="lq-sec__title">{t("الإجمالي التقريبي", "Estimated total")}</span>
-        <Money
-          className="lq-money"
-          amount={cart.grandTotalEstimate}
-          locale={locale}
-          reconciled
-        />
+      <div className="lq-sum__row lq-sum__row--total">
+        <span>{t("الإجمالي التقديري", "Estimated total")}</span>
+        <Money className="lq-money" amount={cart.grandTotalEstimate} locale={locale} reconciled />
       </div>
 
-      {/* The two sentences that explain the two things a shopper discovers at
-          the worst possible moment otherwise. Both stay verbatim. */}
-      <p className="lq-prose">
-        {t(
-          "مصاريف التوصيل لكل محل لوحده — الأوردر من محلين بيتحسب مرتين.",
-          "Delivery is charged per shop — an order from two shops is charged twice."
-        )}
-      </p>
-      <p className="lq-prose">
-        {t(
-          "كل محل بيراجع الرف قبل ما يأكد نصّه. لو قطعة خلصت، بنلغيها ومش بتتحاسب عليها — وباقي الأوردر بيكمّل عادي.",
-          "Each shop checks its shelf before it confirms its half. A piece that has sold out is dropped and not charged, and the rest of the order carries on."
-        )}
-      </p>
-      <p className="lq-hint">
-        {t(
-          "الحساب النهائي بيتعمل عند الدفع، فالرقم ده تقديري.",
-          "Everything is repriced at checkout, so this figure is an estimate."
-        )}
-      </p>
+      <div className="lq-panel__go">{checkout}</div>
 
       {blocked.length > 0 ? (
         <p className="lq-hint lq-hint--error" role="alert">
           {t(
-            `${blocked.map((brand) => brand.brandName).join(" و")} لسه تحت الحد الأدنى، فالأوردر مش هيكمّل.`,
+            `لم يبلغ ${blocked.map((brand) => brand.brandName).join(" و")} الحد الأدنى للطلب بعد، فلا يمكن إتمام الطلب.`,
             `${blocked.map((brand) => brand.brandName).join(" and ")} ${blocked.length === 1 ? "is" : "are"} still under the minimum, so checkout cannot run.`
           )}
         </p>
       ) : null}
-    </section>
+
+      {/* The sentences that explain the things a shopper otherwise discovers
+          at the worst possible moment. */}
+      <p className="lq-panel__note">
+        {t(
+          "تُحسب رسوم التوصيل لكل متجر على حدة، فالطلب من متجرين تُدفع رسومه مرتين.",
+          "Delivery is charged per shop — an order from two shops is charged twice."
+        )}
+      </p>
+      <p className="lq-panel__note">
+        {t(
+          "يراجع كل متجر الرف قبل التأكيد. إذا نفدت قطعة تُلغى ولا تُحاسب عليها، ويستمر باقي الطلب.",
+          "Each shop checks its shelf before it confirms its half. A piece that has sold out is dropped and not charged, and the rest of the order carries on."
+        )}
+      </p>
+      <p className="lq-panel__note">
+        {t(
+          "يُعاد حساب المبلغ عند إتمام الطلب، لذا فهذا الرقم تقديري.",
+          "Everything is repriced at checkout, so this figure is an estimate."
+        )}
+      </p>
+    </aside>
   );
 }
 
@@ -543,39 +522,34 @@ function Summary({
    ══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * The empty state DESCRIBES WHAT WILL APPEAR. It never says the bag is empty —
- * the shopper can see that — and it teaches the one thing about this screen
- * that is not obvious before there is anything in it: the bag splits by shop.
+ * The empty state names the state, then DESCRIBES WHAT WILL APPEAR and teaches
+ * the one thing about this screen that is not obvious before there is anything
+ * in it: the bag splits by shop.
  */
 function EmptyBag({ locale }: { locale: Locale }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
   return (
-    <div className="lq-wrap lq-pad lq-sec">
-      <h1 className="lq-phead__title">
-        {t("السلة", "Bag")}
-      </h1>
-
-      <span
-        className="lq-pcard__well"
-        style={{ inlineSize: 88 }}
-        aria-hidden="true"
-      >
-        <Garment className="lq-garment" kind="bag" />
-      </span>
-
-      <p className="lq-prose">
-        {t(
-          "الحاجات اللي تختارها من أي محل تظهر هنا، كل محل في قسم لوحده — بمجموعه ومصاريف توصيله، لأن كل محل بيبعت نصّه بنفسه.",
-          "Whatever you pick from any shop shows up here, each shop in its own section — with its own subtotal and its own delivery fee, because each shop sends its own half."
-        )}
-      </p>
-
-      <div>
-        <Link href="/shops" className="lq-btn lq-btn--primary lq-btn--lg">
-          <span className="lq-icon" data-icon="store" aria-hidden="true" />
-          {t("اتفرّج على المحلات", "Browse shops")}
-        </Link>
+    <div className="lq-wrap lq-opage">
+      <header className="lq-ophead">
+        <h1 className="lq-pagetitle">{t("السلة", "Bag")}</h1>
+      </header>
+      <div className="lq-oempty">
+        <h2 className="lq-oempty__title">{t("سلتك فارغة", "Your bag is empty")}</h2>
+        <p className="lq-oempty__body">
+          {t(
+            "ستظهر هنا القطع التي تختارها من أي متجر، وكل متجر في قسم مستقل بمجموعه ورسوم توصيله، لأن كل متجر يرسل طلبه بنفسه.",
+            "Whatever you pick from any shop shows up here, each shop in its own section with its own subtotal and delivery fee, because each shop sends its own half."
+          )}
+        </p>
+        <div className="lq-oempty__acts">
+          <Link href="/shops" className="lq-btn lq-btn--primary lq-btn--lg">
+            {t("تصفّح المتاجر", "Browse shops")}
+          </Link>
+          <Link href="/orders" className="lq-btn lq-btn--secondary lq-btn--lg">
+            {t("تتبّع طلبًا", "Track an order")}
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -585,27 +559,29 @@ function EmptyBag({ locale }: { locale: Locale }) {
  *  two of its lines, twice — never a spinner in the middle of content. */
 function BagSkeleton() {
   return (
-    <div aria-hidden="true">
-      {[0, 1].map((lot) => (
-        <section className="lq-sec" key={lot}>
-          <hr className="lq-rule" />
-          <div className="lq-sec__head">
-            <span className="lq-skel" style={{ blockSize: 20, inlineSize: "9rem" }} />
-            <span className="lq-skel" style={{ blockSize: 20, inlineSize: "5rem" }} />
-          </div>
-          {[0, 1].map((line) => (
-            <div className="lq-line" key={line}>
-              <span className="lq-skel" style={{ aspectRatio: "var(--ratio-garment)" }} />
-              <span className="lq-line__body">
-                <span className="lq-skel" style={{ blockSize: 16, inlineSize: "70%" }} />
-                <span className="lq-skel" style={{ blockSize: 13, inlineSize: "40%" }} />
-                <span className="lq-skel" style={{ blockSize: 44, inlineSize: "9rem" }} />
-              </span>
-              <span className="lq-skel" style={{ blockSize: 16, inlineSize: "4rem" }} />
+    <div className="lq-twocol" aria-hidden="true">
+      <div className="lq-twocol__main">
+        {[0, 1].map((lot) => (
+          <section className="lq-group" key={lot}>
+            <div className="lq-ghead">
+              <span className="lq-skel" style={{ blockSize: 24, inlineSize: "9rem" }} />
+              <span className="lq-skel" style={{ blockSize: 16, inlineSize: "5rem" }} />
             </div>
-          ))}
-        </section>
-      ))}
+            {[0, 1].map((line) => (
+              <div className="lq-line" key={line}>
+                <span className="lq-line__well lq-skel" />
+                <span className="lq-line__body">
+                  <span className="lq-skel" style={{ blockSize: 16, inlineSize: "70%" }} />
+                  <span className="lq-skel" style={{ blockSize: 13, inlineSize: "40%" }} />
+                  <span className="lq-skel" style={{ blockSize: 40, inlineSize: "8rem" }} />
+                </span>
+                <span className="lq-skel" style={{ blockSize: 16, inlineSize: "4rem" }} />
+              </div>
+            ))}
+          </section>
+        ))}
+      </div>
+      <span className="lq-panel lq-skel" style={{ blockSize: 280 }} />
     </div>
   );
 }
@@ -614,14 +590,15 @@ function BagSkeleton() {
    Small shared bits.
    ══════════════════════════════════════════════════════════════════════════ */
 
+const PIECES = { one: "قطعة واحدة", two: "قطعتان", few: "قطع", many: "قطعة" };
+const SHOPS = { one: "متجر واحد", two: "متجران", few: "متاجر", many: "متجرًا" };
+
 /**
  * A counted noun, with LATIN digits in both languages.
  *
  * Arabic has a singular, a dual and a small plural, and a numeral in front of
- * the dual reads as a stutter — "2 قطعتين" says two twice. So one and two are
- * the word alone and everything above three prints the figure. The figure goes
- * through `data-num`, which is Source Code Pro and tabular, like every other
- * count in the system.
+ * the dual reads as a stutter — "2 قطعتان" says two twice. So one and two are
+ * the word alone and everything from three prints the figure, tabular.
  */
 function Counted({
   n,
@@ -649,12 +626,3 @@ function Counted({
     </>
   );
 }
-
-/* Still inline where the stack is NOT a cart line body: a shop header, the
-   delivery label pair, the picker. `.lq-line__body` is the same three
-   declarations but it is named for the cart line and only belongs there. */
-const STACK: CSSProperties = {
-  display: "grid",
-  gap: "var(--space-1)",
-  minInlineSize: 0,
-};
