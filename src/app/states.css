@@ -1,398 +1,81 @@
 /* ==========================================================================
    The empty and broken screens.
 
-   A NEW FILE rather than more of components.css, because these rules belong to
-   four screens that share nothing else and because components.css is a shared
-   surface several people are in at once.
+   One composition for all of them, from the approved design's `.empty`: a
+   large display title at the inline start, one muted paragraph capped at 50ch,
+   and a row of actions. No drawing, no centring — an empty bag and a failed
+   render speak in the same calm voice, and the page reads on from the start
+   edge the way every other page does.
 
-   Everything here resolves tokens.css by name. No hex, no font, no curve that
-   is not already in the system: the drawing is --ink on --paper, the line is
-   the same 1px --line-strong every rail in the product is drawn with, and the
-   motion is --ease-in-out over durations longer than --dur-settle, because a
-   hanger swinging is the one thing in this app that is allowed to keep moving.
-
-   ── The motion, and how it is switched off ──────────────────────────────────
-
-   Every animation here rests at its 0%/100% frame, so the still drawing IS the
-   drawing — nothing is legible only mid-animation. globals.css already
-   collapses every duration under prefers-reduced-motion; the explicit block at
-   the foot of this file turns these off outright rather than running them at
-   0.01ms, so no frame is painted at all. The static `transform` that leans the
-   crooked hanger is NOT an animation and survives, because the lean is the
-   picture and not the movement.
+   Everything resolves tokens.css by name. Sizes are CONTAINER units (`cqi`) of
+   the nearest container — `.lq-shell` on every storefront page — so a state in
+   a narrow column of a wide page and a state on a phone both size themselves to
+   the room they are in, not to the window.
    ========================================================================== */
 
-/* ── The drawing ─────────────────────────────────────────────────────────────
-   A rail, hangers on it, and a garment. --wire is the hanger height and every
-   other measure is derived from it, so the whole illustration scales with one
-   clamp: about 58px on a 390px phone, 74px on a desktop. CONTAINER units, not viewport
-   ones: components.css makes `.lq-shell` an inline-size container precisely so
-   a 430px phone frame embedded in a desktop page still lays out like a phone,
-   and this drawing has no business being the one thing that measures the
-   window instead.
-
-   The hook in the wire's own 60x32 viewBox curls around y=8 — a quarter of the
-   way down — so the hanger is pulled UP by a quarter of its height to put that
-   point on the rail, and pivots about the same point. One fraction, used
-   twice, and the hanger cannot come off the rail as the art rescales. */
-.lq-art {
-  --wire: clamp(52px, 15cqi, 74px);
-  --worn: calc(var(--wire) * 2.45);
-  --sway: 2.4deg;
-  position: relative;
-  inline-size: min(420px, 92%);
-  margin-inline: auto;
-  color: var(--ink);
-}
-
-/* Not a border on the art itself: the rail has to sit UNDER the hangers in the
-   flow, so their negative margin can lift them onto it. */
-.lq-art__rail {
-  display: block;
-  block-size: 0;
-  border-block-start: var(--border-width) solid var(--line-strong);
-  /* Drawn from the middle outward, then the hangers arrive on it. The resting
-     state is the finished rail, so `none` under reduced motion is the rail. */
-  transform: scaleX(1);
-  animation: lq-draw var(--dur-slow) var(--ease) both;
-}
-@keyframes lq-draw {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-/* The hangers land as one group, which leaves every per-hanger animation
-   declaration free for the sway and its overrides. */
-.lq-art__hangs {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: clamp(16px, 6cqi, 34px);
-  animation: lq-hung var(--dur-settle) var(--ease) 120ms both;
-}
-@keyframes lq-hung {
-  from {
-    opacity: 0;
-    translate: 0 calc(var(--wire) * -0.5);
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
-.lq-art__hang {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-block-start: calc(var(--wire) * -0.25);
-  transform-origin: 50% calc(var(--wire) * 0.25);
-  /* The individual `rotate` property, NOT `transform` — the crooked lean below
-     is a `transform`, and keeping the two on separate properties lets the sway
-     be removed without taking the lean with it. */
-  rotate: 0deg;
-  animation:
-    lq-sway 6.4s var(--ease-in-out) infinite,
-    lq-drift 19s var(--ease-in-out) infinite;
-}
-/* Out of phase and out of tempo. Three hangers swinging in step is a
-   metronome; the negative delays mean they are already scattered on the first
-   frame, so nothing lines up even for a moment. */
-.lq-art__hang[data-sway="2"] {
-  --sway: 3.2deg;
-  animation-duration: 7.6s, 23s;
-  animation-delay:
-    -2.4s,
-    -9s;
-}
-.lq-art__hang[data-sway="3"] {
-  --sway: 1.8deg;
-  animation-duration: 5.6s, 17s;
-  animation-delay:
-    -4.1s,
-    -3s;
-}
-
-/* NOT A SINE. A pendulum driven at constant amplitude is a metronome, and a
-   metronome on a dead-end screen is a loading spinner with extra steps. This
-   is one push that decays over four swings and then gets pushed again, which
-   is what a rail in a shop with a door actually does. */
-@keyframes lq-sway {
-  0%,
-  100% {
-    rotate: 0deg;
-  }
-  12% {
-    rotate: var(--sway);
-  }
-  37% {
-    rotate: calc(var(--sway) * -0.82);
-  }
-  60% {
-    rotate: calc(var(--sway) * 0.52);
-  }
-  81% {
-    rotate: calc(var(--sway) * -0.26);
-  }
-}
-
-/* Along the rail, on `translate` so it composes with the swing on `rotate`.
-   Its period is prime to every sway duration, so the drawing never repeats a
-   pose it has already held. */
-@keyframes lq-drift {
-  0%,
-  100% {
-    translate: calc(var(--wire) * -0.07) 0;
-  }
-  50% {
-    translate: calc(var(--wire) * 0.07) 0;
-  }
-}
-
-.lq-art__wire {
-  display: block;
-  inline-size: calc(var(--wire) * 1.875); /* the 60x32 viewBox's own ratio */
-  block-size: var(--wire);
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-/* Exactly 1px at every size, which is what makes the hanger and the garment
-   read as one drawing rather than as two weights of line. */
-.lq-art__wire path,
-.lq-art .lq-garment path,
-.lq-art .lq-garment rect {
-  vector-effect: non-scaling-stroke;
-}
-.lq-art .lq-garment {
-  stroke: currentColor;
-}
-
-/* On the hanger. Pulled up so the garment's shoulders — about a fifth of the
-   way down its own viewBox — meet the hanger's bar. */
-.lq-art__worn {
-  inline-size: var(--worn);
-  block-size: var(--worn);
-  margin-block-start: calc(var(--wire) * -0.125 - var(--worn) * 0.2);
-  /* A beat behind the hanger it hangs from. Cloth has weight and arrives late;
-     a garment welded to its hanger reads as a sticker. */
-  transform-origin: 50% 12%;
-  animation: lq-drag 6.4s var(--ease-in-out) 320ms infinite;
-}
-/* The same shape as the swing, a fifth of the size and a beat behind it, so
-   the cloth trails the wire rather than keeping its own time. */
-@keyframes lq-drag {
-  0%,
-  100% {
-    rotate: 0deg;
-  }
-  12% {
-    rotate: -1.5deg;
-  }
-  37% {
-    rotate: 1.2deg;
-  }
-  60% {
-    rotate: -0.8deg;
-  }
-  81% {
-    rotate: 0.4deg;
-  }
-}
-
-/* The lean. A static transform, so it is the drawing and not the animation:
-   under reduced motion the hanger stops swinging and stays crooked. The slip
-   is its arrival: it overshoots past the lean and comes back, ending on the
-   same -7deg the static rule holds. */
-.lq-art[data-art="crooked"] .lq-art__hang {
-  transform: rotate(-7deg);
-  animation:
-    lq-sway 6.4s var(--ease-in-out) 0s infinite,
-    lq-drift 19s var(--ease-in-out) 0s infinite,
-    lq-slip 720ms var(--ease-in-out) 200ms both;
-}
-@keyframes lq-slip {
-  0% {
-    transform: rotate(1.5deg);
-  }
-  60% {
-    transform: rotate(-11deg);
-  }
-  100% {
-    transform: rotate(-7deg);
-  }
-}
-
-/* Nothing on it any more, so it swings wider and quicker than a loaded one.
-   That is the whole joke, told in two numbers. */
-.lq-art[data-art="slipped"] .lq-art__hang {
-  --sway: 5.5deg;
-  animation-duration: 3.6s, 19s;
-}
-
-/* The bare rail runs three hangers across it instead of one, so it gets a
-   larger wire and the whole drawing keeps its proportions. Capped at 44 rather
-   than 42 for the same reason it is capped at all: three hangers plus two gaps
-   must still fit inside --lq-art's 320px. */
-.lq-art[data-art="shelf"] {
-  --wire: clamp(46px, 13cqi, 64px);
-}
-/* Nothing on this shelf, and the empty band is the point — the hangers alone
-   are a hairline with three small marks on it, which reads as a divider. */
-.lq-art[data-art="shelf"] .lq-art__floor {
-  block-size: calc(var(--wire) * 1.6);
-}
-
-/* ── Off the hanger ──────────────────────────────────────────────────────────
-   The floor is the same hairline as the rail, and the garment rests its hem on
-   it. It does NOT sway: it has already landed, and a thing on the floor that
-   keeps moving is a different and much stranger drawing. */
-.lq-art__floor {
-  display: grid;
-  place-items: end center;
-  padding-block-start: calc(var(--wire) * 0.55);
-  border-block-end: var(--border-width) solid var(--line-strong);
-}
-.lq-art__fallen {
-  inline-size: var(--worn);
-  block-size: var(--worn);
-  /* The pivot is the HEM, not the box: the garment's own drawing ends about
-     an eighth of the way above the bottom of its 120x120 viewBox, so pivoting
-     on the box would swing it about a point in mid-air and float it above the
-     floor line. `translate` drops that eighth so the hem meets the line. */
-  transform-origin: 50% 88%;
-  translate: 0 12%;
-  rotate: -15deg;
-  opacity: 0.9;
-  /* It falls, catches on its hem, rocks once and stops. `both`, and the last
-     frame is the resting rule above it, so a screen that never runs the
-     animation looks identical to one that has finished it. */
-  animation: lq-settle 980ms var(--ease-in-out) 340ms both;
-}
-@keyframes lq-settle {
-  0% {
-    rotate: -36deg;
-    translate: 0 -22%;
-    opacity: 0;
-  }
-  46% {
-    rotate: -8deg;
-    translate: 0 14%;
-    opacity: 0.9;
-  }
-  68% {
-    rotate: -20deg;
-    translate: 0 10%;
-  }
-  86% {
-    rotate: -13deg;
-    translate: 0 12.5%;
-  }
-  100% {
-    rotate: -15deg;
-    translate: 0 12%;
-    opacity: 0.9;
-  }
-}
-
-/* A state with nothing beside it gets the room that buys: half again the
-   drawing, and the whole measure rather than a results column. */
-.lq-state[data-size="page"] .lq-art {
-  --wire: clamp(72px, 12cqi, 108px);
-  inline-size: min(560px, 94%);
-}
-/* Three hangers and two gaps have to fit the 560px the page state gives them,
-   and still fit a 390px phone. That ceiling is lower than the single-hanger
-   one above it for no other reason. */
-.lq-state[data-size="page"] .lq-art[data-art="shelf"] {
-  --wire: clamp(46px, 9cqi, 80px);
-}
-.lq-state[data-size="page"] {
-  min-block-size: min(62svh, 560px);
-  align-content: center;
-  padding-block: clamp(32px, 8svh, 88px);
-}
-.lq-state[data-size="page"] .lq-state__title {
-  font-size: var(--text-xl);
-}
-
-/* ── The state around it ─────────────────────────────────────────────────────
-   Centred, capped at a readable measure, and phone-first: the drawing and the
-   two sentences fit on a 390px screen with the action still in the thumb's
-   reach. */
 .lq-state {
   display: grid;
-  justify-items: center;
-  gap: var(--space-5);
-  padding-block: clamp(24px, 6svh, 52px);
-  text-align: center;
+  justify-items: start;
+  max-inline-size: 760px;
+  padding-block: clamp(2rem, 7vh, 4.5rem);
+  text-align: start;
 }
-.lq-state__say {
-  display: grid;
-  gap: var(--space-2);
-  max-inline-size: 42ch;
+/* A state that IS the screen gets the sample's full breathing room. */
+.lq-state[data-size="page"] {
+  padding-block: clamp(3.75rem, 14vh, 8.75rem);
 }
+/* A caller's own picture (search's rail) sits above the words. */
+.lq-state > :not(.lq-state__title, .lq-state__body, .lq-state__note, .lq-state__acts) {
+  margin-block-end: var(--space-8);
+}
+
+/* Inline states stay under the page's own h1 (--text-4xl tops out at 4.5rem);
+   a page state is the h1's equal, because it is the whole screen. */
 .lq-state__title {
-  font-size: var(--text-lg);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4.6cqi, 3.5rem);
   font-weight: var(--weight-medium);
-  line-height: var(--leading-snug);
-  color: var(--text-title);
+  line-height: 1.2;
+  color: var(--ink);
+  text-wrap: balance;
+  /* A search term the shopper typed can be one forty-character token. */
+  overflow-wrap: anywhere;
+}
+.lq-state[data-size="page"] .lq-state__title {
+  font-size: clamp(2.5rem, 6cqi, 4.75rem);
 }
 .lq-state__body {
-  font-size: var(--text-sm);
+  margin: var(--space-3) 0 0;
+  max-inline-size: 50ch;
+  font-size: var(--text-base);
   font-weight: var(--weight-light);
   line-height: var(--leading-normal);
-  color: var(--text-muted);
+  color: var(--ink-2);
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+.lq-state__body .lq-hint {
+  display: inline-block;
+  margin-block-start: var(--space-2);
 }
 .lq-state__note {
-  padding-block-start: var(--space-1);
+  margin: var(--space-3) 0 0;
 }
 .lq-state__acts {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: var(--space-3);
-  inline-size: 100%;
-}
-/* A failure is drawn in the signal colour, mixed back toward ink so a broken
-   page is not a red page. Colour is never the only carrier: every one of these
-   states says what happened in words directly under the drawing. */
-.lq-state[data-tone="loud"] .lq-art {
-  color: color-mix(in srgb, var(--signal-ink) 55%, var(--ink));
+  margin-block-start: var(--space-6);
 }
 
-/* Phone. One action per line and full width — two 44px buttons side by side at
+/* Phone. One action per line and full width — two buttons side by side at
    390px leave neither of them a comfortable target. */
 @container (max-width: 460px) {
   .lq-state__acts {
     flex-direction: column;
     align-items: stretch;
-  }
-  .lq-state__acts > * {
     inline-size: 100%;
-  }
-}
-
-/* ==========================================================================
-   Not optional.
-
-   `animation:none`, not a shorter duration: the drawings above are complete at
-   rest, so there is nothing to play quickly. The crooked lean and the fallen
-   garment's angle are static transforms and stay exactly as they are.
-   ========================================================================== */
-@media (prefers-reduced-motion: reduce) {
-  .lq-art__rail,
-  .lq-art__hangs,
-  .lq-art__hang,
-  .lq-art__worn,
-  .lq-art__fallen {
-    animation: none;
   }
 }
 

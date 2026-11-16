@@ -15,11 +15,11 @@ import { Wordmark } from "@/components/wordmark";
 /**
  * Signing in — a number, then six digits, on a page of its own.
  *
- * NO SITE CHROME. The header, the mega-menus and the 400px footer belong to
- * shopping; on a credential screen they squeeze the one thing the page is for
- * into the strip between them and offer a dozen ways to wander off mid-sign-in.
- * So this route does not mount `Shell`: it is the mark, a way back to the shop,
- * the language toggle, and the form, filling the window.
+ * NO SITE CHROME. The header, the mega-menus and the footer belong to shopping;
+ * on a credential screen they squeeze the one thing the page is for and offer a
+ * dozen ways to wander off mid-sign-in. So this route does not mount `Shell`:
+ * it is a shop's photograph on one side, and on the other the mark, a way back,
+ * the language toggle and the form, filling the window.
  *
  * IT GOES BACK WHERE THE SHOPPER CAME FROM. `?next=` carries the path that sent
  * them here, and the browser's own referrer covers the links that forgot to;
@@ -29,21 +29,20 @@ import { Wordmark } from "@/components/wordmark";
  * A phone is the credential an Egyptian shopper already has, and it is already
  * half of how this product works: a guest order is opened with its number and
  * the phone that placed it. So the phone route leads, Google sits under it, and
- * email and password — the route brand staff and admins use — is a toggle
- * rather than the front door.
+ * email and password — the route brand staff and admins use — is a line of
+ * text rather than the front door.
  *
- * WHAT IS DRAWN IS WHAT THE DEPLOYMENT HAS. `/v1/auth/methods` answers three
- * booleans: Google is mounted only where both halves of its credential are set,
- * and the phone code only where a WhatsApp gateway credential exists (or in
+ * WHAT IS DRAWN IS WHAT THE DEPLOYMENT HAS. `/v1/auth/methods` answers which
+ * doors exist: Google only where both halves of its credential are set, the
+ * phone code only where a WhatsApp gateway credential exists (or in
  * development, where the code goes to the API's log). This screen renders what
  * that says and nothing else — a button that cannot work is worse than a button
  * that is not there. If the call itself fails, it falls back to email and
  * password, which is the one route always mounted.
  *
- * THE INK PANEL IS DESKTOP ONLY. It carries the three reasons to have an
- * account, which is the honest answer to "why am I being asked to do this" —
- * and on a phone it would be 300px of dark between the shopper and the form,
- * so a container query drops it.
+ * THE PHOTO IS A REAL SHOP. `page.tsx` passes the first shop photo it can find,
+ * tinted green; with none it is a plain green plate, never a stock picture. On
+ * a phone it shrinks to a short band above the form.
  *
  * THE GUEST EXIT STAYS. Buying never required an account, and letting somebody
  * build one to find that out is the deceit this screen has always refused.
@@ -93,7 +92,7 @@ function pathFromReferrer(): string | null {
   }
 }
 
-export function SignInView() {
+export function SignInView({ photo = null }: { photo?: string | null }) {
   const locale = useLocale();
   const router = useRouter();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
@@ -171,7 +170,7 @@ export function SignInView() {
 
   const unreachable = () =>
     t(
-      "مش قادرين نوصل للسيرفر دلوقتي. حاول تاني بعد شوية.",
+      "تعذّر الوصول إلى الخادم الآن. حاول مرة أخرى بعد قليل.",
       "We cannot reach the server right now. Try again in a moment."
     );
 
@@ -201,9 +200,9 @@ export function SignInView() {
         setError(
           result.error.message ??
             (door === "phone"
-              ? t("مش قادرين نبعت الكود للرقم ده.", "We cannot send a code to that number.")
+              ? t("تعذّر إرسال الرمز إلى هذا الرقم.", "We cannot send a code to that number.")
               : t(
-                  "مش قادرين نبعت الكود للإيميل ده.",
+                  "تعذّر إرسال الرمز إلى هذا البريد.",
                   "We cannot send a code to that address."
                 ))
         );
@@ -239,7 +238,7 @@ export function SignInView() {
       if (result.error) {
         setError(
           result.error.message ??
-            t("الكود مش مظبوط. جرّب تاني.", "That code is not right. Try again.")
+            t("الرمز غير صحيح. حاول مرة أخرى.", "That code is not right. Try again.")
         );
         setAttempt((n) => n + 1);
         setPending(false);
@@ -275,7 +274,10 @@ export function SignInView() {
       if (result.error) {
         setError(
           result.error.message ??
-            t("الإيميل أو الباسورد غلط.", "That email or password is not right.")
+            t(
+              "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+              "That email or password is not right."
+            )
         );
         setPending(false);
         return;
@@ -297,6 +299,11 @@ export function SignInView() {
     }
   };
 
+  const pick = (next: Door) => {
+    setChosen(next);
+    setError(null);
+  };
+
   const error_ = error ? (
     /* Inserted rather than hidden-then-shown: role="alert" on a node that
        ARRIVES is announced; a hidden alert is dropped from the tree between. */
@@ -305,218 +312,234 @@ export function SignInView() {
     </p>
   ) : null;
 
+  const sendLabel = pending ? t("جارٍ إرسال الرمز", "Sending the code") : t("أرسل الرمز", "Send the code");
+
+  /* The other doors this deployment has, never the one already open. A button
+     that reloads the screen you are on is noise. */
+  const otherPhone = door !== "phone" && methods.phoneOtp;
+  const otherEmail = door !== "email" && methods.emailOtp;
+
   return (
     /* Its own container, because `.lq-shell` is not here to be one and every
        width rule on this page is a container query. */
-    <main className="lq-gate">
-      <div className="lq-gate__bar">
-        <Link className="lq-gate__mark" href="/">
+    <main className="lq-signin">
+      <div className="lq-signin__grid">
+      <div className="lq-signin__bar">
+        <Link className="lq-mark" href="/">
           <Wordmark />
         </Link>
-        <div className="lq-gate__tools">
+        <div className="lq-signin__tools">
           <LocaleSwitch />
-          <Link className="lq-gate__back" href={back}>
-            <span className="lq-icon" data-icon="arrow-left" aria-hidden="true" />
-            {t("رجوع للمحلات", "Back to the shop")}
+          <Link className="lq-signin__back" href={back}>
+            {t("العودة إلى المتاجر", "Back to the shop")}
           </Link>
         </div>
       </div>
 
-      <div className="lq-gate__body">
-        <section className="lq-signin lq-rv">
-          <div className="lq-signin__form">
-            {step === "number" ? (
-              <>
-                <h1 className="lq-signin__title">{t("ادخل على حسابك", "Sign in")}</h1>
-                <p className="lq-signin__lede">
-                  {door === "phone"
-                    ? t(
-                        "رقمك، وبعدين كود من ٦ أرقام. من غير باسورد تنساه.",
-                        "Your number, then a six-digit code. No password to forget."
-                      )
-                    : door === "email"
-                      ? t(
-                          "إيميلك، وبعدين كود من ٦ أرقام. من غير باسورد تنساه.",
-                          "Your email, then a six-digit code. No password to forget."
-                        )
-                      : t(
-                          "الدخول بالباسورد لأصحاب المحلات وفريق loqaaal.",
-                          "The password route is for shop owners and the loqaaal team."
-                        )}
+      <div className="lq-signin__photo">
+        {photo ? (
+          // Presigned shop photos from the API's media host; `next/image` would
+          // need that host in `remotePatterns`, which a deployment may not set.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt="" fetchPriority="high" />
+        ) : null}
+        <div className="lq-signin__pitch">
+          <p className="lq-signin__slogan">
+            {t("متاجر منطقتك، في سلة واحدة", "Your neighbourhood shops, in one bag")}
+          </p>
+          <p className="lq-signin__line">
+            {t(
+              "توصيل في اليوم نفسه داخل القاهرة والجيزة، يحجز المتجر مندوبه بنفسه.",
+              "Same-day delivery in Cairo and Giza. Each shop books its own rider."
+            )}
+          </p>
+        </div>
+      </div>
+
+      <div className="lq-signin__body">
+        {step === "number" ? (
+          <>
+            <h1 className="lq-signin__title">{t("أدخل إلى حسابك", "Sign in")}</h1>
+            <p className="lq-signin__lede">
+              {door === "phone"
+                ? t(
+                    "رقم هاتفك، ثم رمز من 6 أرقام. لا حاجة إلى كلمة مرور.",
+                    "Your number, then a six-digit code. No password to forget."
+                  )
+                : door === "email"
+                  ? t(
+                      "بريدك الإلكتروني، ثم رمز من 6 أرقام. لا حاجة إلى كلمة مرور.",
+                      "Your email, then a six-digit code. No password to forget."
+                    )
+                  : t(
+                      "الدخول بكلمة المرور مخصص لأصحاب المتاجر وفريق loqaaal.",
+                      "The password route is for shop owners and the loqaaal team."
+                    )}
+            </p>
+
+            {door === "phone" ? (
+              <div className="lq-signin__block">
+                <div className="lq-field">
+                  <label className="lq-label" htmlFor={phoneId}>
+                    {t("رقم الهاتف", "Mobile number")}
+                  </label>
+                  {/* The country code is not editable: this product delivers to
+                      Cairo and Giza, and the API refuses anything that is not
+                      an Egyptian mobile. A free country field would be a way
+                      to fail. LTR always: under RTL "+20" would read "20+". */}
+                  <div className="lq-phone" dir="ltr">
+                    <span className="lq-phone__cc">+20</span>
+                    <input
+                      id={phoneId}
+                      className="lq-phone__input"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="10 0000 0000"
+                      value={groupDigits(digits)}
+                      onChange={(event) => {
+                        setDigits(event.target.value.replace(/\D/g, "").slice(0, DIGITS));
+                        if (error) setError(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") void sendCode();
+                      }}
+                      aria-invalid={error !== null}
+                      aria-describedby={error ? errorId : undefined}
+                    />
+                  </div>
+                </div>
+
+                {error_}
+
+                <button
+                  type="button"
+                  className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                  onClick={() => void sendCode()}
+                  disabled={!ready || pending}
+                >
+                  {sendLabel}
+                </button>
+                <p className="lq-signin__note">
+                  {t(
+                    "نرسل الرمز عبر واتساب، وإن لم يصل نرسله برسالة نصية.",
+                    "We send the code on WhatsApp, and by SMS if WhatsApp does not reach you."
+                  )}
                 </p>
+              </div>
+            ) : door === "email" ? (
+              /* The same two steps as the phone route, with an address in place
+                 of a number — and no password field anywhere on it. */
+              <div className="lq-signin__block">
+                <div className="lq-field">
+                  <label className="lq-label" htmlFor={emailId}>
+                    {t("البريد الإلكتروني", "Email")}
+                  </label>
+                  <input
+                    id={emailId}
+                    className="lq-input"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    dir="ltr"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (error) setError(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") void sendCode();
+                    }}
+                    aria-invalid={error !== null}
+                    aria-describedby={error ? errorId : undefined}
+                  />
+                </div>
 
-                {door === "phone" ? (
-                  <div className="lq-signin__block">
-                    <label className="lq-label" htmlFor={phoneId}>
-                      {t("رقم الموبايل", "Mobile number")}
-                    </label>
-                    {/* The country code is not editable: this product delivers
-                        to Cairo and Giza, and the API refuses anything that is
-                        not an Egyptian mobile. A free country field would be a
-                        way to fail. */}
-                    <div className="lq-phone">
-                      {/* LTR always: under RTL the browser reorders "+20" to
-                          "20+", which is a different thing to read. */}
-                      <span className="lq-phone__cc" dir="ltr">
-                        +20
-                      </span>
-                      <input
-                        id={phoneId}
-                        className="lq-phone__input"
-                        inputMode="numeric"
-                        autoComplete="tel-national"
-                        dir="ltr"
-                        placeholder="10 0000 0000"
-                        value={groupDigits(digits)}
-                        onChange={(event) => {
-                          setDigits(event.target.value.replace(/\D/g, "").slice(0, DIGITS));
-                          if (error) setError(null);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") void sendCode();
-                        }}
-                        aria-invalid={error !== null}
-                        aria-describedby={error ? errorId : undefined}
-                      />
-                    </div>
-                    <p className="lq-hint">
-                      {t(
-                        "بنبعت الكود على واتساب، ولو مَوصلش بنبعته SMS.",
-                        "We send the code on WhatsApp, and by SMS if WhatsApp does not reach you."
-                      )}
-                    </p>
+                {error_}
 
-                    {error_}
+                <button
+                  type="button"
+                  className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                  onClick={() => void sendCode()}
+                  disabled={!ready || pending}
+                >
+                  {sendLabel}
+                </button>
+                <p className="lq-signin__note">
+                  {t(
+                    "نرسل رمزًا إلى هذا البريد. وإن كانت لديك طلبات كضيف بالبريد نفسه، فستجدها في حسابك.",
+                    "We email a code to that address. Guest orders placed with the same email gather in the account."
+                  )}
+                </p>
+              </div>
+            ) : (
+              <form method="post" onSubmit={submitEmail} className="lq-signin__block" noValidate>
+                <div className="lq-field">
+                  <label className="lq-label" htmlFor={emailId}>
+                    {t("البريد الإلكتروني", "Email")}
+                  </label>
+                  <input
+                    id={emailId}
+                    className="lq-input"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    dir="ltr"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (error) setError(null);
+                    }}
+                    aria-invalid={error !== null}
+                    aria-describedby={error ? errorId : undefined}
+                  />
+                </div>
 
-                    <button
-                      type="button"
-                      className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
-                      onClick={() => void sendCode()}
-                      disabled={!ready || pending}
-                    >
-                      {pending
-                        ? t("بنبعت الكود", "Sending the code")
-                        : t("ابعت الكود", "Send the code")}
-                    </button>
-                  </div>
-                ) : door === "email" ? (
-                  /* The same two steps as the phone route, with an address in
-                     place of a number — and no password field anywhere on it. */
-                  <div className="lq-signin__block">
-                    <div className="lq-field">
-                      <label className="lq-label" htmlFor={emailId}>
-                        {t("الإيميل", "Email")}
-                      </label>
-                      <input
-                        id={emailId}
-                        className="lq-input"
-                        type="email"
-                        autoComplete="email"
-                        inputMode="email"
-                        dir="ltr"
-                        value={email}
-                        onChange={(event) => {
-                          setEmail(event.target.value);
-                          if (error) setError(null);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") void sendCode();
-                        }}
-                        aria-invalid={error !== null}
-                        aria-describedby={error ? errorId : undefined}
-                      />
-                    </div>
-                    <p className="lq-hint">
-                      {t(
-                        "هنبعتلك كود على الإيميل ده. لو عندك أوردرات كضيف بنفس الإيميل، هتلاقيها في حسابك.",
-                        "We email a code to that address. Guest orders placed with the same email gather in the account."
-                      )}
-                    </p>
+                <div className="lq-field">
+                  <label className="lq-label" htmlFor={passwordId}>
+                    {t("كلمة المرور", "Password")}
+                  </label>
+                  <input
+                    id={passwordId}
+                    className="lq-input"
+                    type="password"
+                    autoComplete="current-password"
+                    dir="ltr"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      if (error) setError(null);
+                    }}
+                    aria-invalid={error !== null}
+                    aria-describedby={error ? errorId : undefined}
+                  />
+                </div>
 
-                    {error_}
+                {error_}
 
-                    <button
-                      type="button"
-                      className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
-                      onClick={() => void sendCode()}
-                      disabled={!ready || pending}
-                    >
-                      {pending
-                        ? t("بنبعت الكود", "Sending the code")
-                        : t("ابعت الكود", "Send the code")}
-                    </button>
-                  </div>
-                ) : (
-                  <form method="post" onSubmit={submitEmail} className="lq-signin__block" noValidate>
-                    <div className="lq-field">
-                      <label className="lq-label" htmlFor={emailId}>
-                        {t("الإيميل", "Email")}
-                      </label>
-                      <input
-                        id={emailId}
-                        className="lq-input"
-                        type="email"
-                        autoComplete="email"
-                        inputMode="email"
-                        dir="ltr"
-                        value={email}
-                        onChange={(event) => {
-                          setEmail(event.target.value);
-                          if (error) setError(null);
-                        }}
-                        aria-invalid={error !== null}
-                        aria-describedby={error ? errorId : undefined}
-                      />
-                    </div>
+                <button
+                  type="submit"
+                  className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                  aria-disabled={pending}
+                >
+                  {pending ? t("جارٍ الدخول", "Signing you in") : t("دخول", "Sign in")}
+                </button>
+              </form>
+            )}
 
-                    <div className="lq-field">
-                      <label className="lq-label" htmlFor={passwordId}>
-                        {t("الباسورد", "Password")}
-                      </label>
-                      <input
-                        id={passwordId}
-                        className="lq-input"
-                        type="password"
-                        autoComplete="current-password"
-                        dir="ltr"
-                        value={password}
-                        onChange={(event) => {
-                          setPassword(event.target.value);
-                          if (error) setError(null);
-                        }}
-                        aria-invalid={error !== null}
-                        aria-describedby={error ? errorId : undefined}
-                      />
-                    </div>
+            {methods.google || otherPhone || otherEmail ? (
+              <div className="lq-signin__or">{t("أو", "or")}</div>
+            ) : null}
 
-                    {error_}
-
-                    <button
-                      type="submit"
-                      className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
-                      aria-disabled={pending}
-                    >
-                      {pending ? t("بندخّلك", "Signing you in") : t("ادخل", "Sign in")}
-                    </button>
-                  </form>
-                )}
-
-                {methods.google || (door !== "phone" && methods.phoneOtp) ||
-                (door !== "email" && methods.emailOtp) ? (
-                  <div className="lq-or">
-                    <span>{t("أو", "or")}</span>
-                  </div>
-                ) : null}
-
+            {methods.google || otherPhone || otherEmail ? (
+              <div className="lq-signin__doors">
                 {methods.google ? (
                   <button
                     type="button"
                     className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
                     onClick={() => void withGoogle()}
                   >
-                    {/* Google's own mark, drawn rather than fetched: the CSP
-                        allows no third-party images and a coloured G is what
-                        makes the button recognisable at a glance. */}
+                    {/* Google's own mark, drawn rather than fetched: a coloured
+                        G is what makes the button recognisable at a glance. */}
                     <svg className="lq-signin__g" viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         fill="#4285F4"
@@ -532,187 +555,116 @@ export function SignInView() {
                         d="M12 5.98c1.47 0 2.79.5 3.83 1.5l2.86-2.86C16.95 2.99 14.7 2 12 2A10 10 0 0 0 3.07 7.52l3.34 2.58C7.2 7.74 9.4 5.98 12 5.98Z"
                       />
                     </svg>
-                    {t("كمّل بجوجل", "Continue with Google")}
+                    {t("المتابعة عبر Google", "Continue with Google")}
                   </button>
                 ) : null}
 
-                {/* The other doors this deployment has, never the one already
-                    open. A button that reloads the screen you are on is noise. */}
-                {door !== "phone" && methods.phoneOtp ? (
+                {otherPhone ? (
                   <button
                     type="button"
                     className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
-                    onClick={() => {
-                      setChosen("phone");
-                      setError(null);
-                    }}
+                    onClick={() => pick("phone")}
                   >
-                    {t("برقم الموبايل", "Use a mobile number")}
+                    {t("الدخول برقم الهاتف", "Use a mobile number")}
                   </button>
                 ) : null}
 
-                {door !== "email" && methods.emailOtp ? (
+                {otherEmail ? (
                   <button
                     type="button"
                     className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
-                    onClick={() => {
-                      setChosen("email");
-                      setError(null);
-                    }}
+                    onClick={() => pick("email")}
                   >
-                    {t("بكود على الإيميل", "Use an email code")}
+                    {t("الدخول برمز عبر البريد", "Use an email code")}
                   </button>
                 ) : null}
+              </div>
+            ) : null}
 
-                {/* Buying never required an account, and saying so is better
-                    than letting somebody build one to find that out. A rule
-                    across the column used to separate this; on a card that
-                    already has a border and a seam down its middle, one more
-                    line was one too many. */}
-                <p className="lq-signin__aside">
-                  {t(
-                    "مش لازم حساب عشان تطلب. تقدر تشتري كضيف وتتابع الأوردر برقمه ورقم موبايلك.",
-                    "You do not need an account to order. You can buy as a guest and follow the order by its number and your phone."
-                  )}
-                </p>
-                {/* Back where they were, not to the home page: a shopper who
-                    declines the account should return to the basket or the
-                    product they were reading. */}
-                <Link className="lq-btn lq-btn--secondary lq-btn--block" href={back}>
-                  {t("كمّل كضيف", "Continue as a guest")}
-                </Link>
-
-                {/* THE PASSWORD ROUTE, DEMOTED TO A LINE OF TEXT.
-                    It is how brand staff and admins sign in — they are issued
-                    credentials and know to look for it — and it is the way in
-                    if both code routes are down. It is not what a shopper
-                    should be offered first: a password is a second thing to
-                    invent at the moment they wanted to buy a shirt, and
-                    resetting one needs email that works. */}
-                {door !== "password" && (methods.phoneOtp || methods.emailOtp) ? (
-                  <button
-                    type="button"
-                    className="lq-signin__staff"
-                    onClick={() => {
-                      setChosen("password");
-                      setError(null);
-                    }}
-                  >
-                    {t("عندك باسورد؟ ادخل بيه", "Have a password? Sign in with it")}
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="lq-signin__back"
-                  onClick={() => {
-                    setStep("number");
-                    setError(null);
-                  }}
-                >
-                  <span className="lq-icon" data-icon="arrow-left" aria-hidden="true" />
-                  {door === "phone"
-                    ? t("غيّر الرقم", "Change the number")
-                    : t("غيّر الإيميل", "Change the address")}
-                </button>
-
-                <h1 className="lq-signin__title">{t("اكتب الكود", "Enter the code")}</h1>
-                <p className="lq-signin__lede">
-                  {t("اتبعت لـ", "Sent to")}{" "}
-                  {/* The address as typed, the number regrouped — one is a
-                      string the shopper wrote, the other is a figure. */}
-                  <b className="lq-signin__num" dir="ltr">
-                    {door === "phone" ? `+20 ${groupDigits(digits)}` : email.trim()}
-                  </b>
-                </p>
-
-                <CodeBoxes
-                  onComplete={(full) => void verify(full)}
-                  pending={pending}
-                  autoFocus
-                  resetKey={attempt}
-                />
-
-                {error_}
-
-                {pending ? (
-                  <p className="lq-hint" role="status">
-                    {t("بنتأكد…", "Checking…")}
-                  </p>
-                ) : null}
-
-                <button
-                  type="button"
-                  className="lq-btn lq-btn--secondary lq-btn--block"
-                  onClick={() => void sendCode()}
-                  disabled={left > 0 || pending}
-                >
-                  {left > 0
-                    ? t(`ابعته تاني بعد ${left} ثانية`, `Send it again in ${left}s`)
-                    : t("ابعت الكود تاني", "Send the code again")}
-                </button>
-              </>
-            )}
-          </div>
-
-          <aside className="lq-signin__art" aria-hidden="true">
-            {/* Three concentric rings in the panel's far corner, breathing
-                once every four seconds. Straight from the motif mockup, and
-                the only motion on the screen. */}
-            <span className="lq-signin__rings">
-              <i />
-              <i />
-              <i />
-            </span>
-            <div>
-              <span className="lq-eyebrow lq-signin__brand">loqaaal</span>
-              <p className="lq-signin__pitch">
-                {t("محلات منطقتك، في شنطة واحدة.", "Your neighbourhood shops, in one basket.")}
-              </p>
+            {/* Buying never required an account. "Continue as a guest" goes
+                back where they were, not to the home page: a shopper who
+                declines the account should return to the basket or the
+                product they were reading. */}
+            <div className="lq-signin__mini">
+              <Link className="lq-textlink" href={back}>
+                {t("المتابعة كضيف", "Continue as a guest")}
+              </Link>
+              <Link className="lq-textlink" href="/account#help">
+                {t("تحتاج إلى مساعدة؟", "Need help?")}
+              </Link>
             </div>
-            <ul className="lq-signin__points">
-              <li>
-                <span className="lq-icon" data-icon="truck" />
-                {t(
-                  "توصيل في نفس اليوم في القاهرة والجيزة — المحل بيحجز المندوب بنفسه.",
-                  "Same-day delivery in Cairo and Giza — the shop books its own rider."
-                )}
-              </li>
-              <li>
-                <span className="lq-icon" data-icon="map-pin" />
-                {t(
-                  "العناوين محفوظة، فالأوردر الجاي بضغطتين.",
-                  "Addresses kept, so the next order is two taps."
-                )}
-              </li>
-              <li>
-                <span className="lq-icon" data-icon="package" />
-                {t(
-                  "كل الأوردرات في مكان واحد، من أي محل.",
-                  "Every order in one place, whichever shop it came from."
-                )}
-              </li>
-            </ul>
-            <span className="lq-signin__pay">
-              {t(
-                "كاش عند الاستلام · بطاقة · فاليو · إنستاباي",
-                "Cash on delivery · card · Valu · InstaPay"
-              )}
-            </span>
-          </aside>
-        </section>
 
-        <p className="lq-gate__foot">
-          {t(
-            "بتسجّل دخولك على loqaaal — القاهرة والجيزة.",
-            "Signing in to loqaaal — Cairo and Giza."
-          )}{" "}
-          <a href="https://wa.me/201559959890" target="_blank" rel="noopener noreferrer">
-            {t("محتاج مساعدة؟", "Need help?")}
-          </a>
-        </p>
+            {/* THE PASSWORD ROUTE, DEMOTED TO A LINE OF TEXT. It is how brand
+                staff and admins sign in, and the way in if both code routes
+                are down. A shopper should not be offered it first: a password
+                is a second thing to invent at the moment they wanted to buy a
+                shirt. */}
+            {door !== "password" && (methods.phoneOtp || methods.emailOtp) ? (
+              <button type="button" className="lq-signin__staff" onClick={() => pick("password")}>
+                {t("لديك كلمة مرور؟ ادخل بها", "Have a password? Sign in with it")}
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <h1 className="lq-signin__title">{t("اكتب الرمز", "Enter the code")}</h1>
+            <p className="lq-signin__lede">
+              {t("أرسلنا الرمز إلى", "Sent to")}{" "}
+              {/* The address as typed, the number regrouped — one is a string
+                  the shopper wrote, the other is a figure. */}
+              <b className="lq-signin__num" dir="ltr">
+                {door === "phone" ? `+20 ${groupDigits(digits)}` : email.trim()}
+              </b>
+            </p>
+
+            <div className="lq-signin__block">
+              <CodeBoxes
+                onComplete={(full) => void verify(full)}
+                pending={pending}
+                autoFocus
+                resetKey={attempt}
+              />
+
+              {error_}
+
+              {pending ? (
+                <p className="lq-hint" role="status">
+                  {t("جارٍ التحقق…", "Checking…")}
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                className="lq-btn lq-btn--secondary lq-btn--lg lq-btn--block"
+                onClick={() => void sendCode()}
+                disabled={left > 0 || pending}
+              >
+                {left > 0
+                  ? t(`يمكنك إعادة الإرسال بعد ${left} ثانية`, `Send it again in ${left}s`)
+                  : t("أعد إرسال الرمز", "Send the code again")}
+              </button>
+            </div>
+
+            <div className="lq-signin__mini">
+              <button
+                type="button"
+                className="lq-textlink"
+                onClick={() => {
+                  setStep("number");
+                  setError(null);
+                }}
+              >
+                {door === "phone"
+                  ? t("تغيير الرقم", "Change the number")
+                  : t("تغيير البريد", "Change the address")}
+              </button>
+              <Link className="lq-textlink" href="/account#help">
+                {t("تحتاج إلى مساعدة؟", "Need help?")}
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
       </div>
     </main>
   );

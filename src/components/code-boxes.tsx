@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useLocale } from "@/lib/locale-context";
+
 /**
  * Six boxes for a six-digit code, and the typing rules that go with them.
  *
@@ -41,6 +43,7 @@ function Boxes({
   pending?: boolean;
   autoFocus?: boolean;
 }) {
+  const locale = useLocale();
   const [code, setCode] = useState<string[]>(() => Array<string>(CODE_LENGTH).fill(""));
   const boxes = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -89,7 +92,11 @@ function Boxes({
           value={value}
           data-filled={value ? "true" : undefined}
           disabled={pending}
-          aria-label={`${index + 1}`}
+          aria-label={
+            locale === "ar"
+              ? `الرقم ${index + 1} من ${CODE_LENGTH}`
+              : `Digit ${index + 1} of ${CODE_LENGTH}`
+          }
           onChange={(event) => put(index, event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Backspace" && !value && index > 0) {
