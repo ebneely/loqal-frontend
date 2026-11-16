@@ -29,10 +29,10 @@ import { Wordmark } from "@/components/wordmark";
  *            for everything the five slots cannot carry. No footer: a dark
  *            400px block above a fixed tab bar is a dead end, and the drawer
  *            carries the footer's links.
- *   Desktop  the utility strip, a sticky header with the mark, a live search
- *            field and the tools, the brands mega-menu, and the footer. No tab
- *            bar — five buttons pinned to the bottom of a 1080px window with
- *            nothing near them is what "mobile on desktop" looks like.
+ *   Desktop  a sticky three-column header — destinations at the inline start,
+ *            the mark in the centre, the tools at the inline end — and the
+ *            footer. No tab bar. On home the header lies over the hero instead
+ *            (`data-home` on the shell; see components.css).
  *
  * Both chromes are in the markup at all times and one is hidden by the
  * container query. That is deliberate: branching in JS would need the width,
@@ -67,26 +67,23 @@ import { Wordmark } from "@/components/wordmark";
  */
 const TABS = [
   { href: "/", icon: "house", ar: "الرئيسية", en: "Home" },
-  { href: "/categories", icon: "shirt", ar: "المنتجات", en: "Products" },
-  { href: "/shops", icon: "store", ar: "المحلات", en: "Shops" },
+  { href: "/categories", icon: "shirt", ar: "الأقسام", en: "Categories" },
+  { href: "/shops", icon: "store", ar: "المتاجر", en: "Shops" },
   { href: "/bag", icon: "shopping-bag", ar: "السلة", en: "Bag" },
-  { href: "/orders", icon: "package", ar: "أوردراتي", en: "Orders" },
+  { href: "/orders", icon: "package", ar: "طلباتي", en: "Orders" },
 ] as const;
 
 /**
- * The three claims in the utility strip. Facts a shopper weighs before they
- * start, which is why they sit above the header rather than inside a page.
- *
- * NO tracking and NO uppercase on this strip — see `.lq-util` in
- * components.css. It carries Arabic.
+ * The three facts a shopper weighs before they start. The footer states them;
+ * one source so the two places cannot drift apart.
  */
 export const CLAIMS = [
   {
-    ar: "توصيل في نفس اليوم — القاهرة والجيزة",
-    en: "Same-day delivery — Cairo & Giza",
+    ar: "توصيل في اليوم نفسه داخل القاهرة والجيزة",
+    en: "Same-day delivery in Cairo & Giza",
   },
   { ar: "الدفع عند الاستلام", en: "Cash on delivery" },
-  { ar: "استبدال خلال 14 يوم", en: "14-day returns" },
+  { ar: "الاستبدال خلال 14 يومًا", en: "14-day returns" },
 ] as const;
 
 /**
@@ -133,95 +130,63 @@ export function Shell({
   );
 
   return (
-    <div className="lq-shell">
+    <div className="lq-shell" data-home={pathname === "/" || undefined}>
       {/* Renders nothing. Mounted once here so a SERVER component can opt into
           the entrance with a `.lq-rv` class and never has to become a client
           component just to animate. */}
       <Reveal />
 
       {/* ── Desktop ─────────────────────────────────────────────────────── */}
-      <div className="lq-util">
-        {CLAIMS.map((claim) => (
-          <span key={claim.en}>{t(claim.ar, claim.en)}</span>
-        ))}
-      </div>
-
       <header className="lq-head">
         <div className="lq-head__bar">
-          <Link href="/" className="lq-mark" aria-label="loqaaal">
-            <Wordmark />
-          </Link>
-
-          {/* A real link, not a live field. Search is a route with its own
-              query state; a second input in the chrome would be a second
-              source of truth for the same term.
-
-              AND IT IS NOT RENDERED ON /search AT ALL. There the page owns a
-              real input, and shipping both put two search boxes on top of each
-              other — one live, one a link back to the page you are already on.
-              The grid column stays empty rather than collapsing, so the mark
-              and the tools do not jump when you navigate into search.
-
-              IT CARRIES `.lq-head__search` ONLY, never also `.lq-search`.
-              `.lq-search > .lq-icon` is position:absolute, which pulls the
-              magnifier out of this flex row and pins it on top of the
-              placeholder. That rule exists for a real <input>, which reserves
-              padding for the icon; this is a link laid out with a gap and
-              needs the icon to stay in flow. */}
-          {onSearch ? (
-            <span aria-hidden="true" />
-          ) : (
-            <Link className="lq-head__search" href="/search">
-              <span className="lq-icon" data-icon="search" aria-hidden="true" />
-              <span className="lq-search__fake">
-                {t("دوّر على قطعة أو محل…", "Search for a piece or a shop…")}
-              </span>
-            </Link>
-          )}
-
-          <nav className="lq-tools" aria-label={t("التنقل", "Navigation")}>
-            {/* Both are panels, and that is the point: الأقسام used to be a
-                plain link sitting beside a menu, which made two neighbours in
-                one row behave differently for no reason a shopper could see.
-                Each still points at its real route for a middle-click. */}
+          <nav className="lq-head__nav" aria-label={t("التنقل", "Navigation")}>
+            {/* Both are panels that still point at their real route for a
+                middle-click. */}
             <CategoriesMenu />
             <BrandsMenu />
-
             <Link
               href="/orders"
               aria-current={isActive(pathname, "/orders") ? "page" : undefined}
             >
-              {t("أوردراتي", "Orders")}
+              {t("طلباتي", "Orders")}
             </Link>
+          </nav>
+
+          <Link href="/" className="lq-mark" aria-label="loqaaal">
+            <Wordmark />
+          </Link>
+
+          <div className="lq-tools">
+            {/* Not on /search, where the page owns the real input and a link
+                back to it would be a second search box. */}
+            {onSearch ? null : (
+              <Link href="/search" aria-label={t("بحث", "Search")}>
+                <span className="lq-icon" data-icon="search" aria-hidden="true" />
+              </Link>
+            )}
             <Link
               href="/account"
+              aria-label={t("حسابي", "Account")}
               aria-current={isActive(pathname, "/account") ? "page" : undefined}
             >
-              {t("حسابي", "Account")}
+              <span className="lq-icon" data-icon="user" aria-hidden="true" />
             </Link>
             <Link
               className="lq-bag"
               href="/bag"
-              aria-label={t("السلة", "Bag")}
               aria-current={isActive(pathname, "/bag") ? "page" : undefined}
             >
-              <span
-                className="lq-icon"
-                data-icon="shopping-cart"
-                aria-hidden="true"
-              />
+              <span className="lq-icon" data-icon="shopping-bag" aria-hidden="true" />
+              {t("السلة", "Bag")}
               {bagCount > 0 ? (
-                <span className="lq-cartn" data-num>
-                  {bagCount}
+                <span className="lq-bag__n" data-num>
+                  ({bagCount})
                 </span>
               ) : null}
             </Link>
-
-            {/* Last in the row: a preference, not a destination. Desktop only —
-                the phone bar has no room and `/account` carries the same
-                switch as a full row. */}
+            {/* A preference, not a destination: last in the row. */}
             <LocaleSwitch />
-          </nav>
+          </div>
         </div>
       </header>
 

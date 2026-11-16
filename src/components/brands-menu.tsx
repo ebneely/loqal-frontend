@@ -47,7 +47,7 @@ export function BrandsMenu() {
     <MegaMenu
       id="shops"
       href="/shops"
-      label={locale === "ar" ? "المحلات" : "Shops"}
+      label={locale === "ar" ? "المتاجر" : "Shops"}
       wide
     >
       {shops.length === 0 ? (
@@ -64,10 +64,10 @@ export function BrandsMenu() {
           <p className="lq-hint" role={isError ? "alert" : undefined}>
             {isError
               ? locale === "ar"
-                ? "مش قادرين نوصل للمحلات دلوقتي."
+                ? "تعذّر الوصول إلى المتاجر الآن."
                 : "We cannot reach the shops right now."
               : locale === "ar"
-                ? "المحلات هتظهر هنا أول ما تفتح."
+                ? "ستظهر المتاجر هنا فور افتتاحها."
                 : "Shops show up here as they open."}
           </p>
         )
@@ -112,7 +112,7 @@ export function BrandsMenu() {
                 </span>
                 {shop.isPromoted ? (
                   <span className="lq-catrail__in">
-                    {locale === "ar" ? "مموّل" : "Promoted"}
+                    {locale === "ar" ? "إعلان" : "Promoted"}
                   </span>
                 ) : null}
               </Link>
@@ -120,7 +120,7 @@ export function BrandsMenu() {
           </div>
 
           <Link className="lq-mega__all" href="/shops">
-            {locale === "ar" ? "كل المحلات" : "All shops"}
+            {locale === "ar" ? "كل المتاجر" : "All shops"}
           </Link>
         </>
       )}

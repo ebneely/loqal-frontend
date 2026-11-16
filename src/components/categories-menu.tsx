@@ -68,10 +68,10 @@ export function CategoriesMenu() {
           <p className="lq-hint" role={isError ? "alert" : undefined}>
             {isError
               ? locale === "ar"
-                ? "مش قادرين نوصل للأقسام دلوقتي."
+                ? "تعذّر الوصول إلى الأقسام الآن."
                 : "We cannot reach the categories right now."
               : locale === "ar"
-                ? "الأقسام هتظهر هنا أول ما تتفتح."
+                ? "ستظهر الأقسام هنا فور توفّرها."
                 : "Shelves show up here as they open."}
           </p>
         )

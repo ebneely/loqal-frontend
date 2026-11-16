@@ -61,27 +61,22 @@ const onServer = () => false;
 /**
  * The destinations the tab bar cannot carry, plus the two it can.
  *
- * `/categories` appears here under the tab bar's own word — المنتجات — because
- * one route may not answer to two names: a drawer calling it الأقسام while the
- * tab beneath calls it المنتجات reads as two places, and a shopper who wants
- * "products" looks in the drawer and decides there are none.
+ * `/categories` appears here under the tab bar's own word — الأقسام — because
+ * one route may not answer to two names.
  */
 const PLACES = [
   { href: "/account", icon: "user", ar: "حسابي", en: "Account" },
-  { href: "/categories", icon: "shirt", ar: "المنتجات", en: "Products" },
-  { href: "/shops", icon: "store", ar: "المحلات", en: "Shops" },
-  { href: "/orders", icon: "package", ar: "أوردراتي", en: "Orders" },
+  { href: "/categories", icon: "shirt", ar: "الأقسام", en: "Categories" },
+  { href: "/shops", icon: "store", ar: "المتاجر", en: "Shops" },
+  { href: "/orders", icon: "package", ar: "طلباتي", en: "Orders" },
 ] as const;
 
 /**
- * COPIED FROM `site-footer.tsx`, and the duplication is on purpose rather than
- * an oversight: that file does not export its `LINKS`, and the footer is a
- * DESKTOP-ONLY component the container query hides under 720px. If the footer's
- * list changes, change this one too — or export it there and import it here.
+ * The help links. If the footer's list changes, change this one too.
  */
 const LINKS = [
   { ar: "عن loqaaal", en: "About loqaaal", href: "https://join-loqaaal.vercel.app/" },
-  { ar: "انضم كمحل", en: "Join as a shop", href: "https://join-loqaaal.vercel.app/" },
+  { ar: "انضم كمتجر", en: "Join as a shop", href: "https://join-loqaaal.vercel.app/" },
   { ar: "الشحن والتوصيل", en: "Shipping", href: "/account#help-shipping" },
   { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account#help-returns" },
   { ar: "الأسئلة الشائعة", en: "FAQ", href: "/account#help-faq" },
@@ -208,7 +203,7 @@ export function NavDrawer({
             type="button"
             className="lq-iconbtn lq-nav__close"
             onClick={dismiss}
-            aria-label={t("اقفل القائمة", "Close menu")}
+            aria-label={t("أغلق القائمة", "Close menu")}
           >
             <span className="lq-icon" data-icon="x" aria-hidden="true" />
           </button>

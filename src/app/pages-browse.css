@@ -1,0 +1,6 @@
+/* ==========================================================================
+   Browse surfaces: home, the shops index, a shop, the categories index, and
+   the cards they share (product card, shop card).
+   Loaded after components.css and unlayered, so a rule here wins over the
+   older layered rule it replaces.
+   ========================================================================== */

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Readex_Pro, Source_Code_Pro } from "next/font/google";
+import { Alexandria, Reem_Kufi } from "next/font/google";
 
 import { QueryProvider } from "@/lib/query";
 import { LocaleProvider } from "@/lib/locale-context";
@@ -10,33 +10,22 @@ import { getLocale } from "@/lib/locale-server";
 import "./globals.css";
 
 /**
- * Readex Pro carries both scripts. One family with matched x-height means an
- * Arabic price row and an English one are the same height in the same grid, and
- * its Arabic is a first-class design rather than a fallback. At 700 with
- * −0.03em tracking it is also the wordmark.
+ * Alexandria is everything a shopper reads or taps, in both scripts, and its
+ * tabular figures are the prices. Reem Kufi is the display voice — titles,
+ * section heads, shop names, the wordmark.
  *
- * Self-hosted through next/font rather than the design system's
- * `@import url(fonts.googleapis.com)`: that import is render-blocking, costs a
- * DNS lookup and a connection on a mid-range Android over Egyptian mobile data,
- * and shifts the layout when it lands. This is the one place the app knowingly
- * diverges from the token files, and tokens.css says so.
+ * Self-hosted through next/font: a fonts.googleapis.com stylesheet is
+ * render-blocking and costs a connection on Egyptian mobile data.
  */
-const readexPro = Readex_Pro({
+const alexandria = Alexandria({
   subsets: ["latin", "arabic"],
-  variable: "--font-readex-pro",
+  variable: "--font-alexandria",
   display: "swap",
 });
 
-/**
- * Source Code Pro is the figures face: every price, order number and phone
- * number. Tabular and lining, so a cart total lines up under a subtotal. 800 is
- * included because a price is the loudest thing on a product card and the
- * heaviest weight in the system.
- */
-const sourceCodePro = Source_Code_Pro({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-source-code-pro",
+const reemKufi = Reem_Kufi({
+  subsets: ["latin", "arabic"],
+  variable: "--font-reem-kufi",
   display: "swap",
 });
 
@@ -49,12 +38,12 @@ export const metadata: Metadata = {
    */
   metadataBase: new URL(SITE),
   title: {
-    default: "loqaaal — تسوّق من محلات مصر",
+    default: "loqaaal — متاجر حيّك",
     /** Product and shop pages supply their own name; this frames it. */
     template: "%s · loqaaal",
   },
   description:
-    "اشتري من محلات مصرية قريبة منك. توصيل في نفس اليوم، دفع كاش أو بالكارت، وكل محل بيجهّز طلبك بنفسه.",
+    "تسوّق من متاجر الملابس القريبة منك. توصيل في اليوم نفسه، والدفع نقدًا أو بالبطاقة، ويجهّز كل متجر طلبك بنفسه.",
   applicationName: "loqaaal",
   referrer: "origin-when-cross-origin",
   formatDetection: { telephone: false, address: false, email: false },
@@ -67,9 +56,9 @@ export const metadata: Metadata = {
     siteName: "loqaaal",
     locale: "ar_EG",
     alternateLocale: ["en_US"],
-    title: "loqaaal — تسوّق من محلات مصر",
+    title: "loqaaal — متاجر حيّك",
     description:
-      "اشتري من محلات مصرية قريبة منك. توصيل في نفس اليوم، وكل محل بيجهّز طلبك بنفسه.",
+      "تسوّق من متاجر الملابس القريبة منك. توصيل في اليوم نفسه، ويجهّز كل متجر طلبك بنفسه.",
   },
   twitter: { card: "summary_large_image" },
   robots: {
@@ -105,7 +94,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={localeDir(locale)}
-      className={`${readexPro.variable} ${sourceCodePro.variable}`}
+      className={`${alexandria.variable} ${reemKufi.variable}`}
       suppressHydrationWarning
     >
       <head>

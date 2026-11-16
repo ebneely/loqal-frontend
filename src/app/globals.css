@@ -2,6 +2,12 @@
 @import "./tokens.css";
 @import "./icons.css";
 @import "./components.css";
+/* One file per area, so the areas can be redesigned at the same time without
+   two hands in one file. Each is unlayered and wins over components.css. */
+@import "./pages-browse.css";
+@import "./pages-product.css";
+@import "./pages-orders.css";
+@import "./pages-account.css";
 /* The empty and broken screens. After components.css, which it leans on for the
    button, row and hint classes it does not redefine. */
 @import "./states.css";
@@ -16,14 +22,16 @@
    the element defaults, and owns the two things that belong to the page
    itself rather than to any component: the paper grain and the reveal.
 
-   Register is decided in DESIGN.md. Stone ground, 1px hairline structure,
-   radius 0, shadow none.
+   Register is decided in DESIGN.md. White ground, deep green bands, square
+   corners, depth only where something floats.
    ========================================================================== */
 
 @theme inline {
-  --font-sans: var(--font-readex-pro), "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-source-code-pro), "SF Mono", ui-monospace, monospace;
-  --font-display: var(--font-readex-pro), "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-alexandria), "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* Figures are Alexandria too, with tabular lining numerals switched on where
+     they are set. A monospace price reads as a terminal, not a shop. */
+  --font-mono: var(--font-alexandria), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-reem-kufi), var(--font-alexandria), "Segoe UI", system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -100,21 +108,21 @@
   --color-money-zero: var(--money-zero);
   --color-overlay: var(--overlay);
 
-  --text-2xs: 0.6875rem;
+  --text-2xs: 0.75rem;
   --text-xs: 0.8125rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.625rem;
-  --text-3xl: 2.125rem;
-  --text-4xl: 2.75rem;
-  --text-5xl: 3.5rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.875rem;
+  --text-4xl: 4.5rem;
+  --text-5xl: 7rem;
 
   --leading-tight: 1.2;
-  --leading-snug: 1.35;
-  --leading-normal: 1.6;
-  --leading-loose: 1.75;
+  --leading-snug: 1.4;
+  --leading-normal: 1.65;
+  --leading-loose: 1.8;
 
   --font-weight-thin: 200;
   --font-weight-light: 300;
@@ -122,20 +130,19 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --font-weight-figure: 600;
+  --font-weight-figure: 500;
 
-  --tracking-tight: -0.022em;
-  --tracking-display: -0.03em;
+  --tracking-tight: 0em;
+  --tracking-display: 0em;
   --tracking-normal: 0em;
-  --tracking-caps: 0.13em;
+  --tracking-caps: 0.08em;
 
   /* Mirrors tokens.css so Tailwind's rounded-* utilities and the hand-written
-     rules in components.css cannot disagree about what "md" is. The values
-     live there; these are the registrations. */
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+     rules in components.css cannot disagree about what "md" is. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
   --radius-full: 9999px;
 
   /* Shadow and easing tokens are NOT registered here. Repeating a name inside
@@ -149,10 +156,10 @@
   --spacing-tap-min: 44px;
   --spacing-tap-primary: 52px;
   --spacing-row-density: 52px;
-  --spacing-bar-height: 56px;
-  --spacing-tabbar-height: 60px;
-  --spacing-utilbar-height: 34px;
-  --spacing-content-max: 1200px;
+  --spacing-bar-height: 60px;
+  --spacing-tabbar-height: 62px;
+  --spacing-utilbar-height: 0px;
+  --spacing-content-max: 1440px;
   --spacing-prose-max: 62ch;
 }
 
@@ -162,7 +169,7 @@
 @layer base {
   :root {
     color-scheme: light;
-    --font-arabic: var(--font-readex-pro), "Noto Sans Arabic", Tahoma, sans-serif;
+    --font-arabic: var(--font-alexandria), "Noto Sans Arabic", Tahoma, sans-serif;
   }
 
   * {
@@ -172,7 +179,6 @@
   html {
     font-family: var(--font-sans);
     -webkit-text-size-adjust: 100%;
-    /* The grain is fixed to the viewport, so the page must not bounce it. */
     overflow-x: hidden;
   }
 
@@ -181,6 +187,7 @@
     background: var(--paper);
     color: var(--ink);
     font-size: var(--text-base);
+    font-weight: var(--weight-light);
     line-height: var(--leading-normal);
     -webkit-font-smoothing: antialiased;
     font-variant-numeric: tabular-nums lining-nums;
@@ -188,25 +195,6 @@
 
   :where(html[dir="rtl"]) body {
     font-family: var(--font-arabic);
-  }
-
-  /* ── The paper grain ─────────────────────────────────────────────────────
-     A fractal-noise SVG at 3%, fixed over the whole viewport. It is the reason
-     the ground reads as paper rather than as a flat hex value, and on a
-     low-gamut Android panel it is most of what separates #EDEBE5 from "beige".
-
-     Inline data URI, not a file: it is under 300 bytes and a separate request
-     for a texture that must be present on first paint is a request too many.
-     pointer-events:none so it never eats a tap, and it sits above everything
-     including the sheet — grain is a property of the paper, not of a layer. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-grain);
-    pointer-events: none;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   h1,
@@ -225,13 +213,19 @@
   h3,
   h4 {
     color: var(--ink);
-    /* The register's headings are LIGHT, not bold. Weight is carried by size
-       and by the hairline around a block, which is why 200–300 reads as
-       deliberate here and would read as unfinished on a white card. */
-    font-weight: var(--weight-regular);
+    font-weight: var(--weight-medium);
     line-height: var(--leading-tight);
-    letter-spacing: var(--tracking-tight);
+    letter-spacing: 0;
     text-wrap: balance;
+  }
+
+  /* The display voice. Page titles and section heads are shop signs; a card's
+     h3 stays in the text face unless its component says otherwise. Kufi
+     ascenders and dots need more line than Latin. */
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    line-height: 1.25;
   }
 
   p {
@@ -264,19 +258,30 @@
   }
 
   ::selection {
-    background: var(--green-soft);
-    color: var(--ink);
+    background: var(--green);
+    color: #fff;
+  }
+
+  ::placeholder {
+    color: var(--ink-3);
+    opacity: 1;
+  }
+
+  /* Thin, green-grey, square: a scrollbar is part of the page. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-ink) transparent;
   }
 
   /* Every figure a shopper compares vertically: price, total, order number,
-     phone, piece count, date. Source Code Pro, tabular and lining, so a total
-     lines up under a subtotal. Latin digits in both languages. */
+     phone, piece count, date. Tabular and lining, so a total lines up under a
+     subtotal. Latin digits in both languages. */
   [data-num],
   .num {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums lining-nums;
     font-weight: var(--weight-figure);
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   /* A Latin shop name inside an Arabic row keeps its own punctuation and

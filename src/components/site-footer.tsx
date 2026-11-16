@@ -7,30 +7,23 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchBrands, queryKeys } from "@/lib/catalog";
 import { useLocale } from "@/lib/locale-context";
 import { CLAIMS } from "@/components/shell";
-import { Wordmark } from "@/components/wordmark";
 
 /**
- * The footer. DESKTOP ONLY — the container query in components.css hides it
- * under 720px, where the tab bar is the navigation and `/account` carries these
- * same links. A dark 400px block above a fixed tab bar is a dead end on a
- * phone, and the links in it are ones a shopper reaches deliberately.
+ * The footer: a green band at every width, closed by the wordmark set huge.
  *
- * Built once here and rendered by `Shell`, so the four pages that used to paste
- * it cannot drift into four footers.
+ * Built once here and rendered by `Shell`, so no page can grow a footer of its
+ * own and drift.
  */
 
 /**
  * Payment METHODS, drawn.
  *
  * NOT imitations of the Visa, Mastercard or Meeza marks. Those are trademarks,
- * and a hand-drawn near-copy is both a legal problem and a worse graphic than
- * the real asset — a real deployment drops in the official files the processor
- * supplies. One glyph per method also beats three near-identical card logos
- * sitting in a row saying the same thing.
+ * and a real deployment drops in the official files the processor supplies.
  */
 const PAYMENTS = [
   {
-    ar: "بطاقات",
+    ar: "البطاقات",
     en: "Cards",
     path: (
       <>
@@ -63,7 +56,7 @@ const PAYMENTS = [
     ),
   },
   {
-    ar: "كاش عند الاستلام",
+    ar: "الدفع عند الاستلام",
     en: "Cash on delivery",
     path: (
       <>
@@ -76,18 +69,19 @@ const PAYMENTS = [
   },
 ];
 
-const LINKS = [
-  { ar: "عن loqaaal", en: "About loqaaal", href: "https://join-loqaaal.vercel.app/" },
-  { ar: "انضم كمحل", en: "Join as a shop", href: "https://join-loqaaal.vercel.app/" },
+const HELP = [
   /* Into Account's Help section, each with its own answer already open — see
-     the hash reader in account-view.tsx. Plain `/account` opened on "Who you
-     are", which answers none of these. Contact has no answer to open: the
-     WhatsApp row sits in the section itself. */
+     the hash reader in account-view.tsx. */
   { ar: "الشحن والتوصيل", en: "Shipping", href: "/account#help-shipping" },
   { ar: "الاستبدال والاسترجاع", en: "Returns", href: "/account#help-returns" },
   { ar: "الأسئلة الشائعة", en: "FAQ", href: "/account#help-faq" },
-  { ar: "تواصل معنا", en: "Contact", href: "/account#help" },
+  { ar: "تتبّع طلبك", en: "Track an order", href: "/orders" },
+  { ar: "عن loqaaal", en: "About loqaaal", href: "https://join-loqaaal.vercel.app/" },
+  { ar: "انضم كمتجر", en: "Join as a shop", href: "https://join-loqaaal.vercel.app/" },
 ];
+
+/** Enough to be a directory, few enough to stay a column. */
+const SHOPS_SHOWN = 7;
 
 function Subscribe() {
   const locale = useLocale();
@@ -99,13 +93,9 @@ function Subscribe() {
       onSubmit={(event) => {
         event.preventDefault();
         /**
-         * BACKEND GAP: there is no subscribe endpoint. Nothing in the contracts
-         * accepts an email address for a mailing list.
-         *
-         * So this says so, rather than clearing the field and looking like it
-         * worked. A form that swallows an address and reports success is the
-         * one failure mode worth avoiding here — the shopper believes they will
-         * hear from us and never does. "Say the consequence, not the caution."
+         * BACKEND GAP: there is no subscribe endpoint. So this says so, rather
+         * than clearing the field and looking like it worked — a shopper who
+         * believes they will hear from us and never does is the failure.
          */
         setState("unavailable");
       }}
@@ -113,8 +103,8 @@ function Subscribe() {
       <input
         type="email"
         required
-        placeholder={locale === "ar" ? "إيميلك" : "Your email"}
-        aria-label={locale === "ar" ? "إيميلك" : "Your email"}
+        placeholder={locale === "ar" ? "بريدك الإلكتروني" : "Your email"}
+        aria-label={locale === "ar" ? "بريدك الإلكتروني" : "Your email"}
         aria-describedby={state === "unavailable" ? "lq-sub-note" : undefined}
         onChange={() => setState("idle")}
       />
@@ -122,7 +112,7 @@ function Subscribe() {
       {state === "unavailable" ? (
         <span id="lq-sub-note" className="lq-foot__note" role="status">
           {locale === "ar"
-            ? "التسجيل لسه مش شغال. جرّب تاني قريب."
+            ? "الاشتراك غير متاح بعد. حاول مجددًا قريبًا."
             : "Sign-up is not live yet. Try again soon."}
         </span>
       ) : null}
@@ -141,46 +131,49 @@ export function SiteFooter() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const shops = [...(data?.items ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const shops = [...(data?.items ?? [])]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, SHOPS_SHOWN);
 
   return (
     <footer className="lq-foot">
-      {/* The utility strip's claims again, where the page ends — the same
-          facts, one source, so the two bands cannot drift apart. */}
-      <div className="lq-foot__facts">
-        {CLAIMS.map((claim) => (
-          <span key={claim.en}>{t(claim.ar, claim.en)}</span>
-        ))}
-        <a
-          href="https://wa.me/201559959890"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {t("واتساب", "WhatsApp")}{" "}
-          <span data-num dir="ltr">
-            wa.me/201559959890
-          </span>
-        </a>
-      </div>
-
       <div className="lq-foot__cols">
+        <div className="lq-foot__about">
+          <strong>{t("متاجر حيّك، على الإنترنت", "Your neighbourhood's shops, online")}</strong>
+          <ul className="lq-foot__list" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {CLAIMS.map((claim) => (
+              <li key={claim.en}>{t(claim.ar, claim.en)}</li>
+            ))}
+          </ul>
+          <a
+            className="lq-foot__wa"
+            href="https://wa.me/201559959890"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("واتساب", "WhatsApp")}{" "}
+            <span data-num dir="ltr">
+              +20 155 995 9890
+            </span>
+          </a>
+        </div>
+
         <div>
-          <h3>{t("المحلات", "Shops")}</h3>
-          <div className="lq-foot__shops">
+          <h3>{t("المتاجر", "Shops")}</h3>
+          <div className="lq-foot__list">
             {shops.map((shop) => (
               <Link key={shop.id} href={`/shop/${shop.slug}`} data-bidi>
                 {shop.name}
               </Link>
             ))}
+            <Link href="/shops">{t("كل المتاجر", "All shops")}</Link>
           </div>
         </div>
 
         <div>
-          <h3>
-            <Wordmark />
-          </h3>
-          <div className="lq-foot__links">
-            {LINKS.map((link) => {
+          <h3>{t("المساعدة", "Help")}</h3>
+          <div className="lq-foot__list">
+            {HELP.map((link) => {
               const external = link.href.startsWith("http");
               return external ? (
                 <a
@@ -201,7 +194,7 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h3>{t("اعرف الجديد", "Stay in touch")}</h3>
+          <h3>{t("ابقَ على اطلاع", "Stay in touch")}</h3>
           <Subscribe />
           <div className="lq-foot__pays">
             {PAYMENTS.map((pay) => (
@@ -217,12 +210,12 @@ export function SiteFooter() {
       </div>
 
       <div className="lq-foot__bot">
-        <span className="lq-mark">
-          <Wordmark />
-        </span>
-        <span>{t("تسوّق من محلات بلدك — القاهرة والجيزة", "Shop your own city — Cairo & Giza")}</span>
-        <span data-num>© 2026</span>
+        <span>{t("متاجر القاهرة والجيزة", "Shops of Cairo & Giza")}</span>
+        <span data-num>© 2026 loqaaal</span>
       </div>
+      <p className="lq-foot__huge" aria-hidden="true">
+        loqaaal
+      </p>
     </footer>
   );
 }
