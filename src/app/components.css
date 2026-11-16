@@ -744,9 +744,12 @@ html[data-greeted="1"] .lq-open{display:none}
    and a pale mint reads as washed out. One value on white and on the photo.
    The keyframes name only the green moment; before and after it the letter
    keeps whatever colour its mark has. */
-.lq-mark__a{--mark-green:var(--well);animation:lq-mark-a 7s var(--ease-in-out) infinite}
+.lq-mark__a{--mark-green:var(--green-bright);animation:lq-mark-a 7s var(--ease-in-out) infinite}
 .lq-mark__a+.lq-mark__a{animation-delay:.35s}
 .lq-mark__a+.lq-mark__a+.lq-mark__a{animation-delay:.7s}
+/* On the home photo the mark is white over a grey-brown picture, where the
+   bottle-bright green goes dim; a livelier green carries it. */
+@container (min-width:1080px){.lq-shell[data-home] .lq-head .lq-mark__a{--mark-green:#1fbf6c}}
 @keyframes lq-mark-a{6%,13%{color:var(--mark-green)}}
 @media (prefers-reduced-motion:reduce){.lq-mark__a{animation:none}}
 

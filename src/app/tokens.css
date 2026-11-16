@@ -23,12 +23,16 @@
   /* A hover, a disabled control, a skeleton: quiet, and never a surface that
      holds content. Surfaces that hold content are --well below. */
   --raise: #e7f2eb;
-  /* THE EMERALD. Image wells, the summary panel, a chosen size or filter:
-     a rich green with white on it (5.4:1), never a pastel. */
-  --well: #127a4c;
+  /* THE WELL. Image wells, the summary panel, a chosen size or filter: the
+     brand's own bottle green with white on it (12.2:1), the same green as the
+     footer and the buttons, so the page is white and one green. */
+  --well: #0b3d2e;
   --well-ink: #ffffff;
-  --well-ink-2: #e4f5ea; /* secondary text on the emerald, 4.7:1 */
-  --well-rule: rgb(255 255 255 / 0.35);
+  --well-ink-2: #c6dacd; /* secondary text on the well, 8.3:1 */
+  --well-rule: rgb(255 255 255 / 0.3);
+  /* The one bright green: the action that sits ON the dark green (it would
+     vanish as dark-on-dark), and the logo's a's as they light up. */
+  --green-bright: #127a4c;
   --field: #ffffff;
   --line-hair: #c7dccf; /* the 1px between rows */
   --line-ink: #a9c3b4; /* an input's edge, a hairline that must be found */

@@ -1,9 +1,9 @@
 /* ==========================================================================
-   The emerald surfaces.
+   The dark green surfaces.
 
-   The storefront is white and green. Every surface that HOLDS something — an
-   image well, the order summary, a chosen size or filter — is the emerald
-   `--well` with white on it, never a pale tint. One file, so the rule lives in
+   The storefront is white and one green. Every surface that HOLDS something —
+   an image well, the order summary, a chosen size or filter — is the bottle
+   green `--well` with white on it, never a pale tint. One file, so the rule lives in
    one place instead of being repeated across the five area stylesheets; it
    loads after them (unlayered, later wins).
    ========================================================================== */
@@ -40,7 +40,7 @@
   fill: rgb(255 255 255 / 0.14);
 }
 
-/* A shop with no photo shows its initials, white on the emerald. */
+/* A shop with no photo shows its initials, light on the dark green. */
 .lq-shopcard__mark,
 .lq-biglist__initials,
 .lq-catrail__sign b,
@@ -75,17 +75,18 @@
 .lq-panel .lq-textlink {
   color: var(--well-ink);
 }
-/* A failure on the emerald: white and heavier, since red on green is mud. */
+/* A failure on the dark green: white and heavier, since red on green is mud. */
 .lq-panel .lq-hint--error {
   color: var(--well-ink);
   font-weight: var(--weight-medium);
 }
-/* The primary action on the emerald is the deep brand green. */
+/* The primary action on the dark green is the bright green — dark on dark
+   would vanish. White on it is 5.4:1. */
 .lq-panel .lq-btn--primary {
-  background: var(--green);
+  background: var(--green-bright);
 }
 .lq-panel .lq-btn--primary:hover {
-  background: #082c21;
+  background: #0f6a41;
 }
 /* Choice rows inside the panel (the delivery picker) stay white cards with
    ink text, so they read as controls lying on the panel. */
