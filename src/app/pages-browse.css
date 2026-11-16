@@ -15,16 +15,33 @@
    clipped to the photo's rectangle is white, so the heading turns from ink to
    white exactly at the photo's edge. The overlaid desktop header (72px) sits
    above the heading, which starts at 21% of a hero at least 680px tall. */
-.lq-hero{--hero-split:57%;--hero-foot:clamp(28px,6svh,60px);--inset-w:clamp(168px,16.4cqi,236px);
+/* THE SEAM SITS IN THE GAP BETWEEN THE TWO WORDS, never through a letter.
+   A fixed 57% split cut «حيّك» in half at some widths and left its shadda
+   floating on the photo like a stray glyph. So the split is derived from the
+   heading instead: «متاجر» plus half the word gap measures 1.993em in Reem
+   Kufi 500, so the photo starts exactly that far past the heading's start.
+   The first word is ink on paper, the second white on the photo, at every
+   width. Re-measure (scratch script: width of the first word + half a space,
+   divided by font-size) if the heading's words or face ever change. */
+.lq-hero{--hero-fs:clamp(84px,14cqi,216px);--hero-split:calc(100% - var(--pad) - 1.993 * var(--hero-fs));
+  --hero-foot:clamp(28px,6svh,60px);--inset-w:clamp(168px,16.4cqi,236px);
   position:relative;block-size:max(100svh,680px);overflow:hidden;background:var(--paper)}
+/* English words differ; its heading wraps to two lines and crosses wherever
+   it crosses. */
+[dir="ltr"] .lq-hero{--hero-split:57%}
+/* Under 1080 the header is a bar above the hero rather than over it, so the
+   heading no longer has to leave room for it. */
+@container (min-width:720px) and (max-width:1079px){.lq-hero__title{inset-block-start:calc(24px + 5svh)}}
 .lq-hero__plate{position:absolute;inset-block:0;inset-inline-end:0;inline-size:var(--hero-split);overflow:hidden;background:var(--green)}
 .lq-hero__plate img{display:block;inline-size:100%;block-size:100%;object-fit:cover;object-position:50% 45%;scale:1.04;animation:lq-settle 1.6s var(--ease) both}
 /* A slight dark veil, so the white mark, tools and heading hold on any photo. */
 .lq-hero__plate::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--ink) 26%,transparent)}
 @keyframes lq-settle{from{scale:1.12}to{scale:1.04}}
 
-.lq-hero__title{position:absolute;inset-block-start:21%;inset-inline-start:var(--pad);margin:0;
-  font-family:var(--font-display);font-weight:var(--weight-medium);font-size:clamp(84px,14cqi,216px);
+/* Below the 72px overlaid header, and high enough that the descenders of
+   ر and ج clear the inset photo on a short laptop window. */
+.lq-hero__title{position:absolute;inset-block-start:calc(72px + 5svh);inset-inline-start:var(--pad);margin:0;
+  font-family:var(--font-display);font-weight:var(--weight-medium);font-size:var(--hero-fs);
   line-height:1;letter-spacing:0;white-space:nowrap;color:var(--ink)}
 /* The white copy, clipped to the plate. The plate is at the inline END, which
    is the left in Arabic and the right in English. */
@@ -36,13 +53,18 @@
 
 /* The small photo straddling the plate's edge: the one thing on the page that
    floats, so it is the one thing with a shadow. Wide screens only. */
+/* It sits on the photo and laps 24px over onto the paper: enough to read as
+   laid on top of the page, little enough to leave the lede and search their
+   column (see `.lq-hero__side`). */
 .lq-hero__inset{display:none;position:absolute;z-index:1;inset-block-end:var(--hero-foot);
-  inset-inline-end:calc(var(--hero-split) - var(--inset-w) / 2);inline-size:var(--inset-w);aspect-ratio:3/4;
+  inset-inline-end:calc(var(--hero-split) - var(--inset-w) + 24px);inline-size:var(--inset-w);aspect-ratio:3/4;
   overflow:hidden;background:var(--raise);box-shadow:var(--shadow-float)}
 .lq-hero__inset img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
 @container (min-width:1024px){.lq-hero__inset{display:block}}
 
-.lq-hero__side{position:absolute;inset-inline-start:var(--pad);inset-block-end:var(--hero-foot);inline-size:min(36%,430px)}
+/* The paper strip left of the photo, less the gutter and room for the inset's
+   24px lap: the lede and the search never run under the photo. */
+.lq-hero__side{position:absolute;inset-inline-start:var(--pad);inset-block-end:var(--hero-foot);inline-size:min(calc(100% - var(--hero-split) - var(--pad) - 48px),430px)}
 .lq-hero__lede{margin:0 0 22px;font-size:1.1875rem;line-height:1.55;text-wrap:balance;color:var(--ink)}
 .lq-hero__links{display:flex;flex-wrap:wrap;gap:6px 16px;margin-block-start:14px;font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink-2)}
 .lq-hero__links a{color:inherit;text-underline-offset:4px}

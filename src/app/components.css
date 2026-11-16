@@ -433,10 +433,19 @@ html[data-greeted="1"] .lq-open{display:none}
    END 57% of the first screen, so the mark (centre) and the tools (end) sit
    on the photo and turn white; the destinations (start) sit on white paper and
    stay ink. The hero must keep that split — see `.lq-hero` in components.css. */
+/* From 1080 only: the paper strip left of the photo is ~28% of the width, and
+   below 1080 the three destinations no longer fit on it — they would sit on
+   the photo in ink. Narrower, the header stays a white bar above the hero. */
+@container (min-width:1080px){
 .lq-shell[data-home] .lq-head{position:absolute;inset-inline:0;inset-block-start:0;background:none;border-block-end:0}
+/* Uncapped here: the hero is full-bleed, so a header centred at 1440 would put
+   the destinations onto the photo on a wide screen. Gutter to gutter, they stay
+   on the paper strip. */
+.lq-shell[data-home] .lq-head__bar{max-inline-size:none}
 .lq-shell[data-home] .lq-head .lq-mark,.lq-shell[data-home] .lq-tools{color:#fff}
 .lq-shell[data-home] .lq-tools .lq-lang button{border-color:rgb(255 255 255 / .55);color:#fff}
 .lq-shell[data-home] .lq-tools .lq-lang button[aria-pressed="true"]{background:#fff;border-color:#fff;color:var(--green)}
+}
 /* SIZED HERE, and flex:none. This sits in `.lq-tools>a`, which is an
    inline-flex row: an SVG with only width/height ATTRIBUTES is a flex item with
    nothing stopping it shrinking, so it collapsed to a 1px sliver beside the
