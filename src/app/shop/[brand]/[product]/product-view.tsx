@@ -17,105 +17,40 @@ import { ProductPhoto } from "@/components/product-photo";
 /**
  * The product screen.
  *
- * SHAPE: a scrolling gallery on one side and a STICKY info column on the other,
- * collapsing to one column with the buy bar pinned under the fold. The two
- * columns are a hairline pair — a 1px gap over a `--line` ground — so the
- * divider is vertical when they sit side by side and horizontal when they
- * stack, with no mirrored rule and no second markup path.
- *
- * The breakpoint is `auto-fit` + `minmax`, not a media query, because this is a
- * page file and the container-query steps live in components.css. Two 26rem
- * tracks plus the hairline need ~833px, so the columns split at roughly the
- * mockup's 900px and stack below it.
+ * SHAPE: a gallery (one large 4:5 well and a row of thumbnails) beside a STICKY
+ * info column, collapsing to one column with the gallery full-bleed and the buy
+ * bar pinned under the fold. The layout lives in pages-product.css, behind a
+ * container query on `.lq-shell`.
  *
  * Only this half is client code. The page around it is a server component that
- * owns the ISR cache, the metadata and the JSON-LD; shipping the description
- * through a hydration boundary would buy nothing.
+ * owns the metadata and the JSON-LD; shipping the description through a
+ * hydration boundary would buy nothing.
+ *
+ * NOT HERE: "المتبقي 2 فقط" from the approved sample. `publicVariantSchema`
+ * carries `inStock` and no count — the API strips `stockOnHand` on purpose —
+ * so the size row can say a size is gone, never how many are left. And the
+ * sample's "من {shop} أيضًا" grid: this route does not load the shop's other
+ * pieces, so the link to the whole shop stands in for it.
  */
 
 /** The synthetic group used when the variants carry no attributes at all. */
 const SKU_KEY = "__sku";
 
-const PDP: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 26rem), 1fr))",
-  gap: "1px",
-  background: "var(--line)",
-  borderBlock: "var(--border-width) solid var(--line)",
-};
-
-const GALLERY: React.CSSProperties = {
-  background: "var(--paper)",
-  padding: "var(--space-4)",
-  display: "flex",
-  flexDirection: "column",
-  gap: "var(--space-3)",
-};
-
 /**
- * The cell STRETCHES and the column inside it sticks.
- *
- * Not `align-self:start` on the cell itself: the divider between the two
- * columns is the grid's `--line` ground showing through a 1px gap, so a cell
- * that stops short of the row leaves that ground painted as a slab rather than
- * as a hairline. The cell fills the row; the sticky travel happens one level in.
- */
-const INFO_CELL: React.CSSProperties = {
-  background: "var(--paper)",
-  padding: "var(--space-6) var(--space-4)",
-};
-
-const INFO: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "var(--space-4)",
-  /* Sticky only has room to travel once the columns split; in the stacked
-     layout the cell is exactly this element's height, so it is a no-op. */
-  position: "sticky",
-  insetBlockStart: "calc(var(--bar-height) + var(--space-4))",
-};
-
-const CRUMB: React.CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  alignItems: "center",
-  gap: "var(--space-2)",
-  paddingBlock: "var(--space-3)",
-};
-
-/* `.lq-actionbar` sets its own `--gutter-phone` inset. Bled to the column edge
-   so the button lines up with the picker above it and the bar spans the whole
-   column once it pins itself to the bottom of the screen. */
-const BAR: React.CSSProperties = {
-  marginInline: "calc(-1 * var(--space-4))",
-  marginBlockStart: "var(--space-2)",
-  flexDirection: "column",
-  alignItems: "stretch",
-  gap: "var(--space-2)",
-};
-
-/**
- * `<details>`, hairline-ruled — `.lq-disc` in the component layer. The rule, the
- * 44px summary row and the `+` that becomes a `−` all live there, so this
- * screen sets nothing but the reveal delay.
+ * `<details>`, hairline-ruled — `.lq-disc` in pages-product.css. The rule, the
+ * summary row and the + that turns into an × all live there.
  */
 function Disclosure({
   title,
   children,
   open = false,
-  delayMs = 0,
 }: {
   title: string;
   children: React.ReactNode;
   open?: boolean;
-  delayMs?: number;
 }) {
   return (
-    <details
-      className="lq-disc lq-rv"
-      open={open}
-      style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
-    >
+    <details className="lq-disc" open={open}>
       <summary>{title}</summary>
       <div className="lq-disc__body">{children}</div>
     </details>
@@ -196,6 +131,9 @@ export function ProductView({
     return initial;
   });
 
+  /** Which photo the large well shows. */
+  const [photo, setPhoto] = useState(0);
+
   const addToBag = useAddToBag();
 
   const selected: PublicVariant | null = useMemo(() => {
@@ -239,34 +177,32 @@ export function ProductView({
   /**
    * The heading over a group and the button while it is unchosen. A real key
    * goes through `attributeName`, which translates the known ones and
-   * title-cases the rest — printing the key itself put "size" on an Arabic
-   * page. The synthetic SKU group has no key a shop wrote, so it is named here.
+   * title-cases the rest. The synthetic SKU group has no key a shop wrote, so
+   * it is named here.
    */
   const groupName = (key: string) =>
     key === SKU_KEY
       ? ar
-        ? { label: "الاختيار", choose: "اختار الاختيار" }
+        ? { label: "الخيار", choose: "اختر الخيار" }
         : { label: "Option", choose: "Choose an option" }
       : attributeName(key, locale);
 
   const t = {
     home: ar ? "الرئيسية" : "Home",
-    shops: ar ? "المحلات" : "Shops",
-    allOfShop: ar ? "كل قطع المحل" : "Everything from this shop",
-    from: ar ? "من" : "from",
-    add: ar ? "ضيف للسلة" : "Add to bag",
-    adding: ar ? "بيتضاف…" : "Adding…",
-    added: ar ? "اتضاف للسلة" : "Added to your bag",
-    soldOut: ar ? "خلص من المحل" : "Gone from the shelf",
-    strike: ar
-      ? "اللي عليه خط خلص من المحل."
-      : "Struck through means the shop is out of it.",
+    shops: ar ? "المتاجر" : "Shops",
+    allOfShop: ar ? "كل قطع المتجر" : "Everything from this shop",
+    from: ar ? "يبدأ من" : "from",
+    add: ar ? "أضف إلى السلة" : "Add to bag",
+    adding: ar ? "جارٍ الإضافة…" : "Adding…",
+    added: ar ? "أُضيفت القطعة إلى السلة." : "Added to your bag.",
+    soldOut: ar ? "نفد من المتجر" : "Gone from the shelf",
+    strike: ar ? "المشطوب نفد من المتجر" : "Struck through means the shop is out of it",
     noVariants: ar
-      ? "المحل لسه ماحطّش مقاسات للقطعة دي. لما يحطّها، هتقدر تطلبها من هنا."
+      ? "لم يُضف المتجر مقاسات لهذه القطعة بعد. حين يضيفها، يمكنك طلبها من هنا."
       : "The shop has not listed sizes for this piece yet. When it does, you can order it here.",
     /* Says the consequence, not the caution. */
     failed: ar
-      ? "مااتضافش. المحل ممكن يكون خلص القطعة دلوقتي — جرّب تاني."
+      ? "لم تُضف القطعة. ربما نفدت من المتجر للتو، فحاول مرة أخرى."
       : "It did not go in. The shop may have just run out — try again.",
     /**
      * NEVER a stock COUNT. `publicVariantSchema` carries `inStock` and nothing
@@ -274,26 +210,27 @@ export function ProductView({
      * server. The shelf note is words.
      */
     shelf: ar
-      ? "اللي مكتوب هنا هو آخر حاجة المحل قالها لنا. المحل بيراجع الرف قبل ما يأكد الأوردر، ولو القطعة مش موجودة بيتلغي الأوردر ومش بيتخصم منك حاجة."
+      ? "ما تراه هنا هو آخر ما أبلغنا به المتجر. يراجع المتجر الرف قبل تأكيد الطلب، وإذا لم تتوفر القطعة يُلغى الطلب دون أي خصم."
       : "What you see here is the last thing the shop told us. The shop checks the shelf before it confirms the order, and if the piece is not there the order is cancelled and you are not charged.",
     noPhotos: ar
-      ? "لسه مفيش صور للقطعة دي. الرسمة دي ماسكة مكانها لحد ما المحل يصوّرها على الرف."
+      ? "لا توجد صور لهذه القطعة بعد. يحفظ هذا الرسم مكانها حتى يصوّرها المتجر على الرف."
       : "There are no photos of this piece yet. The drawing holds its place until the shop photographs it on the shelf.",
+    photoN: (n: number) => (ar ? `الصورة ${n}` : `Photo ${n}`),
     about: ar ? "عن القطعة" : "About this piece",
     noAbout: ar
-      ? "المحل لسه مابعتش وصف للقطعة دي. لو محتاج تعرف حاجة، كلّم المحل قبل ما تطلب."
+      ? "لم يكتب المتجر وصفًا لهذه القطعة بعد. إن احتجت إلى معرفة شيء، فاسأل المتجر قبل الطلب."
       : "The shop has not written a description for this piece yet. If you need to know something, ask the shop before you order.",
     material: ar ? "الخامة والعناية" : "Material and care",
     noMaterial: ar
-      ? "المحل مابعتش تفاصيل الخامة ولا الغسيل للقطعة دي. مابنكتبش حاجة المحل ماقالهاش."
+      ? "لم يرسل المتجر تفاصيل الخامة أو الغسيل لهذه القطعة، ولا نكتب شيئًا لم يقله المتجر."
       : "The shop has not sent the fabric or the washing details for this piece. We do not write anything the shop did not say.",
     delivery: ar ? "التوصيل" : "Delivery",
     deliveryBody: ar
-      ? "التوصيل من المحل نفسه، مش من مخزن. جوّه القاهرة والجيزة بيوصل في نفس اليوم، وتقدر تدفع كاش لما يوصلك."
+      ? "يأتي التوصيل من المتجر نفسه لا من مستودع. داخل القاهرة والجيزة يصل الطلب في اليوم نفسه، ويمكنك الدفع نقدًا عند الاستلام."
       : "Delivery comes from the shop itself, not from a warehouse. Inside Cairo and Giza it arrives the same day, and you can pay cash when it reaches you.",
     returns: ar ? "الاستبدال والاسترجاع" : "Exchanges and returns",
     returnsBody: ar
-      ? "استبدال أو استرجاع خلال 14 يوم، مع نفس المحل اللي بعتلك."
+      ? "استبدال أو استرجاع خلال 14 يومًا، مع المتجر نفسه الذي أرسل إليك القطعة."
       : "Exchange or return within 14 days, through the same shop that sent it.",
   };
 
@@ -305,253 +242,208 @@ export function ProductView({
         ? t.soldOut
         : t.add;
 
+  const photos = product.mediaUrls;
+  const shown = photos[photo] ?? photos[0];
+
   return (
     <div className="lq-wrap">
-      <nav className="lq-pad" style={CRUMB} aria-label={ar ? "مسار" : "Breadcrumb"}>
-        <Link className="lq-eyebrow" href="/">
-          {t.home}
-        </Link>
-        <span className="lq-eyebrow" aria-hidden="true">
-          /
+      <nav className="lq-pcrumb" aria-label={ar ? "مسار التصفح" : "Breadcrumb"}>
+        <Link href="/">{t.home}</Link>
+        <span>
+          <Link href="/shops">{t.shops}</Link>
         </span>
-        <Link className="lq-eyebrow" href="/shops">
-          {t.shops}
-        </Link>
-        <span className="lq-eyebrow" aria-hidden="true">
-          /
-        </span>
-        <Link className="lq-eyebrow" href={`/shop/${brandSlug}`} data-bidi>
-          {brandName}
-        </Link>
-        <span className="lq-eyebrow" aria-hidden="true">
-          /
-        </span>
-        <span className="lq-eyebrow" data-bidi aria-current="page">
-          {name}
+        <span>
+          <Link href={`/shop/${brandSlug}`} data-bidi>
+            {brandName}
+          </Link>
         </span>
       </nav>
 
-      <div style={PDP}>
-        {/* ── The gallery ───────────────────────────────────────────────────
-            Every well is 3:4 with no exceptions. There is no product
-            photography yet and none has been invented: with nothing to show the
-            well carries the garment line art, which is the register's answer
-            rather than a picture of a missing picture. */}
-        <div style={GALLERY}>
-          {product.mediaUrls.length > 0 ? (
-            product.mediaUrls.map((url, index) => (
-              <div
-                key={url}
-                className="lq-pcard__well lq-rv"
-                style={{ "--lq-d": `${index * 70}ms` } as React.CSSProperties}
-              >
-                {/* `ProductPhoto`, not a bare `next/image`: with no configured
-                    media host or a file that fails to load it degrades to the
-                    garment drawing below, instead of throwing the page down. */}
-                <ProductPhoto
-                  src={url}
-                  alt={name}
-                  productId={product.id}
-                  sizes="(min-width: 900px) 45vw, 100vw"
-                  // The first photo is the LCP on this screen.
-                  priority={index === 0}
-                />
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="lq-pcard__well lq-rv">
-                <Garment className="lq-garment" kind={garmentFor(product.id)} />
-              </div>
-              {/* Say what is absent and why. A missing thing explained is a
-                  feature; a blank frame is a bug report. */}
-              <p className="lq-hint" style={{ maxInlineSize: "48ch" }}>
-                {t.noPhotos}
-              </p>
-            </>
-          )}
+      <section className="lq-pdp">
+        {/* ── The gallery ─────────────────────────────────────────────────
+            With no photography the well carries the garment line art, drawn
+            large in the raised well — the register's answer rather than a
+            picture of a missing picture. */}
+        <div className="lq-pdp__gallery">
+          <div className="lq-pdp__main">
+            {shown ? (
+              /* `ProductPhoto`, not a bare `next/image`: with no configured
+                 media host or a file that fails to load it degrades to the
+                 garment drawing, instead of throwing the page down. Keyed so a
+                 failed photo does not keep the next one on the fallback. */
+              <ProductPhoto
+                key={shown}
+                src={shown}
+                alt={name}
+                productId={product.id}
+                sizes="(min-width: 900px) 55vw, 100vw"
+                // The large photo is the LCP on this screen.
+                priority
+              />
+            ) : (
+              <Garment className="lq-garment" kind={garmentFor(product.id)} />
+            )}
+          </div>
+
+          {photos.length > 1 ? (
+            <div className="lq-pdp__thumbs">
+              {photos.map((url, index) => (
+                <button
+                  key={url}
+                  type="button"
+                  aria-pressed={index === photo}
+                  aria-label={t.photoN(index + 1)}
+                  onClick={() => setPhoto(index)}
+                >
+                  <ProductPhoto src={url} alt="" productId={product.id} sizes="84px" />
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Say what is absent and why. A missing thing explained is a
+              feature; a blank frame is a bug report. */}
+          {photos.length === 0 ? <p className="lq-pdp__nophoto">{t.noPhotos}</p> : null}
         </div>
 
-        {/* ── The info column ───────────────────────────────────────────── */}
-        <div style={INFO_CELL}>
-          <div style={INFO}>
-            {/* The shop is a link, not a label: a shopper who likes the garment
+        {/* ── The info column ─────────────────────────────────────────── */}
+        <div className="lq-pdp__info">
+          {/* The shop is a link, not a label: a shopper who likes the garment
               wants the rest of the rail. */}
-            <Link
-              className="lq-eyebrow lq-rv"
-              href={`/shop/${brandSlug}`}
-              data-bidi
-              style={{ "--lq-d": "0ms" } as React.CSSProperties}
-            >
-              {brandName}
-            </Link>
+          <Link className="lq-pdp__shop" href={`/shop/${brandSlug}`} data-bidi>
+            {brandName}
+          </Link>
 
-            <h1
-              className="lq-phead__title lq-rv"
-              data-bidi
-              style={{ "--lq-d": "70ms" } as React.CSSProperties}
-            >
-              {name}
-            </h1>
+          <h1 className="lq-pdp__name" data-bidi>
+            {name}
+          </h1>
 
-            <div
-              className="lq-rv"
-              style={
-                {
-                  display: "flex",
-                  alignItems: "baseline",
-                  flexWrap: "wrap",
-                  gap: "var(--space-3)",
-                  fontSize: "var(--text-xl)",
-                  "--lq-d": "140ms",
-                } as React.CSSProperties
-              }
-            >
-              {priceIsFrom ? <span className="lq-hint">{t.from}</span> : null}
-              {/* A shelf price, so `reconciled` stays off and it carries no
-                decimals. Latin numerals in both languages, and the currency
-                mark trails the figure in Arabic — all of that lives in `Money`.
+          <p className="lq-pdp__price">
+            {priceIsFrom ? <span className="lq-pdp__from">{t.from}</span> : null}
+            {/* The struck "was" figure first, then the live one — red only when
+                the price genuinely dropped, one of the two things red means.
+                The badge carries the same drop in words, so neither colour nor
+                the strike is the only carrier. */}
+            <MoneyWas amount={compareAt} locale={locale} />
+            <Money
+              className={off != null ? "lq-money lq-money--drop" : "lq-money"}
+              amount={price}
+              locale={locale}
+            />
+            {off != null ? (
+              <span className="lq-badge lq-badge--drop" data-bidi>
+                {ar ? `خصم ${off}%` : `${off}% off`}
+              </span>
+            ) : null}
+          </p>
 
-                The live figure takes `.lq-money--sale` when the price genuinely
-                dropped — red means exactly two things in this system and a price
-                that dropped is one of them. The strike and the badge carry the
-                same drop in words, so colour is never the only carrier. */}
-              <Money
-                className={off != null ? "lq-money lq-money--sale" : "lq-money"}
-                amount={price}
-                locale={locale}
-              />
-              <MoneyWas amount={compareAt} locale={locale} />
-              {/* Red means a price that dropped, and the badge carries the word —
-                colour and a strike-through are never the only carriers. */}
-              {off != null ? (
-                <span className="lq-badge lq-badge--sale" data-bidi>
-                  {ar ? `خصم ${off}%` : `${off}% off`}
-                </span>
-              ) : null}
-            </div>
-
-            <hr className="lq-rule" />
-
-            {/* ── The picker ─────────────────────────────────────────────────
+          {/* ── The picker ─────────────────────────────────────────────────
               One group per attribute key the data actually carries. */}
-            {product.variants.length === 0 ? (
-              <p className="lq-hint">{t.noVariants}</p>
-            ) : (
-              groups.map((group, index) => (
-                <div
-                  key={group.key}
-                  className="lq-vp lq-rv"
-                  style={{ "--lq-d": `${210 + index * 70}ms` } as React.CSSProperties}
-                >
-                  <div className="lq-vp__head">
-                    <span className="lq-vp__label" data-bidi>
-                      {groupName(group.key).label}
-                      {choice[group.key] ? ` — ${choice[group.key]}` : ""}
-                    </span>
-                    {group.values.some((value) => !available(group.key, value)) ? (
-                      <span className="lq-vp__aside">{t.strike}</span>
-                    ) : null}
-                  </div>
+          {product.variants.length === 0 ? (
+            <p className="lq-pdp__note">{t.noVariants}</p>
+          ) : (
+            groups.map((group) => (
+              <div key={group.key} className="lq-vp">
+                <div className="lq-vp__head">
+                  <span className="lq-vp__label" data-bidi>
+                    {groupName(group.key).label}
+                    {choice[group.key] ? ` — ${choice[group.key]}` : ""}
+                  </span>
+                  {group.values.some((value) => !available(group.key, value)) ? (
+                    <span className="lq-vp__aside">{t.strike}</span>
+                  ) : null}
+                </div>
 
-                  <div className="lq-vp__row">
-                    {group.values.map((value) => {
-                      const inStock = available(group.key, value);
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          className="lq-chip"
-                          data-bidi
-                          /* Struck through by `.lq-chip[data-out]`, and STILL ON
+                <div className="lq-vp__row">
+                  {group.values.map((value) => {
+                    const inStock = available(group.key, value);
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        className="lq-chip"
+                        data-bidi
+                        /* Struck through by `.lq-chip[data-out]`, and STILL ON
                            THE SCREEN. Hiding it tells the shopper the shop never
                            carried their size. */
-                          data-out={inStock ? undefined : "true"}
-                          aria-pressed={choice[group.key] === value}
-                          aria-disabled={inStock ? undefined : true}
-                          aria-label={inStock ? undefined : `${value} — ${t.soldOut}`}
-                          onClick={() => {
-                            if (!inStock) return;
-                            setChoice((current) => ({
-                              ...current,
-                              [group.key]: value,
-                            }));
-                          }}
-                        >
-                          {value}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        data-out={inStock ? undefined : "true"}
+                        aria-pressed={choice[group.key] === value}
+                        aria-disabled={inStock ? undefined : true}
+                        aria-label={inStock ? undefined : `${value} — ${t.soldOut}`}
+                        onClick={() => {
+                          if (!inStock) return;
+                          setChoice((current) => ({
+                            ...current,
+                            [group.key]: value,
+                          }));
+                        }}
+                      >
+                        {value}
+                      </button>
+                    );
+                  })}
                 </div>
-              ))
-            )}
+              </div>
+            ))
+          )}
 
-            {/* ── The one action of the screen ──────────────────────────────
-              `.lq-actionbar` is sticky to the block end, so it pins itself
-              above the fold while the info column is still running and sits in
-              flow once the column ends. One element, both widths. */}
-            <div className="lq-actionbar" style={BAR}>
-              <button
-                type="button"
-                className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
-                disabled={!selected || !selected.inStock || addToBag.isPending}
-                onClick={() => {
-                  if (!selected) return;
-                  addToBag.mutate({ variantId: selected.id, quantity: 1 });
-                }}
-              >
-                {buyLabel}
-              </button>
+          {/* ── The one action of the screen ────────────────────────────────
+              `.lq-actionbar` is sticky to the block end on a phone, so it pins
+              itself above the tab bar while the column is still running and
+              sits in flow once the column ends. In flow beside the gallery. */}
+          <div className="lq-actionbar lq-pdp__buy">
+            <button
+              type="button"
+              className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+              disabled={!selected || !selected.inStock || addToBag.isPending}
+              onClick={() => {
+                if (!selected) return;
+                addToBag.mutate({ variantId: selected.id, quantity: 1 });
+              }}
+            >
+              {buyLabel}
+            </button>
 
-              {addToBag.isError ? (
-                <p className="lq-hint lq-hint--error" role="alert">
-                  {t.failed}
-                </p>
-              ) : addToBag.isSuccess ? (
-                <p className="lq-hint" role="status">
-                  {t.added}
-                </p>
-              ) : null}
-            </div>
+            {addToBag.isError ? (
+              <p className="lq-hint lq-hint--error" role="alert">
+                {t.failed}
+              </p>
+            ) : addToBag.isSuccess ? (
+              <p className="lq-hint" role="status">
+                {t.added}{" "}
+                <Link className="lq-textlink" href="/bag">
+                  {ar ? "عرض السلة" : "View bag"}
+                </Link>
+              </p>
+            ) : null}
+          </div>
 
-            {/*
-            NEVER CLAIM STOCK WE DO NOT OWN, and never print a count.
-            `publicVariantSchema` carries `inStock` and nothing else — the API
-            strips `stockOnHand` before it leaves the server — so the shelf note
-            is words. Visible, not folded into a disclosure: this is the sentence
-            that explains the wait between placing and confirming, and a shopper
-            who reads it after the wait has read it too late.
+          {/*
+            NEVER CLAIM STOCK WE DO NOT OWN, and never print a count. Visible,
+            not folded into a disclosure: this is the sentence that explains
+            the wait between placing and confirming, and a shopper who reads it
+            after the wait has read it too late.
           */}
-            <p className="lq-hint" style={{ maxInlineSize: "56ch" }}>
-              {t.shelf}
-            </p>
+          <p className="lq-pdp__note">{t.shelf}</p>
 
-            <Disclosure title={t.about} open={Boolean(description)} delayMs={0}>
+          <div className="lq-pdp__accs">
+            <Disclosure title={t.about} open>
               <span data-bidi>{description ?? t.noAbout}</span>
             </Disclosure>
 
             {/* No fabric and no care instructions exist in `publicProductDetail`.
-              Saying so is the register; inventing "70% merino" is the one thing
-              PRODUCT.md rules out outright. */}
-            <Disclosure title={t.material} delayMs={70}>
-              {t.noMaterial}
-            </Disclosure>
-
-            <Disclosure title={t.delivery} delayMs={140}>
-              {t.deliveryBody}
-            </Disclosure>
-
-            <Disclosure title={t.returns} delayMs={210}>
-              {t.returnsBody}
-            </Disclosure>
-
-            <Link className="lq-eyebrow" href={`/shop/${brandSlug}`}>
-              {t.allOfShop}
-            </Link>
+                Saying so is the register; inventing "70% merino" is the one
+                thing PRODUCT.md rules out outright. */}
+            <Disclosure title={t.material}>{t.noMaterial}</Disclosure>
+            <Disclosure title={t.delivery}>{t.deliveryBody}</Disclosure>
+            <Disclosure title={t.returns}>{t.returnsBody}</Disclosure>
           </div>
+
+          <Link className="lq-textlink lq-pdp__all" href={`/shop/${brandSlug}`}>
+            {t.allOfShop}
+          </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

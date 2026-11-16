@@ -110,10 +110,10 @@ const swatchFor = (value: string): string | null =>
   SWATCHES[value.trim().toLowerCase()] ?? null;
 
 const SORTS: { value: SearchSort; ar: string; en: string }[] = [
-  { value: "relevance", ar: "الأقرب للكلمة", en: "Best match" },
+  { value: "relevance", ar: "الأقرب إلى البحث", en: "Best match" },
   { value: "newest", ar: "الأحدث", en: "Newest" },
-  { value: "priceAsc", ar: "الأرخص", en: "Price: low to high" },
-  { value: "priceDesc", ar: "الأغلى", en: "Price: high to low" },
+  { value: "priceAsc", ar: "الأقل سعرًا", en: "Price: low to high" },
+  { value: "priceDesc", ar: "الأعلى سعرًا", en: "Price: high to low" },
 ];
 
 /** Toggling a value in or out of a filter list. */
@@ -165,6 +165,9 @@ export function SearchView() {
 
   const patch = (next: Partial<SearchFilters>) =>
     setFilters((current) => ({ ...current, ...next }));
+
+  /** The filter block on a phone, folded until asked for. Always open from 820. */
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   /** Empty string, never undefined, so the query key is stable. */
   const category = filters.category ?? "";
@@ -337,9 +340,16 @@ export function SearchView() {
 
   return (
     <Shell title={t("البحث", "Search")}>
-      <div className="lq-wrap lq-pad">
+      <div className="lq-wrap lq-srch">
+        {/* The page names what it is showing: the shelf when one is chosen,
+            otherwise the search itself. */}
+        <h1 className="lq-pagetitle lq-srch__title" data-bidi>
+          {category ? categoryName : t("البحث", "Search")}
+        </h1>
+
         <form
-          className="lq-sec"
+          className="lq-srch__field"
+          role="search"
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitted(term.trim());
@@ -353,10 +363,10 @@ export function SearchView() {
               value={term}
               onChange={(event) => setTerm(event.target.value)}
               placeholder={t(
-                "دوّر على قطعة أو محل…",
+                "ابحث عن قطعة أو متجر…",
                 "Search for a piece or a shop…",
               )}
-              aria-label={t("بحث", "Search")}
+              aria-label={t("ابحث", "Search")}
             />
           </label>
         </form>
@@ -366,10 +376,7 @@ export function SearchView() {
             for. This sits directly under the box, above everything it narrows,
             and the × on it is the whole of "show me everything again". */}
         {category ? (
-          <div
-            className="lq-vp__row"
-            style={{ paddingBlockEnd: "var(--space-3)" }}
-          >
+          <div className="lq-vp__row lq-srch__shelf">
             <span className="lq-hint">{t("القسم", "Category")}</span>
             <button
               type="button"
@@ -380,7 +387,7 @@ export function SearchView() {
               <span data-bidi>{categoryName}</span>
               <span aria-hidden="true">×</span>
               <span className="lq-vh">
-                {t("شيل القسم", "Clear the category")}
+                {t("إزالة القسم", "Clear the category")}
               </span>
             </button>
           </div>
@@ -392,16 +399,16 @@ export function SearchView() {
              left the whole screen a thin strip above the footer. It says how
              search behaves, then hands over the two routes that browse without
              one. */
-          <section className="lq-sec">
+          <section className="lq-srch__blank">
             <p className="lq-prose">
               {t(
-                "اكتب اسم قطعة أو محل. البحث بيقارن الكلام، فمش لازم تكتبه بالظبط.",
+                "اكتب اسم قطعة أو متجر. يقارن البحث الكلمات، فلا يلزم أن تكتبها بدقة.",
                 "Type the name of a piece or a shop. Search compares words, so it does not have to be exact.",
               )}
             </p>
             <p className="lq-prose">
               {t(
-                "أول ما تدوّر، هتلاقي على الشمال فلاتر بالمحل والمقاس واللون والسعر.",
+                "بعد البحث تظهر بجانب النتائج فلاتر المتجر والمقاس واللون والسعر.",
                 "Once you search, filters for shop, size, colour and price appear beside the results.",
               )}
             </p>
@@ -414,11 +421,11 @@ export function SearchView() {
                 />
                 <span className="lq-row__body">
                   <span>
-                    {t("اتفرّج على الأقسام", "Browse the categories")}
+                    {t("تصفّح الأقسام", "Browse the categories")}
                   </span>
                   <span className="lq-hint">
                     {t(
-                      "كل قطعة على رف في محل",
+                      "كل قطعة على رفّ في متجر",
                       "Every piece is on a shelf in a shop",
                     )}
                   </span>
@@ -436,9 +443,9 @@ export function SearchView() {
                   aria-hidden="true"
                 />
                 <span className="lq-row__body">
-                  <span>{t("اتفرّج على المحلات", "Browse the shops")}</span>
+                  <span>{t("تصفّح المتاجر", "Browse the shops")}</span>
                   <span className="lq-hint">
-                    {t("محلات ليها عناوين حقيقية", "Shops with real addresses")}
+                    {t("متاجر لها عناوين حقيقية", "Shops with real addresses")}
                   </span>
                 </span>
                 <span
@@ -453,7 +460,7 @@ export function SearchView() {
           /* NO RAIL AND NO COLUMN. A filter rail beside a search that did not
              run is furniture, and it squeezes the one thing on the page that
              has something to say into two thirds of the width, off-centre. */
-          <section className="lq-sec">
+          <section className="lq-srch__solo">
             {recoverable ? (
               <div className="lq-recover">
                 <p className="lq-recover__say" role="status">
@@ -464,7 +471,7 @@ export function SearchView() {
                   />
                   <span>
                     {t(
-                      `بنعرض كل حاجة اسمها «${categoryName}». السيرفر ده بيقارن بالاسم، فالقطعة اللي متسجلة في القسم من غير الكلمة دي مش هتبان.`,
+                      `نعرض كل ما يحمل اسم «${categoryName}». يطابق هذا الخادم الاسم وحده، فالقطعة المسجّلة في القسم دون هذه الكلمة في اسمها لن تظهر.`,
                       `Showing everything called “${categoryName}”. This server matches on the name, so a piece filed under it without the word in its title is not here.`,
                     )}
                   </span>
@@ -473,12 +480,12 @@ export function SearchView() {
                     className="lq-btn lq-btn--secondary lq-recover__act"
                     onClick={clearCategory}
                   >
-                    {t("شيل القسم", "Drop the category")}
+                    {t("إزالة القسم", "Drop the category")}
                   </button>
                 </p>
 
                 {recovery.isPending ? (
-                  <div className="lq-pgrid" aria-hidden="true">
+                  <div className="lq-srch__grid" aria-hidden="true">
                     {Array.from({ length: 8 }, (_, index) => (
                       <span key={index} className="lq-recover__skel">
                         <span className="lq-skel lq-recover__skelart" />
@@ -492,8 +499,8 @@ export function SearchView() {
                   </div>
                 ) : (
                   <>
-                    <div className="lq-sum__row lq-recover__count">
-                      <p className="lq-hint" aria-live="polite">
+                    <div className="lq-srch__rhead lq-recover__count">
+                      <p aria-live="polite">
                         {t(`${recovered.length} قطعة`, `${recovered.length} pieces`)}
                       </p>
                       <SortSelect
@@ -502,7 +509,7 @@ export function SearchView() {
                         onChange={(sort) => patch({ sort })}
                       />
                     </div>
-                    <div className="lq-pgrid">
+                    <div className="lq-srch__grid">
                       {recovered.map((item, index) => (
                         <SearchCard
                           key={item.id}
@@ -513,16 +520,16 @@ export function SearchView() {
                       ))}
                     </div>
                     {recovery.hasNextPage ? (
-                      <div style={{ paddingBlock: "var(--space-6)" }}>
+                      <div className="lq-srch__more">
                         <button
                           type="button"
-                          className="lq-btn lq-btn--secondary lq-btn--block"
+                          className="lq-btn lq-btn--secondary"
                           aria-busy={recovery.isFetchingNextPage}
                           onClick={() => recovery.fetchNextPage()}
                         >
                           {recovery.isFetchingNextPage
-                            ? t("بنجيب المزيد…", "Loading…")
-                            : t("اعرض المزيد", "Show more")}
+                            ? t("جارٍ تحميل المزيد…", "Loading…")
+                            : t("عرض المزيد", "Show more")}
                         </button>
                       </div>
                     ) : null}
@@ -536,11 +543,11 @@ export function SearchView() {
                 artwork={<StateRail />}
                 role="alert"
                 title={t(
-                  "الرف موجود. الباب اللي عليه لسه مقفول",
+                  "الرف موجود، لكن الطريق إليه لم يُفتح بعد",
                   "The rail is here. This door to it is not open yet",
                 )}
                 body={t(
-                  "السيرفر ده بيرد على البحث بالاسم مش بالقسم. دوّر بالاسم وهترجع تلاقي نفس القطع.",
+                  "يجيب هذا الخادم عن البحث بالاسم لا بالقسم. ابحث بالاسم وستظهر القطع نفسها.",
                   "This server answers a search by name but not by shelf. Search the name and the same pieces come back.",
                 )}
                 actions={
@@ -550,10 +557,10 @@ export function SearchView() {
                       className="lq-btn lq-btn--primary"
                       onClick={searchCategoryName}
                     >
-                      {t(`دوّر على «${categoryName}»`, `Search for “${categoryName}”`)}
+                      {t(`ابحث عن «${categoryName}»`, `Search for “${categoryName}”`)}
                     </button>
                     <Link className="lq-btn lq-btn--secondary" href="/shops">
-                      {t("اتفرّج على المحلات", "Browse the shops")}
+                      {t("تصفّح المتاجر", "Browse the shops")}
                     </Link>
                   </>
                 }
@@ -569,16 +576,16 @@ export function SearchView() {
             )}
           </section>
         ) : results.isError ? (
-          <section className="lq-sec">
+          <section className="lq-srch__solo">
             <EmptyState
               size="page"
               art="crooked"
               tone="loud"
               role="alert"
               seed="search-error"
-              title={t("مش قادرين ندوّر دلوقتي", "We cannot search right now")}
+              title={t("تعذّر البحث الآن", "We cannot search right now")}
               body={t(
-                "الطلب مارجعش. مش مشكلة في اللي كتبته — جرّب تاني، وغالبًا هيرد.",
+                "لم يصل الرد. لا خطأ فيما كتبته؛ حاول مرة أخرى، وغالبًا ستظهر النتائج.",
                 "The request did not come back. Nothing is wrong with what you typed — try again, and it usually answers.",
               )}
               actions={
@@ -588,34 +595,58 @@ export function SearchView() {
                   aria-busy={results.isFetching}
                   onClick={() => results.refetch()}
                 >
-                  {t("حاول تاني", "Try again")}
+                  {t("حاول مرة أخرى", "Try again")}
                 </button>
               }
             />
           </section>
         ) : (
-          <div className="lq-body">
-            {/* ── The rail ────────────────────────────────────────────────── */}
+          <div className="lq-srch__results">
+            {/* ── The rail ──────────────────────────────────────────────────
+                A column from 820 up; on a phone a folded block whose button
+                says how many filters are on, so a folded filter is never a
+                forgotten one. */}
             <aside
-              className="lq-body__rail lq-body__sticky"
-              aria-label={t("فلتر", "Filters")}
+              className="lq-srch__filters"
+              data-open={filtersOpen ? "true" : "false"}
+              aria-label={t("الفلاتر", "Filters")}
             >
-              <div className="lq-sum__row">
-                <h2 className="lq-sec__title">{t("فلتر", "Filters")}</h2>
+              <button
+                type="button"
+                className="lq-srch__toggle"
+                aria-expanded={filtersOpen}
+                aria-controls="lq-srch-filters"
+                onClick={() => setFiltersOpen((open) => !open)}
+              >
+                <span>
+                  {t("الفلاتر", "Filters")}
+                  {activeCount > 0 ? (
+                    <span className="lq-srch__n" data-num>
+                      {" "}
+                      ({activeCount})
+                    </span>
+                  ) : null}
+                </span>
+                <span className="lq-srch__plus" aria-hidden="true" />
+              </button>
+
+              <div id="lq-srch-filters" className="lq-srch__fbody">
+              <div className="lq-srch__fhead">
+                <h2>{t("الفلاتر", "Filters")}</h2>
                 {activeCount > 0 ? (
                   <button
                     type="button"
-                    className="lq-sec__more"
+                    className="lq-textlink"
                     onClick={clearFilters}
                   >
-                    {t("مسح", "Clear")}
+                    {t("مسح الكل", "Clear all")}
                   </button>
                 ) : null}
               </div>
 
               {results.isPending ? (
                 <p className="lq-hint">
-                  {t("بنجيب الفلاتر…", "Loading filters…")}
+                  {t("جارٍ تحميل الفلاتر…", "Loading filters…")}
                 </p>
               ) : !hasFacets ? (
                 /* No facets means one of two things, and only one of them is
@@ -630,14 +661,14 @@ export function SearchView() {
                 items.length > 0 ? (
                   <p className="lq-hint">
                     {t(
-                      "الفلاتر مش متاحة من السيرفر ده لسه.",
+                      "لا يرسل هذا الخادم الفلاتر بعد.",
                       "This server build does not send filters yet.",
                     )}
                   </p>
                 ) : null
               ) : (
                 <>
-                  <FacetGroup title={t("المحل", "Shop")}>
+                  <FacetGroup title={t("المتجر", "Shop")}>
                     {facets.brands.map((brand) => (
                       <Check
                         key={brand.slug}
@@ -738,7 +769,7 @@ export function SearchView() {
 
                   <FacetGroup title={t("المتاح", "Availability")}>
                     <Check
-                      label={t("المتاح بس", "In stock only")}
+                      label={t("المتوفر فقط", "In stock only")}
                       checked={filters.inStockOnly ?? false}
                       onChange={() =>
                         patch({ inStockOnly: !filters.inStockOnly })
@@ -747,22 +778,23 @@ export function SearchView() {
                   </FacetGroup>
                 </>
               )}
+              </div>
             </aside>
 
             {/* ── Results ─────────────────────────────────────────────────── */}
-            <section className="lq-body__main">
-              <div className="lq-sum__row">
+            <section className="lq-srch__main">
+              <div className="lq-srch__rhead">
                 {/* No count while the search is failing — "0 نتيجة" beside an
                     error reads as "there is nothing", which is a different and
                     much worse claim than "we could not look". */}
-                <p className="lq-hint" aria-live="polite">
+                <p aria-live="polite">
                   {results.isPending
-                    ? t("بندوّر…", "Searching…")
+                    ? t("جارٍ البحث…", "Searching…")
                     : results.isError
                       ? ""
                       : submitted.length > 0
                         ? t(
-                            `${items.length} نتيجة لـ «${submitted}»`,
+                            `${items.length} نتيجة عن «${submitted}»`,
                             `${items.length} results for “${submitted}”`,
                           )
                         : t(
@@ -798,32 +830,32 @@ export function SearchView() {
                   title={
                     activeCount > 0
                       ? t(
-                          "الرف فاضي بالفلاتر دي",
+                          "لا توجد نتائج بهذه الفلاتر",
                           "Nothing on the rail with these filters",
                         )
                       : submitted.length > 0
                         ? t(
-                            `مفيش حاجة اسمها «${submitted}»`,
+                            `لا توجد نتائج عن «${submitted}»`,
                             `Nothing here called “${submitted}”`,
                           )
                         : t(
-                            `مفيش قطع في «${categoryName}» لسه`,
+                            `لا توجد قطع في «${categoryName}» بعد`,
                             `Nothing in “${categoryName}” yet`,
                           )
                   }
                   body={
                     activeCount > 0
                       ? t(
-                          "شيل فلتر أو اتنين وهترجع تلاقي. الشروط دي مفيش قطعة مطابقة ليها دلوقتي.",
+                          "أزل فلترًا أو اثنين لتعود القطع إلى الظهور؛ لا توجد الآن قطعة تطابق كل هذه الشروط معًا.",
                           "Drop one or two and the rail fills up again. Nothing in stock matches all of these at once.",
                         )
                       : submitted.length > 0
                         ? t(
-                            "جرّب كلمة أقصر، أو اسم المحل نفسه. البحث بيقارن الكلام مش بيحفظه.",
+                            "جرّب كلمة أقصر، أو اسم المتجر نفسه. يقارن البحث الكلمات ولا يشترط تطابقها حرفيًا.",
                             "Try a shorter word, or the shop's own name. Search compares words rather than matching them.",
                           )
                         : t(
-                            "القسم موجود، بس المحلات لسه محطّتش فيه حاجة. جرّب قسم تاني أو ادخل محل.",
+                            "القسم موجود، لكن المتاجر لم تضع فيه شيئًا بعد. جرّب قسمًا آخر أو تصفّح أحد المتاجر.",
                             "The section is here, the shops have just not put anything on it yet. Try another one, or open a shop.",
                           )
                   }
@@ -834,7 +866,7 @@ export function SearchView() {
                         className="lq-btn lq-btn--primary"
                         onClick={clearFilters}
                       >
-                        {t("شيل الفلاتر", "Clear the filters")}
+                        {t("إزالة الفلاتر", "Clear the filters")}
                       </button>
                     ) : (
                       <>
@@ -848,14 +880,14 @@ export function SearchView() {
                           className="lq-btn lq-btn--secondary"
                           href="/shops"
                         >
-                          {t("اتفرّج على المحلات", "Browse the shops")}
+                          {t("تصفّح المتاجر", "Browse the shops")}
                         </Link>
                       </>
                     )
                   }
                 />
               ) : results.isPending ? (
-                <div className="lq-pgrid" aria-hidden="true">
+                <div className="lq-srch__grid" aria-hidden="true">
                   {Array.from({ length: 12 }, (_, index) => (
                     <span key={index} className="lq-recover__skel">
                       <span className="lq-skel lq-recover__skelart" />
@@ -868,7 +900,7 @@ export function SearchView() {
                   ))}
                 </div>
               ) : (
-                <div className="lq-pgrid">
+                <div className="lq-srch__grid">
                   {items.map((item, index) => (
                     <SearchCard
                       key={item.id}
@@ -881,16 +913,16 @@ export function SearchView() {
               )}
 
               {results.hasNextPage ? (
-                <div style={{ paddingBlock: "var(--space-6)" }}>
+                <div className="lq-srch__more">
                   <button
                     type="button"
-                    className="lq-btn lq-btn--secondary lq-btn--block"
+                    className="lq-btn lq-btn--secondary"
                     aria-busy={results.isFetchingNextPage}
                     onClick={() => results.fetchNextPage()}
                   >
                     {results.isFetchingNextPage
-                      ? t("بنجيب المزيد…", "Loading…")
-                      : t("اعرض المزيد", "Show more")}
+                      ? t("جارٍ تحميل المزيد…", "Loading…")
+                      : t("عرض المزيد", "Show more")}
                   </button>
                 </div>
               ) : null}
@@ -936,7 +968,7 @@ function SortSelect({
         aria-haspopup="listbox"
         onClick={() => setOpen((previous) => !previous)}
       >
-        <span className="lq-hint">{t("ترتيب", "Sort")}</span>
+        <span className="lq-hint">{t("الترتيب", "Sort")}</span>
         <span className="lq-seltrigger__val">{t(current.ar, current.en)}</span>
         <span
           className="lq-icon lq-chev"
@@ -991,9 +1023,8 @@ function FacetGroup({
   children: React.ReactNode;
 }) {
   return (
-    <section className="lq-sec">
-      <hr className="lq-rule" />
-      <h3 className="lq-vp__label">{title}</h3>
+    <section className="lq-srch__group">
+      <h3>{title}</h3>
       {children}
     </section>
   );
@@ -1184,7 +1215,7 @@ function ActiveChips({
   if (filters.inStockOnly) {
     chips.push({
       key: "stock",
-      label: locale === "ar" ? "المتاح بس" : "In stock",
+      label: locale === "ar" ? "المتوفر فقط" : "In stock",
       next: { ...filters, inStockOnly: undefined },
     });
   }
@@ -1192,7 +1223,7 @@ function ActiveChips({
   if (chips.length === 0) return null;
 
   return (
-    <div className="lq-vp__row" style={{ paddingBlockEnd: "var(--space-3)" }}>
+    <div className="lq-vp__row lq-srch__chips">
       {chips.map((chip) => (
         <button
           key={chip.key}
@@ -1204,7 +1235,7 @@ function ActiveChips({
           <span data-bidi>{chip.label}</span>
           <span aria-hidden="true">×</span>
           <span className="lq-vh">
-            {locale === "ar" ? "شيل الفلتر" : "Remove filter"}
+            {locale === "ar" ? "إزالة الفلتر" : "Remove filter"}
           </span>
         </button>
       ))}
@@ -1274,7 +1305,7 @@ function SearchCard({
           <Garment className="lq-garment" kind={garmentFor(item.id)} />
         )}
         {off != null ? (
-          <span className="lq-badge lq-badge--sale lq-pcard__tag" data-num>
+          <span className="lq-badge lq-badge--drop lq-pcard__tag" data-num>
             −{off}%
           </span>
         ) : null}
@@ -1283,7 +1314,7 @@ function SearchCard({
             said" as "sold out" stamps خلص across a healthy catalogue. */}
         {item.inStock === false ? (
           <span className="lq-pcard__out">
-            {locale === "ar" ? "خلص" : "Sold out"}
+            {locale === "ar" ? "نفد من المتجر" : "Sold out"}
           </span>
         ) : null}
       </span>
@@ -1295,15 +1326,15 @@ function SearchCard({
         {name}
       </span>
 
-      <span className="lq-sum__row">
-        <Money
-          className={off != null ? "lq-money lq-money--sale" : "lq-money"}
-          amount={price}
-          locale={locale}
-        />
+      <span className="lq-srch__price">
         {off != null ? (
           <MoneyWas amount={item.compareAtPrice} locale={locale} />
         ) : null}
+        <Money
+          className={off != null ? "lq-money lq-money--drop" : "lq-money"}
+          amount={price}
+          locale={locale}
+        />
       </span>
     </Link>
   );

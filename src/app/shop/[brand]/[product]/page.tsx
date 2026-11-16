@@ -66,14 +66,14 @@ export async function generateMetadata({
     load(resolved),
     loadBrandName(resolved.brand),
   ]);
-  if (!product) return { title: "الصفحة مش موجودة" };
+  if (!product) return { title: "الصفحة غير موجودة" };
 
   const nameAr = product.name?.ar ?? product.name?.en ?? "";
   const nameEn = product.name?.en ?? product.name?.ar ?? "";
   const description =
     product.description?.ar ??
     product.description?.en ??
-    `${nameAr} — اشتريه من محل ${brandName ?? resolved.brand} على loqaaal.`;
+    `${nameAr} — اشترِها من متجر ${brandName ?? resolved.brand} على loqaaal.`;
 
   const canonical = `/shop/${resolved.brand}/${resolved.product}`;
 

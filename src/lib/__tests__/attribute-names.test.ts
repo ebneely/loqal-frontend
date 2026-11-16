@@ -13,7 +13,7 @@ describe("attributeName", () => {
   it("names a size in Arabic and in English", () => {
     expect(attributeName("size", "ar")).toEqual({
       label: "المقاس",
-      choose: "اختار المقاس",
+      choose: "اختر المقاس",
     });
     expect(attributeName("size", "en")).toEqual({
       label: "Size",
@@ -38,7 +38,7 @@ describe("attributeName", () => {
     });
     expect(attributeName("sleeve_length", "ar")).toEqual({
       label: "Sleeve Length",
-      choose: "اختار Sleeve Length",
+      choose: "اختر Sleeve Length",
     });
   });
 });

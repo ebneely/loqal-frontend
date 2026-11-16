@@ -40,12 +40,12 @@ export function attributeName(key: string, locale: Locale): AttributeName {
   const known = KNOWN[key.trim().toLowerCase()];
   if (known) {
     return locale === "ar"
-      ? { label: known.ar, choose: `اختار ${known.ar}` }
+      ? { label: known.ar, choose: `اختر ${known.ar}` }
       : { label: known.en, choose: known.enChoose };
   }
 
   const label = titleCase(key) || key;
   return locale === "ar"
-    ? { label, choose: `اختار ${label}` }
+    ? { label, choose: `اختر ${label}` }
     : { label, choose: `Choose the ${label.toLowerCase()}` };
 }

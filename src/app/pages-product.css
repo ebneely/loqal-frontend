@@ -3,3 +3,145 @@
    Loaded after components.css and unlayered, so a rule here wins over the
    older layered rule it replaces.
    ========================================================================== */
+
+/* ── Product: breadcrumb ──────────────────────────────────────────────────── */
+/* Quiet small text; the "/" is drawn by the span so the links stay bare words
+   for a screen reader. */
+.lq-pcrumb{display:flex;flex-wrap:wrap;gap:var(--space-2);padding:var(--space-4) var(--pad) 0;font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink-2)}
+.lq-pcrumb a{color:inherit;text-decoration:none;overflow-wrap:break-word;transition:color var(--dur-fast) var(--ease)}
+.lq-pcrumb a:hover{color:var(--ink)}
+.lq-pcrumb span::before{content:"/";margin-inline-end:var(--space-2);color:var(--ink-3)}
+
+/* ── Product: the two columns ─────────────────────────────────────────────── */
+/* One column on a phone with the gallery bled to the screen edge; gallery and
+   a sticky info column side by side from 900. */
+.lq-pdp{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-6);padding-block-start:var(--space-4)}
+
+.lq-pdp__gallery{display:grid;gap:3px;min-inline-size:0}
+/* The raised well. The padding only moves the garment drawing in from the
+   edges; a photo is `fill` and covers the whole box regardless. */
+.lq-pdp__main{position:relative;display:grid;place-items:center;aspect-ratio:4/5;overflow:hidden;padding:14%;background:var(--raise)}
+.lq-pdp__main img{object-fit:cover}
+.lq-pdp__thumbs{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none;padding-inline:var(--pad)}
+.lq-pdp__thumbs::-webkit-scrollbar{display:none}
+.lq-pdp__thumbs button{position:relative;flex:none;display:grid;place-items:center;inline-size:84px;block-size:104px;padding:12px;border:0;background:var(--raise);opacity:.6;cursor:pointer;transition:opacity var(--dur-fast) var(--ease)}
+.lq-pdp__thumbs button img{object-fit:cover}
+.lq-pdp__thumbs button:hover{opacity:.85}
+.lq-pdp__thumbs button[aria-pressed="true"]{opacity:1}
+/* The chosen thumbnail: a 3px green bar on its block-end edge, over the photo. */
+.lq-pdp__thumbs button::after{content:"";position:absolute;z-index:1;inset-inline:0;inset-block-end:0;block-size:3px;background:var(--green);scale:1 0;transform-origin:bottom;transition:scale var(--dur-base) var(--ease-out)}
+.lq-pdp__thumbs button[aria-pressed="true"]::after{scale:1 1}
+.lq-pdp__thumbs button:focus-visible{outline:var(--focus-width) solid var(--ring);outline-offset:calc(-1 * var(--focus-width))}
+.lq-pdp__nophoto{padding:var(--space-2) var(--pad) 0;max-inline-size:52ch;font-size:var(--text-xs);color:var(--ink-2)}
+
+/* ── Product: the info column ─────────────────────────────────────────────── */
+.lq-pdp__info{display:flex;flex-direction:column;min-inline-size:0;padding-inline:var(--pad)}
+.lq-pdp__shop{align-self:flex-start;font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink-2);text-decoration:none;border-block-end:var(--border-width) solid var(--line);transition:color var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+.lq-pdp__shop:hover{color:var(--ink);border-block-end-color:var(--ink)}
+.lq-pdp__name{margin-block-start:var(--space-3);font-family:var(--font-display);font-size:clamp(2.125rem,3.8vw,3.375rem);font-weight:var(--weight-medium);line-height:1.25;letter-spacing:normal;color:var(--ink);text-wrap:balance;overflow-wrap:break-word}
+
+.lq-pdp__price{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-2) var(--space-3);margin-block-start:var(--space-2);font-size:1.5rem}
+.lq-pdp__price .lq-money{font-weight:var(--weight-medium)}
+.lq-pdp__price .lq-money--strike{font-size:1.0625rem;font-weight:var(--weight-light);color:var(--ink-2)}
+.lq-pdp__price .lq-badge{align-self:center}
+.lq-pdp__from{font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink-2)}
+
+/* The size label row: المقاس at one end, "المشطوب نفد من المتجر" at the other. */
+.lq-pdp .lq-vp{display:block;margin-block-start:var(--space-6)}
+.lq-pdp .lq-vp__head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--space-1) var(--space-3);margin-block-end:var(--space-3);font-size:.90625rem}
+.lq-pdp .lq-vp__label{font-size:inherit;font-weight:var(--weight-medium)}
+.lq-pdp .lq-vp__aside{font-size:inherit;font-weight:var(--weight-regular);color:var(--ink-2)}
+.lq-pdp .lq-vp__row{gap:6px}
+
+/* The buy button. On a phone `.lq-actionbar` keeps its sticky pin above the
+   tab bar, bled to the screen edge; the gutter here matches the column's. */
+.lq-pdp__buy{flex-direction:column;align-items:stretch;gap:var(--space-2);margin-block-start:var(--space-5);margin-inline:calc(-1 * var(--pad));padding-inline:var(--pad)}
+.lq-pdp__note{margin-block-start:var(--space-3);max-inline-size:52ch;font-size:var(--text-sm);font-weight:var(--weight-light);color:var(--ink-2)}
+
+/* ── Product: accordions ──────────────────────────────────────────────────── */
+/* Hairline rows, and a + drawn from two 1.5px bars that turns into an × when
+   the row opens: one glyph, one meaning on this screen. */
+.lq-pdp__accs{margin-block-start:var(--space-6);border-block-start:var(--border-width) solid var(--line)}
+.lq-disc{border-block-end:var(--border-width) solid var(--line)}
+.lq-disc>summary{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);min-block-size:var(--tap-min);padding-block:var(--space-3);font-weight:var(--weight-medium);color:var(--ink);cursor:pointer;list-style:none}
+.lq-disc>summary::-webkit-details-marker{display:none}
+.lq-disc>summary:focus-visible{outline:var(--focus-width) solid var(--ring);outline-offset:var(--focus-offset)}
+.lq-disc>summary::after,.lq-srch__plus{content:"";flex:none;inline-size:12px;block-size:12px;background:linear-gradient(currentColor,currentColor) center/100% 1.5px no-repeat,linear-gradient(currentColor,currentColor) center/1.5px 100% no-repeat;transition:rotate var(--dur-base) var(--ease-out)}
+.lq-disc[open]>summary::after{rotate:45deg}
+.lq-disc__body{padding-block-end:var(--space-4);max-inline-size:60ch;font-weight:var(--weight-light);color:var(--ink-2)}
+.lq-pdp__all{align-self:flex-start;margin-block-start:var(--space-6)}
+
+@container (min-width:720px){
+  /* No tab bar from here, so the pinned bar sits on the screen's edge. */
+  .lq-pdp__buy{inset-block-end:0}
+}
+@container (min-width:900px){
+  .lq-pdp{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start;gap:clamp(var(--space-8),5cqi,4.5rem);padding-inline:var(--pad)}
+  .lq-pdp__thumbs,.lq-pdp__nophoto{padding-inline:0}
+  .lq-pdp__info{position:sticky;inset-block-start:calc(var(--bar-height) + var(--space-8));padding-inline:0}
+  /* Beside the gallery the button is simply in the column. */
+  .lq-pdp__buy{position:static;margin-inline:0;padding:0;border:0;background:none}
+}
+
+/* ── Search ───────────────────────────────────────────────────────────────── */
+.lq-srch{padding-inline:var(--pad);padding-block-end:var(--section-gap)}
+.lq-srch__title{padding-block:clamp(1.75rem,5vh,3.25rem) clamp(1.25rem,3vh,2rem);overflow-wrap:break-word}
+.lq-srch__field{max-inline-size:760px;padding-block-end:var(--space-6)}
+.lq-srch__field .lq-search input{font-size:var(--text-xl);caret-color:var(--green)}
+.lq-srch__shelf{align-items:center;padding-block-end:var(--space-5)}
+.lq-srch__blank{display:flex;flex-direction:column;gap:var(--space-3);max-inline-size:760px;padding-block-start:var(--space-2)}
+.lq-srch__blank .lq-rows{margin-block-start:var(--space-4)}
+.lq-srch__solo{padding-block-start:var(--space-2)}
+
+/* Results: a 230px filter column beside the grid from 820; above the grid as
+   a folded block on a phone. */
+.lq-srch__results{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:var(--space-6)}
+.lq-srch__main{min-inline-size:0}
+.lq-srch__toggle{display:none}
+.lq-srch__fhead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--space-3);padding-block-end:var(--space-3)}
+.lq-srch__fhead:empty{display:none}
+.lq-srch__fhead h2{font-family:var(--font-display);font-size:var(--text-xl);font-weight:var(--weight-medium);line-height:1.3}
+.lq-srch__group{padding-block:var(--space-4);border-block-start:var(--border-width) solid var(--line)}
+.lq-srch__group h3{margin-block-end:var(--space-2);font-family:var(--font-sans);font-size:.90625rem;font-weight:var(--weight-medium);color:var(--ink)}
+.lq-srch__group .lq-check{align-items:center;min-block-size:36px}
+.lq-srch__group .lq-check__box{margin-block-start:0}
+.lq-srch__group .lq-check__text{font-size:.90625rem;font-weight:var(--weight-regular)}
+.lq-srch__group .lq-vp__row{gap:6px}
+.lq-srch__group .lq-chip{min-inline-size:48px;min-block-size:40px;padding-inline:var(--space-3)}
+
+@container (max-width:819px){
+  .lq-srch__filters{border:var(--border-width) solid var(--line);padding-inline:var(--space-4)}
+  .lq-srch__toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);inline-size:100%;min-block-size:var(--tap-primary);padding:0;border:0;background:none;color:var(--ink);font:inherit;font-weight:var(--weight-medium);cursor:pointer}
+  .lq-srch__toggle:focus-visible{outline:var(--focus-width) solid var(--ring);outline-offset:var(--focus-offset)}
+  .lq-srch__n{color:var(--green-2)}
+  .lq-srch__filters[data-open="true"] .lq-srch__plus{rotate:45deg}
+  .lq-srch__filters[data-open="false"] .lq-srch__fbody{display:none}
+  .lq-srch__fbody{padding-block-end:var(--space-2)}
+  /* The toggle already says الفلاتر; only the clear-all stays. */
+  .lq-srch__fhead h2{display:none}
+  .lq-srch__fhead{justify-content:flex-end}
+}
+@container (min-width:820px){
+  .lq-srch__results{grid-template-columns:230px minmax(0,1fr);gap:var(--space-8)}
+}
+
+/* The count line and the sort, which reads as an underlined select. */
+.lq-srch__rhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-2) var(--space-4);margin-block-end:var(--space-5)}
+.lq-srch__rhead>p{font-weight:var(--weight-regular);color:var(--ink-2);overflow-wrap:break-word;min-inline-size:0}
+.lq-srch__rhead .lq-selwrap{flex:none}
+.lq-srch__rhead .lq-seltrigger{inline-size:auto;min-block-size:var(--tap-min);padding:var(--space-1) 2px;border:0;border-block-end:var(--border-width) solid var(--ink);background:none;box-shadow:none}
+.lq-srch__rhead .lq-seltrigger[aria-expanded="true"]{box-shadow:none;border-block-end-color:var(--green-2)}
+.lq-srch__rhead .lq-selpanel{inset-inline:auto 0;min-inline-size:13rem}
+.lq-srch__chips{padding-block-end:var(--space-4)}
+
+/* The results: the product cards on a 3px seam, as many 210px tracks as fit
+   and never fewer than two. */
+.lq-srch__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,calc(50% - 2px)),1fr));gap:clamp(1.5rem,3cqi,2.125rem) 3px}
+.lq-srch__price{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-2)}
+.lq-srch__price .lq-money--strike{font-size:var(--text-xs)}
+.lq-srch__more{display:flex;justify-content:center;padding-block-start:var(--space-10)}
+
+@media (prefers-reduced-motion:reduce){
+  .lq-pcrumb a,.lq-pdp__thumbs button,.lq-pdp__thumbs button::after,.lq-pdp__shop,
+  .lq-disc>summary::after,.lq-srch__plus{transition:none}
+}
