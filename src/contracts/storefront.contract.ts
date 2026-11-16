@@ -731,6 +731,8 @@ export const createOrderBodySchema = z
     paymentMethod: PaymentMethodSchema,
     shippingAddress: createOrderAddressSchema,
     guest: createOrderGuestSchema.optional(),
+    /** Sent only once `POST /v1/promo-codes/validate` priced it; the API re-checks. */
+    promoCode: z.string().trim().min(1).max(64).optional(),
   })
   .strict();
 export type CreateOrderBody = z.infer<typeof createOrderBodySchema>;

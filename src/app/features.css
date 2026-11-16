@@ -116,6 +116,23 @@
 /* The footer's bottom row: privacy and terms beside the year. */
 .lq-foot__legal{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-5)}
 
+/* ── Promo code (checkout summary, on the green well) ────────────────────── */
+
+/* The field is a white control lying on the panel, like the delivery picker;
+   the apply button is the on-brand white slab. */
+.lq-promo{display:grid;gap:var(--space-1);margin-block:var(--space-3) var(--space-1);padding-block-start:var(--space-3);border-block-start:var(--border-width) solid var(--well-rule)}
+.lq-promo__field{display:flex}
+.lq-promo__field .lq-input{flex:1;min-inline-size:0}
+.lq-promo__field .lq-btn{flex:none;padding-inline:var(--space-5)}
+.lq-promo__share{padding-inline-start:var(--space-3)}
+/* A 44px target whose underline stays under the word, not at the box's foot. */
+.lq-promo__remove{justify-self:start;min-block-size:var(--tap-min);border-block-end:0;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.lq-panel .lq-promo .lq-hint--error{margin-block-start:0}
+/* The narrowest phones: the button drops under the field rather than squeezing it. */
+@container (max-width:359px){
+  .lq-promo__field{flex-direction:column}
+}
+
 /* ── Motion ──────────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce){

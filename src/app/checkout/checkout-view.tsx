@@ -21,6 +21,8 @@ import { track } from "@/lib/analytics";
 import { fetchBrand, queryKeys } from "@/lib/catalog";
 import { formatDeliveryTime } from "@/lib/delivery-time";
 import { useCheckoutKey, useCreateOrder, usePaymentLink } from "@/lib/orders";
+import { usePromo } from "@/lib/promo";
+import { minusMoney, promoErrorMessage, promoReason } from "@/lib/promo-rules";
 import { useSession } from "@/lib/auth-client";
 import { formatPrice, type Locale } from "@/lib/locale";
 import { useLocale } from "@/lib/locale-context";
@@ -210,6 +212,7 @@ export function CheckoutView() {
   const create = useCreateOrder();
   const paymentLink = usePaymentLink();
   const checkoutKey = useCheckoutKey();
+  const promo = usePromo(cart, locale);
 
   const [paymentChoice, setPaymentChoice] = useState<PaymentMethod>("CASH");
   const [firstName, setFirstName] = useState("");
@@ -565,6 +568,9 @@ export function CheckoutView() {
             },
           }
         : {}),
+      /* Only a code the API already priced; absent otherwise, so an API
+         without promo codes never sees the field. */
+      ...(promo.applied ? { promoCode: promo.applied.code } : {}),
     };
 
     /* Parsed against the same schema the API validates with, on the way out.
@@ -584,7 +590,14 @@ export function CheckoutView() {
          what turns a second press after a timeout into a replay instead of a
          second order. */
       { body: parsed.data, idempotencyKey: checkoutKey.current, anonymous },
-      { onSuccess: (result) => void land(result) }
+      {
+        onSuccess: (result) => void land(result),
+        /* The order refused the code (the bag or the code changed since it
+           was priced): re-ask, so the field drops it and says why. */
+        onError: (error) => {
+          if (parsed.data.promoCode && promoReason(error)) promo.recheck();
+        },
+      }
     );
   };
 
@@ -919,7 +932,11 @@ export function CheckoutView() {
 
         {/* ── What went wrong, if anything did ───────────────────────────── */}
         {stage === 2 && create.isError ? (
-          <Failure error={create.error} locale={locale} />
+          <Failure
+            error={create.error}
+            locale={locale}
+            promoSent={Boolean(create.variables?.body.promoCode)}
+          />
         ) : null}
 
         <div className="lq-cknav">
@@ -960,7 +977,7 @@ export function CheckoutView() {
         </div>
 
         {/* ── The estimate, split the way the order will be ──────────────── */}
-        <Estimate cart={cart} locale={locale} blocked={blocked}>
+        <Estimate cart={cart} locale={locale} blocked={blocked} promo={promo}>
           {/* Hidden below 720 by `.lq-cksubmit`, where the sticky bar below
               carries the same submit against the same form. */}
           {stage === 2 ? (
@@ -990,7 +1007,11 @@ export function CheckoutView() {
               </span>
               <Money
                 className="lq-money"
-                amount={cart.grandTotalEstimate}
+                amount={
+                  promo.applied
+                    ? minusMoney(cart.grandTotalEstimate, promo.applied.discountTotal)
+                    : cart.grandTotalEstimate
+                }
                 locale={locale}
                 reconciled
               />
@@ -1139,15 +1160,18 @@ function Estimate({
   cart,
   locale,
   blocked,
+  promo,
   children,
 }: {
   cart: CartSummary;
   locale: Locale;
   blocked: CartBrand[];
+  promo: ReturnType<typeof usePromo>;
   /** The place-order button, on the stage that has one. */
   children?: ReactNode;
 }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const applied = promo.applied;
 
   return (
     <aside className="lq-panel" aria-label={t("طلبك", "Your order")}>
@@ -1180,9 +1204,16 @@ function Estimate({
         </div>
       ))}
 
+      <PromoField cart={cart} locale={locale} promo={promo} />
+
       <div className="lq-sum__row lq-sum__row--total">
         <span>{t("الإجمالي التقديري", "Estimated total")}</span>
-        <Money className="lq-money" amount={cart.grandTotalEstimate} locale={locale} reconciled />
+        <Money
+          className="lq-money"
+          amount={applied ? minusMoney(cart.grandTotalEstimate, applied.discountTotal) : cart.grandTotalEstimate}
+          locale={locale}
+          reconciled
+        />
       </div>
 
       {children ? <div className="lq-panel__go">{children}</div> : null}
@@ -1212,15 +1243,118 @@ function Estimate({
   );
 }
 
+/**
+ * «كود الخصم», inside the summary panel and so inside the checkout <form>:
+ * its button is `type="button"` and Enter in its input applies the code
+ * rather than submitting the order.
+ */
+function PromoField({
+  cart,
+  locale,
+  promo,
+}: {
+  cart: CartSummary;
+  locale: Locale;
+  promo: ReturnType<typeof usePromo>;
+}) {
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const id = useId();
+  const applied = promo.applied;
+  // Per shop only when more than one shop carries a share.
+  const shares = applied ? applied.perBrand.filter((share) => Number(share.amount) > 0) : [];
+
+  return (
+    <div className="lq-promo">
+      {applied ? (
+        <>
+          <div className="lq-sum__row">
+            <span>
+              {t("الخصم", "Discount")} · <bdi data-num>{applied.code}</bdi>
+            </span>
+            <span className="lq-money" data-num>
+              {"− "}
+              {formatPrice(applied.discountTotal, locale, { decimals: true })}
+            </span>
+          </div>
+          {shares.length > 1
+            ? shares.map((share) => (
+                <div className="lq-sum__row lq-promo__share" key={share.brandId}>
+                  <span>
+                    <bdi>{cart.brands.find((brand) => brand.brandId === share.brandId)?.brandName ?? "—"}</bdi>
+                  </span>
+                  <span className="lq-money" data-num>
+                    {"− "}
+                    {formatPrice(share.amount, locale, { decimals: true })}
+                  </span>
+                </div>
+              ))
+            : null}
+          <button type="button" className="lq-textlink lq-promo__remove" onClick={promo.remove}>
+            {t("إزالة", "Remove")}
+          </button>
+        </>
+      ) : (
+        <>
+          <label className="lq-label" htmlFor={id}>
+            {t("كود الخصم", "Promo code")}
+          </label>
+          <div className="lq-promo__field">
+            <input
+              id={id}
+              className="lq-input"
+              value={promo.input}
+              onChange={(event) => promo.setInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                promo.apply();
+              }}
+              maxLength={64}
+              dir="ltr"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              aria-invalid={promo.message ? true : undefined}
+            />
+            <button
+              type="button"
+              className="lq-btn lq-btn--onbrand"
+              disabled={promo.checking || promo.input.trim() === ""}
+              onClick={promo.apply}
+            >
+              {promo.checking ? t("لحظة", "Checking") : t("تطبيق", "Apply")}
+            </button>
+          </div>
+        </>
+      )}
+      {promo.message ? (
+        <p className="lq-hint lq-hint--error" role="alert">
+          {promo.message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    Failure, written as four different things because they ARE four different
    things and only one of them is the shopper's to fix.
    ══════════════════════════════════════════════════════════════════════════ */
 
-function Failure({ error, locale }: { error: Error; locale: Locale }) {
+function Failure({ error, locale, promoSent }: { error: Error; locale: Locale; promoSent: boolean }) {
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
 
   if (error instanceof ApiError) {
+    /* The code, not the order, was refused; the field re-checks it. */
+    if (promoSent && promoReason(error)) {
+      return (
+        <p className="lq-hint lq-hint--error" role="alert">
+          {t("لم يُرسَل الطلب. ", "The order did not go through. ")}
+          {promoErrorMessage(error, locale)}
+        </p>
+      );
+    }
+
     if (error.isConflict) {
       return (
         <p className="lq-hint lq-hint--error" role="alert">
