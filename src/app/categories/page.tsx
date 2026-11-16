@@ -56,27 +56,16 @@ export default async function CategoriesPage() {
 
   return (
     <Shell title={locale === "ar" ? "الأقسام" : "Categories"}>
-      <div className="lq-wrap lq-pad">
-        <section className="lq-sec">
-          <div className="lq-sec__head">
-            <div>
-              <h1 className="lq-phead__title">
-                {locale === "ar" ? "الأقسام" : "Categories"}
-                {categories && categories.length > 0 ? (
-                  <span className="lq-sec__count" data-num>
-                    {" · "}
-                    {categories.length}
-                  </span>
-                ) : null}
-              </h1>
-              <p className="lq-eyebrow">
-                {locale === "ar"
-                  ? "كل قطعة على رف في محل — مش في مخزن."
-                  : "Every piece is on a shelf in a shop, not in a warehouse."}
-              </p>
-            </div>
-          </div>
+      <header className="lq-browsehead">
+        <h1 className="lq-pagetitle">{locale === "ar" ? "الأقسام" : "Categories"}</h1>
+        <p className="lq-lede">
+          {locale === "ar"
+            ? "كل قطعة على رف في متجر، لا في مستودع."
+            : "Every piece is on a shelf in a shop, not in a warehouse."}
+        </p>
+      </header>
 
+      <div className="lq-browsebody">
           {categories === null ? (
             /* Says the API is unreachable rather than pretending the shop has
                no categories. A total outage and an empty catalogue must not
@@ -89,19 +78,19 @@ export default async function CategoriesPage() {
               seed="categories-down"
               title={
                 locale === "ar"
-                  ? "مش قادرين نوصل للأقسام دلوقتي"
+                  ? "تعذّر الوصول إلى الأقسام الآن"
                   : "We cannot reach the categories right now"
               }
               body={
                 locale === "ar"
-                  ? "المشكلة عندنا مش عندك. الأقسام موجودة، إحنا اللي مش شايفينها في اللحظة دي."
+                  ? "الخلل من جهتنا لا من جهتك. الأقسام موجودة، لكننا لا نستطيع قراءتها في هذه اللحظة."
                   : "This one is on us, not on you. The sections are there; we just cannot read them this second."
               }
               actions={
                 <>
-                  <ReloadButton>{locale === "ar" ? "حاول تاني" : "Try again"}</ReloadButton>
+                  <ReloadButton>{locale === "ar" ? "أعد المحاولة" : "Try again"}</ReloadButton>
                   <Link className="lq-btn lq-btn--secondary" href="/shops">
-                    {locale === "ar" ? "اتفرّج على المحلات" : "Browse the shops"}
+                    {locale === "ar" ? "تصفّح المتاجر" : "Browse the shops"}
                   </Link>
                 </>
               }
@@ -110,15 +99,15 @@ export default async function CategoriesPage() {
             <EmptyState
               art="shelf"
               seed="categories-empty"
-              title={locale === "ar" ? "لسه مفيش أقسام" : "No sections yet"}
+              title={locale === "ar" ? "لا توجد أقسام بعد" : "No sections yet"}
               body={
                 locale === "ar"
-                  ? "الأقسام هتظهر هنا أول ما المحلات تبدأ ترفع قطعها. لحد ما تيجي، المحلات نفسها مفتوحة."
+                  ? "ستظهر الأقسام هنا حين تبدأ المتاجر في عرض قطعها. وحتى ذلك الحين، المتاجر نفسها مفتوحة."
                   : "Sections show up here once shops start listing. Until they do, the shops themselves are open."
               }
               actions={
                 <Link className="lq-btn lq-btn--primary" href="/shops">
-                  {locale === "ar" ? "اتفرّج على المحلات" : "Browse the shops"}
+                  {locale === "ar" ? "تصفّح المتاجر" : "Browse the shops"}
                 </Link>
               }
             />
@@ -147,26 +136,29 @@ export default async function CategoriesPage() {
                 Filtering by a parent includes its DESCENDANTS. Category is a
                 tree, and a shopper who taps a broad tile means the branch.
               */}
-              <div className="lq-tiles">
-                {categories.map((category, index) => (
-                  <Link
-                    key={category.id}
-                    href={`/search?category=${encodeURIComponent(category.slug)}`}
-                    className="lq-tile lq-rv"
-                    style={{ "--lq-d": `${(index % 4) * 70}ms` } as React.CSSProperties}
-                  >
-                    <span className="lq-tile__art">
-                      <Garment className="lq-garment" kind={categoryGarment(category.slug)} />
-                    </span>
-                    <span className="lq-tile__name" data-bidi>
-                      {category.name[locale] ?? category.name.ar ?? category.name.en}
-                    </span>
-                  </Link>
+              {/* A big list, like the areas on home: the name in display type,
+                  and on hover the category's drawing opens beside it. No piece
+                  count: the API has no per-category total, and a count would
+                  cost a search per row. */}
+              <ul className="lq-biglist">
+                {categories.map((category) => (
+                  <li key={category.id}>
+                    <Link
+                      href={`/search?category=${encodeURIComponent(category.slug)}`}
+                      className="lq-biglist__row"
+                    >
+                      <span className="lq-biglist__thumb" data-art aria-hidden="true">
+                        <Garment className="lq-garment" kind={categoryGarment(category.slug)} />
+                      </span>
+                      <b className="lq-biglist__name" data-bidi>
+                        {category.name[locale] ?? category.name.ar ?? category.name.en}
+                      </b>
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </>
           )}
-        </section>
       </div>
     </Shell>
   );

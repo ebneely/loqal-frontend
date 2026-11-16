@@ -3,4 +3,230 @@
    the cards they share (product card, shop card).
    Loaded after components.css and unlayered, so a rule here wins over the
    older layered rule it replaces.
+
+   Layout switches are CONTAINER queries on `.lq-shell` (720 = the chrome
+   switch, 1024 = wide). Motion stops under prefers-reduced-motion via the
+   blanket rule in globals.css.
    ========================================================================== */
+
+/* ── Home hero ─────────────────────────────────────────────────────────────
+   A shop's photograph owns the inline-END 57%. The heading starts at the
+   inline start and crosses onto it; a second, aria-hidden copy in an overlay
+   clipped to the photo's rectangle is white, so the heading turns from ink to
+   white exactly at the photo's edge. The overlaid desktop header (72px) sits
+   above the heading, which starts at 21% of a hero at least 680px tall. */
+.lq-hero{--hero-split:57%;--hero-foot:clamp(28px,6svh,60px);--inset-w:clamp(168px,16.4cqi,236px);
+  position:relative;block-size:max(100svh,680px);overflow:hidden;background:var(--paper)}
+.lq-hero__plate{position:absolute;inset-block:0;inset-inline-end:0;inline-size:var(--hero-split);overflow:hidden;background:var(--green)}
+.lq-hero__plate img{display:block;inline-size:100%;block-size:100%;object-fit:cover;object-position:50% 45%;scale:1.04;animation:lq-settle 1.6s var(--ease) both}
+/* A slight dark veil, so the white mark, tools and heading hold on any photo. */
+.lq-hero__plate::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--ink) 26%,transparent)}
+@keyframes lq-settle{from{scale:1.12}to{scale:1.04}}
+
+.lq-hero__title{position:absolute;inset-block-start:21%;inset-inline-start:var(--pad);margin:0;
+  font-family:var(--font-display);font-weight:var(--weight-medium);font-size:clamp(84px,14cqi,216px);
+  line-height:1;letter-spacing:0;white-space:nowrap;color:var(--ink)}
+/* The white copy, clipped to the plate. The plate is at the inline END, which
+   is the left in Arabic and the right in English. */
+.lq-hero__over{position:absolute;inset:0;pointer-events:none;clip-path:inset(0 calc(100% - var(--hero-split)) 0 0)}
+[dir="ltr"] .lq-hero__over{clip-path:inset(0 0 0 calc(100% - var(--hero-split)))}
+.lq-hero__over .lq-hero__title{color:var(--text-on-ink)}
+/* English is three times as long: two lines, smaller, still crossing. */
+[dir="ltr"] .lq-hero__title{white-space:normal;max-inline-size:68cqi;font-size:clamp(56px,8.4cqi,136px);line-height:1.02}
+
+/* The small photo straddling the plate's edge: the one thing on the page that
+   floats, so it is the one thing with a shadow. Wide screens only. */
+.lq-hero__inset{display:none;position:absolute;z-index:1;inset-block-end:var(--hero-foot);
+  inset-inline-end:calc(var(--hero-split) - var(--inset-w) / 2);inline-size:var(--inset-w);aspect-ratio:3/4;
+  overflow:hidden;background:var(--raise);box-shadow:var(--shadow-float)}
+.lq-hero__inset img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
+@container (min-width:1024px){.lq-hero__inset{display:block}}
+
+.lq-hero__side{position:absolute;inset-inline-start:var(--pad);inset-block-end:var(--hero-foot);inline-size:min(36%,430px)}
+.lq-hero__lede{margin:0 0 22px;font-size:1.1875rem;line-height:1.55;text-wrap:balance;color:var(--ink)}
+.lq-hero__links{display:flex;flex-wrap:wrap;gap:6px 16px;margin-block-start:14px;font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink-2)}
+.lq-hero__links a{color:inherit;text-underline-offset:4px}
+.lq-hero__links a:hover{color:var(--ink);text-decoration:underline}
+
+/* Phone: the heading on top, the photo full width under it, then the lede,
+   the search and the links. The phone has its own top bar, so no overlay. */
+@container (max-width:719px){
+  .lq-hero{block-size:auto;display:flex;flex-direction:column;overflow:visible}
+  .lq-hero__title{position:static;order:-1;padding:6px var(--pad) 12px;font-size:17.5cqi;line-height:1.2;white-space:normal}
+  [dir="ltr"] .lq-hero__title{font-size:12cqi;max-inline-size:none}
+  .lq-hero__over{display:none}
+  .lq-hero__plate{position:relative;inset:auto;inline-size:auto;block-size:96cqi}
+  .lq-hero__side{position:static;inline-size:auto;padding:24px var(--pad) 0}
+}
+
+/* ── Sections ──────────────────────────────────────────────────────────── */
+.lq-home__sec{padding:var(--section-gap) var(--pad) 0}
+.lq-home__head{margin-block-end:30px}
+.lq-home__head .lq-sec__title{margin:0}
+
+/* ── The big list: areas on home, the categories index ─────────────────────
+   The name in huge display type, the count at the far end, and on hover a
+   picture opening BESIDE the name by width — not one chasing the cursor. */
+.lq-biglist{list-style:none;margin:0;padding:0;border-block-start:var(--border-width) solid var(--line)}
+.lq-biglist__row{display:flex;align-items:center;gap:20px;padding-block:13px;border-block-end:var(--border-width) solid var(--line);color:var(--ink);transition:color var(--dur-base) var(--ease)}
+.lq-biglist__name{min-inline-size:0;font-family:var(--font-display);font-weight:var(--weight-medium);font-size:clamp(36px,6cqi,88px);line-height:1.2;overflow-wrap:break-word}
+.lq-biglist__n{order:2;margin-inline-start:auto;max-inline-size:40%;font-size:.9375rem;font-weight:var(--weight-regular);color:var(--ink-2);text-align:end;transition:color var(--dur-base) var(--ease)}
+.lq-biglist__thumb{order:1;flex:none;display:flex;align-items:center;justify-content:center;inline-size:0;block-size:clamp(60px,6.6cqi,92px);overflow:hidden;background:var(--raise);opacity:0;transition:inline-size .55s var(--ease),opacity .3s var(--ease)}
+.lq-biglist__thumb img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
+.lq-biglist__thumb .lq-garment{flex:none;inline-size:clamp(52px,5.6cqi,78px);block-size:auto;aspect-ratio:1}
+.lq-biglist__initials{font-family:var(--font-display);font-weight:var(--weight-bold);font-size:1.75rem;line-height:1;color:var(--ink-3)}
+@container (min-width:720px){
+  .lq-biglist__row:hover,.lq-biglist__row:focus-visible,
+  .lq-biglist__row:hover .lq-biglist__n,.lq-biglist__row:focus-visible .lq-biglist__n{color:var(--green-2)}
+  /* Hidden at rest as well as zero-wide: a zero-wide box still painted a 1px
+     sliver of its contents beside every name. */
+  .lq-biglist__row:hover .lq-biglist__thumb,.lq-biglist__row:focus-visible .lq-biglist__thumb{inline-size:clamp(130px,14cqi,200px);opacity:1}
+}
+/* No hover on a phone: the picture is always there, at the start of the row. */
+@container (max-width:719px){
+  .lq-biglist__row{gap:14px;padding-block:10px}
+  .lq-biglist__thumb{order:-1;inline-size:62px;block-size:78px;opacity:1}
+  .lq-biglist__thumb .lq-garment{inline-size:50px}
+  /* Small enough that a two-word Latin shop name breaks between its words,
+     not inside one. */
+  .lq-biglist__name{flex:1;font-size:clamp(26px,8.2cqi,44px)}
+  .lq-biglist__n{max-inline-size:34%;font-size:var(--text-xs)}
+}
+
+/* ── Product grid ──────────────────────────────────────────────────────────
+   3px gaps; on home it runs edge to edge (`--bleed`), and the first card takes
+   two columns and two rows. */
+.lq-feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 3px}
+.lq-feed--bleed{margin-inline:calc(var(--pad) * -1)}
+@container (min-width:720px){.lq-feed{grid-template-columns:repeat(3,minmax(0,1fr));gap:34px 3px}}
+@container (min-width:1024px){.lq-feed{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.lq-feed[data-lead]>:first-child{grid-column:span 2}
+.lq-feed[data-lead]>:first-child .lq-pcard__well{aspect-ratio:1}
+.lq-feed[data-lead]>:first-child .lq-pcard__well>.lq-garment{inline-size:44%}
+@container (min-width:720px){
+  .lq-feed[data-lead]>:first-child{grid-row:span 2}
+  .lq-feed[data-lead]>:first-child .lq-pcard__well{aspect-ratio:auto;flex:1}
+}
+
+/* ── Product card ──────────────────────────────────────────────────────────
+   A 3:4 well, then name and price on one line, then shop · area. With no
+   photo the well is a quiet panel with the drawing centred in it. The well
+   rules are scoped to the card: the bag and the product page borrow
+   `.lq-pcard__well` on its own. */
+.lq-pcard{display:flex;flex-direction:column;gap:0;min-inline-size:0;color:inherit}
+.lq-pcard .lq-pcard__well{position:relative;display:grid;place-items:center;aspect-ratio:var(--ratio-garment);overflow:hidden;border:0;background:var(--raise)}
+.lq-pcard .lq-pcard__well>.lq-garment{inline-size:56%;block-size:auto;aspect-ratio:1;stroke:var(--ink)}
+.lq-pcard .lq-pcard__well>img,.lq-pcard .lq-pcard__well>.lq-garment{transition:scale var(--dur-settle) var(--ease),opacity var(--dur-base) var(--ease)}
+.lq-pcard:hover .lq-pcard__well>img,.lq-pcard:hover .lq-pcard__well>.lq-garment{scale:1.04}
+.lq-pcard[data-out] .lq-pcard__well>img,.lq-pcard[data-out] .lq-pcard__well>.lq-garment{opacity:.55}
+.lq-pcard__flag{position:absolute;z-index:1;inset-block-start:10px;inset-inline-start:10px;padding:2px 9px;background:var(--paper);font-size:var(--text-xs);font-weight:var(--weight-medium);color:var(--ink)}
+.lq-pcard__meta{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:2px 14px;padding:12px 14px 0}
+.lq-pcard__meta .lq-pcard__name{font-size:var(--text-base);font-weight:var(--weight-regular);line-height:1.5;overflow-wrap:break-word}
+.lq-pcard__meta .lq-money{font-weight:var(--weight-medium)}
+.lq-pcard__meta .lq-pcard__brand{grid-column:1/-1;font-size:var(--text-xs);font-weight:var(--weight-regular);color:var(--ink-2);overflow-wrap:break-word}
+@container (max-width:719px){
+  .lq-pcard__meta{grid-template-columns:minmax(0,1fr);padding-inline:10px}
+}
+
+/* ── Featured shop band ────────────────────────────────────────────────── */
+.lq-feature{margin-block-start:var(--section-gap);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-block-size:620px;background:var(--green);color:var(--text-on-ink)}
+.lq-feature__ph{position:relative;display:grid;place-items:center;overflow:hidden;background:var(--green-2)}
+.lq-feature__ph img{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover}
+.lq-feature__mark{font-family:var(--font-display);font-weight:var(--weight-bold);font-size:clamp(80px,14cqi,200px);line-height:1;color:var(--green-line)}
+.lq-feature__tx{display:flex;flex-direction:column;justify-content:space-between;gap:40px;padding:clamp(36px,6cqi,84px) var(--pad)}
+.lq-feature__tx .lq-badge{margin-block-end:14px}
+.lq-feature__name{margin:0;font-family:var(--font-display);font-weight:var(--weight-medium);font-size:clamp(52px,7.4cqi,120px);line-height:1.1;color:inherit;overflow-wrap:break-word}
+.lq-feature__about{margin-block-start:18px;max-inline-size:42ch;font-size:var(--text-lg);color:var(--text-on-ink-2)}
+
+/* The facts row: a bold value over a quiet note, three across, on the green. */
+.lq-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:0 0 26px;padding-block-start:18px;
+  border-block-start:var(--border-width) solid color-mix(in srgb,var(--text-on-ink) 26%,transparent);
+  font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--text-on-ink-2)}
+.lq-facts dt{font-size:1.0625rem;font-weight:var(--weight-medium);color:var(--text-on-ink)}
+.lq-facts dd{margin:0}
+@container (max-width:719px){
+  .lq-feature{grid-template-columns:minmax(0,1fr);min-block-size:0}
+  .lq-feature__ph{block-size:84cqi}
+  .lq-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ── One bag, several shops ────────────────────────────────────────────── */
+.lq-story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:clamp(30px,6cqi,90px);align-items:start}
+.lq-story__title{margin:0;font-family:var(--font-display);font-weight:var(--weight-medium);font-size:clamp(36px,4.8cqi,68px);line-height:1.25}
+.lq-story__lede{margin-block-start:16px;max-inline-size:38ch;font-size:1.0625rem;color:var(--ink-2)}
+.lq-split{margin:0;border-block-start:2px solid var(--ink)}
+.lq-split__line{display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:18px;padding-block:16px;border-block-end:var(--border-width) solid var(--line);color:inherit}
+.lq-split__line:hover b{color:var(--green-2)}
+.lq-split__th{position:relative;display:grid;place-items:center;inline-size:76px;block-size:96px;overflow:hidden;background:var(--raise)}
+.lq-split__th .lq-garment{inline-size:72%;block-size:auto;aspect-ratio:1}
+.lq-split__body{min-inline-size:0}
+.lq-split__body b{display:block;font-weight:var(--weight-medium);transition:color var(--dur-fast) var(--ease)}
+.lq-split__body small{display:block;font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink-2);overflow-wrap:break-word}
+.lq-split__pr{font-weight:var(--weight-medium)}
+.lq-split__total{display:flex;justify-content:space-between;gap:14px;padding-block-start:16px;font-size:1.1875rem;font-weight:var(--weight-medium)}
+.lq-split__cap{margin-block-start:12px;font-size:var(--text-xs);color:var(--ink-2)}
+@container (max-width:719px){
+  .lq-story{grid-template-columns:minmax(0,1fr)}
+  .lq-split__line{grid-template-columns:60px minmax(0,1fr);gap:12px}
+  .lq-split__th{inline-size:60px;block-size:76px}
+  .lq-split__pr{grid-column:2}
+}
+
+/* ── Index pages: /shops, /categories ──────────────────────────────────── */
+.lq-browsehead{padding:clamp(28px,5svh,52px) var(--pad) clamp(20px,3svh,32px)}
+.lq-browsehead .lq-pagetitle{margin:0;font-size:clamp(46px,7.4cqi,108px);line-height:1.1;overflow-wrap:break-word}
+.lq-browsehead .lq-lede{margin-block-start:8px;max-inline-size:58ch;font-size:var(--text-base)}
+.lq-tabsrow{display:flex;flex-wrap:wrap;gap:8px;padding:0 var(--pad) 28px}
+.lq-browsebody{padding-inline:var(--pad)}
+.lq-browsebody__more{margin-block-start:var(--space-8)}
+
+/* ── Shop card ─────────────────────────────────────────────────────────── */
+.lq-shopgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:40px 3px}
+@container (min-width:720px){.lq-shopgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (min-width:1024px){.lq-shopgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.lq-shopcard{display:block;min-inline-size:0;color:inherit}
+.lq-shopcard__ph{position:relative;display:block;aspect-ratio:4/3;overflow:hidden;background:var(--raise)}
+.lq-shopcard__ph[data-none]{display:grid;place-items:center}
+.lq-shopcard__shot{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover;opacity:0;transition:opacity var(--dur-slow) var(--ease),scale var(--dur-settle) var(--ease)}
+.lq-shopcard__shot[data-on]{opacity:1}
+.lq-shopcard:hover .lq-shopcard__shot{scale:1.04}
+.lq-shopcard__mark{font-family:var(--font-display);font-weight:var(--weight-bold);font-size:clamp(56px,6cqi,96px);line-height:1;color:var(--ink-3)}
+.lq-shopcard__logo{max-inline-size:40%;max-block-size:40%;object-fit:contain}
+/* One tick per photo, filling as the set advances on hover. */
+.lq-shopcard__ticks{position:absolute;z-index:2;inset-block-end:10px;inset-inline:10px;display:flex;gap:3px;opacity:0;transition:opacity var(--dur-fast) var(--ease)}
+.lq-shopcard:hover .lq-shopcard__ticks{opacity:1}
+.lq-shopcard__tick{flex:1;min-inline-size:0;block-size:2px;background:color-mix(in srgb,var(--paper) 50%,transparent);overflow:hidden}
+.lq-shopcard__tick i{display:block;block-size:100%;inline-size:0;background:var(--paper)}
+.lq-shopcard__tick[data-done] i{inline-size:100%}
+.lq-shopcard__tick[data-run] i{animation:lq-tick 1150ms linear forwards}
+@keyframes lq-tick{from{inline-size:0}to{inline-size:100%}}
+.lq-shopcard__promo{position:absolute;z-index:2;inset-block-start:10px;inset-inline-start:10px}
+.lq-shopcard__t{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:12px 14px 0}
+.lq-shopcard__name{min-inline-size:0;font-family:var(--font-display);font-weight:var(--weight-medium);font-size:1.75rem;line-height:1.3;overflow-wrap:break-word;transition:color var(--dur-fast) var(--ease)}
+.lq-shopcard:hover .lq-shopcard__name{color:var(--green-2)}
+.lq-shopcard__state{flex:none;font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--green-2);white-space:nowrap}
+.lq-shopcard__state[data-open="false"]{color:var(--ink-2)}
+.lq-shopcard__place{display:block;padding-inline:14px;font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--ink-2);overflow-wrap:break-word}
+.lq-shopcard__terms{display:flex;flex-wrap:wrap;gap:2px 14px;padding:2px 14px 0;font-size:var(--text-xs);color:var(--ink-2)}
+.lq-shopcard__terms:empty{display:none}
+
+/* ── A shop ────────────────────────────────────────────────────────────────
+   Its photograph full-bleed, darkened from the block end so the name and the
+   facts read white over any picture. No photo: the green plate alone. */
+.lq-shophero{position:relative;display:flex;align-items:flex-end;block-size:clamp(380px,60svh,560px);overflow:hidden;background:var(--green);color:var(--text-on-ink)}
+.lq-shophero>img{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover}
+.lq-shophero[data-photo]::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(to top,color-mix(in srgb,var(--green) 88%,var(--ink)),color-mix(in srgb,var(--green) 10%,transparent) 62%)}
+.lq-shophero__in{position:relative;z-index:1;inline-size:100%;padding:0 var(--pad) 34px}
+.lq-shophero__crumb{display:flex;flex-wrap:wrap;gap:8px;font-size:var(--text-sm);font-weight:var(--weight-regular);color:var(--text-on-ink-2)}
+.lq-shophero__crumb a{color:inherit;text-underline-offset:3px}
+.lq-shophero__crumb a:hover{color:var(--text-on-ink);text-decoration:underline}
+.lq-shophero__name{margin:0;font-family:var(--font-display);font-weight:var(--weight-medium);font-size:clamp(58px,10cqi,150px);line-height:1.1;color:inherit;overflow-wrap:break-word}
+.lq-shophero .lq-facts{max-inline-size:760px;margin:12px 0 0;border-color:color-mix(in srgb,var(--text-on-ink) 40%,transparent)}
+.lq-shoplede{padding:30px var(--pad) 0;max-inline-size:calc(68ch + 2 * var(--pad));font-size:1.0625rem}
+.lq-shopempty{padding-block:var(--space-8);max-inline-size:52ch;color:var(--ink-2)}
+@container (max-width:719px){
+  .lq-shophero{block-size:clamp(340px,70svh,480px)}
+  .lq-shophero__name{font-size:15cqi}
+}

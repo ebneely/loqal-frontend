@@ -26,9 +26,12 @@ import { ProductPhoto } from "@/components/product-photo";
  * bag from the other gives the same garment two different drawings on two
  * screens in the same session. The id is the only key both sides hold.
  *
- * Sold-out is an OVERLAY on the well, not a line under the price. A shopper
+ * Sold-out is a FLAG ON THE WELL, not a line under the price. A shopper
  * scanning a grid decides on the picture; a note below it is read after they
  * have already tapped.
+ *
+ * No discount badge here: `PublicProduct` carries no struck price (only the
+ * search result shape does), and a badge with nothing behind it is a lie.
  */
 export function ProductCard({
   product,
@@ -37,6 +40,7 @@ export function ProductCard({
   locale,
   priority = false,
   delayMs = 0,
+  area,
 }: {
   product: PublicProduct;
   brandSlug: string;
@@ -46,6 +50,8 @@ export function ProductCard({
   priority?: boolean;
   /** Stagger within a revealed group. */
   delayMs?: number;
+  /** Where the shop is, when it has said. Printed after the shop's name. */
+  area?: string | null;
 }) {
   const name = product.name?.[locale] ?? product.name?.ar ?? product.name?.en ?? "";
 
@@ -53,6 +59,7 @@ export function ProductCard({
     <Link
       href={`/shop/${brandSlug}/${product.slug}`}
       className="lq-pcard lq-rv"
+      data-out={product.inStock ? undefined : "true"}
       style={{ "--lq-d": `${delayMs}ms` } as React.CSSProperties}
     >
       <span className="lq-pcard__well">
@@ -75,23 +82,25 @@ export function ProductCard({
         )}
 
         {!product.inStock ? (
-          <span className="lq-pcard__out">{locale === "ar" ? "خلص" : "Sold out"}</span>
+          <span className="lq-pcard__flag">
+            {locale === "ar" ? "نفد من المتجر" : "Sold out"}
+          </span>
         ) : null}
       </span>
 
-      {/* The shop name over the product name: a shopper on a mixed grid is
-          choosing a shop as much as a garment, and on this product the shop is
-          a place rather than a seller label. */}
-      <span className="lq-pcard__brand" data-bidi>
-        {brandName}
+      <span className="lq-pcard__meta">
+        <span className="lq-pcard__name" data-bidi>
+          {name}
+        </span>
+        {/* A shelf price, so no decimals. `priceFrom` is the cheapest live
+            variant — what a card can honestly print when the sizes differ. */}
+        <Money className="lq-money" amount={product.priceFrom} locale={locale} />
+        {/* The shop, and where it is: on this product the shop is a place
+            rather than a seller label. */}
+        <span className="lq-pcard__brand" data-bidi>
+          {area ? `${brandName} · ${area}` : brandName}
+        </span>
       </span>
-      <span className="lq-pcard__name" data-bidi>
-        {name}
-      </span>
-
-      {/* A shelf price, so no decimals. `priceFrom` is the cheapest live
-          variant — what a card can honestly print when the sizes differ. */}
-      <Money className="lq-money" amount={product.priceFrom} locale={locale} />
     </Link>
   );
 }

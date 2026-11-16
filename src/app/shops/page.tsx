@@ -9,46 +9,37 @@ import { EmptyState } from "@/components/state";
 import { ReloadButton } from "@/components/reload";
 
 /**
- * المحلات — the shop index.
+ * المتاجر — the shop index, filterable by area.
  *
- * The destination behind the brands mega-menu, and the one every shop card in
- * the product grid and the footer eventually points at. `design/`'s version of
- * this screen filtered by neighbourhood and by open/closed; this one does not,
- * and the reason is worth stating where somebody will read it before adding the
- * chips back.
+ * The area filter reads `shop.neighbourhood` — the shop's own answer from the
+ * API, never a hardcoded list. The pills are the areas the listed shops have
+ * actually given, so a pill can never filter against a fiction; until any shop
+ * has said where it is there are no pills at all. `?area=` is what the home
+ * page's area rows link to.
  *
- * BACKEND GAP. `publicBrandSchema` carries id, slug, name, logoUrl, coverUrl
- * and description. There is no neighbourhood, no street, no opening hours and
- * no open/closed flag on it — `design/app.js` invented all four in a hardcoded
- * array, which is fine in a mockup and is not shippable here.
- *
- * So there are no filter chips. A neighbourhood filter over data the API does
- * not return would either filter nothing or filter against a fiction, and on
- * this product that field is not a nice-to-have: PRODUCT.md calls the shop
- * having a real address the premise. The chips come back the day the field
- * does, and `ShopCard` already takes it.
- */
-/**
- * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
- * per-reader. `revalidate` asked Next to cache one copy of it, which threw
- * DYNAMIC_SERVER_USAGE on every request — a 500 on the shop pages and a
- * "we cannot reach the categories" on the ones that catch their own errors.
- *
- * The catalogue reads keep their own `next: { revalidate }`, so a request
- * costs a render and no database round trip.
+ * NOT ISR: the language comes from a cookie, so the HTML is per-reader. The
+ * catalogue read keeps its own `next: { revalidate }`.
  */
 
 export const metadata: Metadata = {
-  title: "المحلات",
-  description: "كل المحلات على loqaaal — محلات ليها عناوين حقيقية في القاهرة والجيزة، بتجهّز وتبعت بنفسها.",
+  title: "المتاجر",
+  description:
+    "كل المتاجر على loqaaal — متاجر لها عناوين حقيقية في القاهرة والجيزة، تجهّز طلبك وترسله بنفسها.",
   alternates: {
     canonical: "/shops",
     languages: { ar: "/shops", en: "/shops?lang=en" },
   },
 };
 
-export default async function ShopsPage() {
+export default async function ShopsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ area?: string | string[] }>;
+}) {
   const locale = await getLocale();
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const { area: rawArea } = await searchParams;
+  const area = (Array.isArray(rawArea) ? rawArea[0] : rawArea)?.trim() || null;
 
   let page;
   try {
@@ -57,91 +48,106 @@ export default async function ShopsPage() {
     page = null;
   }
 
-  return (
-    <Shell title={locale === "ar" ? "المحلات" : "Shops"}>
-      <div className="lq-wrap lq-pad">
-        <section className="lq-sec">
-          <div className="lq-sec__head">
-            <div>
-              <h1 className="lq-phead__title">
-                {locale === "ar" ? "المحلات" : "Shops"}
-                {page && page.total > 0 ? (
-                  <span className="lq-sec__count" data-num>
-                    {" · "}
-                    {page.total}
-                  </span>
-                ) : null}
-              </h1>
-              <p className="lq-eyebrow">
-                {locale === "ar"
-                  ? "محلات ليها عناوين حقيقية تقدر تعدّي عليها."
-                  : "Shops with real addresses you could walk to."}
-              </p>
-            </div>
-          </div>
+  const areas = page
+    ? [...new Set(page.items.map((shop) => shop.neighbourhood).filter((n): n is string => Boolean(n)))]
+    : [];
+  const list = page ? page.items.filter((shop) => !area || shop.neighbourhood === area) : [];
 
-          {page === null ? (
-            <EmptyState
-              art="crooked"
-              tone="loud"
-              role="alert"
-              seed="shops-down"
-              title={
-                locale === "ar"
-                  ? "مش قادرين نوصل للمحلات دلوقتي"
-                  : "We cannot reach the shops right now"
-              }
-              body={
-                locale === "ar"
-                  ? "المحلات فاتحة، إحنا اللي مش واصلين ليها في اللحظة دي. جرّب تاني."
-                  : "The shops are open — we are the ones who cannot reach them this second. Try again."
-              }
-              actions={
-                <>
-                  <ReloadButton>{locale === "ar" ? "حاول تاني" : "Try again"}</ReloadButton>
-                  <Link className="lq-btn lq-btn--secondary" href="/categories">
-                    {locale === "ar" ? "اتفرّج على الأقسام" : "Browse the categories"}
-                  </Link>
-                </>
-              }
-            />
-          ) : page.items.length === 0 ? (
-            <EmptyState
-              art="shelf"
-              seed="shops-empty"
-              title={locale === "ar" ? "لسه مفيش محل هنا" : "No shops here yet"}
-              body={
-                locale === "ar"
-                  ? "المحلات اللي بتوصّل لمنطقتك هتظهر هنا أول ما تفتح. لو عندك محل، ده مكانه."
-                  : "Shops that deliver to your area show up here as they open. If you run one, this is where it goes."
-              }
-              actions={
-                <Link className="lq-btn lq-btn--primary" href="/">
-                  {locale === "ar" ? "الرئيسية" : "Home"}
+  return (
+    <Shell title={area ?? t("المتاجر", "Shops")}>
+      <header className="lq-browsehead">
+        <h1 className="lq-pagetitle" data-bidi>
+          {area ?? t("المتاجر", "Shops")}
+        </h1>
+        <p className="lq-lede">
+          {t("متاجر لها عناوين حقيقية يمكنك زيارتها.", "Shops with real addresses you could walk to.")}
+        </p>
+      </header>
+
+      {areas.length > 0 ? (
+        <nav className="lq-tabsrow" aria-label={t("المناطق", "Areas")}>
+          <Link className="lq-btab" href="/shops" aria-current={area ? undefined : "page"}>
+            {t("الكل", "All")}
+          </Link>
+          {areas.map((name) => (
+            <Link
+              key={name}
+              className="lq-btab"
+              href={`/shops?area=${encodeURIComponent(name)}`}
+              aria-current={area === name ? "page" : undefined}
+              data-bidi
+            >
+              {name}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+
+      <div className="lq-browsebody">
+        {page === null ? (
+          <EmptyState
+            art="crooked"
+            tone="loud"
+            role="alert"
+            seed="shops-down"
+            title={t("تعذّر الوصول إلى المتاجر الآن", "We cannot reach the shops right now")}
+            body={t(
+              "المتاجر تعمل، والخلل في اتصالنا بها في هذه اللحظة. أعد المحاولة.",
+              "The shops are open — we are the ones who cannot reach them this second. Try again.",
+            )}
+            actions={
+              <>
+                <ReloadButton>{t("أعد المحاولة", "Try again")}</ReloadButton>
+                <Link className="lq-btn lq-btn--secondary" href="/categories">
+                  {t("تصفّح الأقسام", "Browse the categories")}
                 </Link>
-              }
-            />
-          ) : (
-            <div className="lq-cells">
-              {page.items.map((shop, index) => (
-                <ShopCard
-                  key={shop.id}
-                  shop={shop}
-                  locale={locale}
-                  delayMs={(index % 3) * 70}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+              </>
+            }
+          />
+        ) : list.length === 0 ? (
+          <EmptyState
+            art="shelf"
+            seed="shops-empty"
+            title={t("لا يوجد متجر هنا بعد", "No shops here yet")}
+            body={
+              area
+                ? t(
+                    "ستظهر هنا متاجر هذه المنطقة فور افتتاحها.",
+                    "Shops in this area show up here as they open.",
+                  )
+                : t(
+                    "ستظهر هنا المتاجر التي توصّل إلى منطقتك فور افتتاحها. وإن كان لديك متجر، فهذا مكانه.",
+                    "Shops that deliver to your area show up here as they open. If you run one, this is where it goes.",
+                  )
+            }
+            actions={
+              area ? (
+                <Link className="lq-btn lq-btn--primary" href="/shops">
+                  {t("كل المتاجر", "All shops")}
+                </Link>
+              ) : (
+                <Link className="lq-btn lq-btn--primary" href="/">
+                  {t("الرئيسية", "Home")}
+                </Link>
+              )
+            }
+          />
+        ) : (
+          <div className="lq-shopgrid">
+            {list.map((shop, index) => (
+              <ShopCard key={shop.id} shop={shop} locale={locale} delayMs={(index % 3) * 70} />
+            ))}
+          </div>
+        )}
 
         {/* The catalogue is paged and this screen shows page one. Said out
             loud rather than left as a silent truncation. */}
         {page && page.total > page.items.length ? (
-          <p className="lq-hint">
-            {locale === "ar"
-              ? `بتشوف أول ${page.items.length} محل من ${page.total}.`
-              : `Showing the first ${page.items.length} of ${page.total} shops.`}
+          <p className="lq-hint lq-browsebody__more">
+            {t(
+              `تعرض هذه الصفحة أول ${page.items.length} متجرًا من ${page.total}.`,
+              `Showing the first ${page.items.length} of ${page.total} shops.`,
+            )}
           </p>
         ) : null}
       </div>

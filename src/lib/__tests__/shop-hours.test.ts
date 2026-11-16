@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cairoNow, isOpenNow } from "../shop-hours";
+import { cairoNow, clock, isOpenNow, pieceCount, shopCount } from "../shop-hours";
 
 /**
  * "Open" or "closed" on a shop card, in Cairo time.
@@ -64,5 +64,31 @@ describe("isOpenNow", () => {
       // running past midnight.
       expect(isOpenNow(late, at("2026-09-18T21:30:00Z"))).toBe(false);
     });
+  });
+});
+
+describe("clock", () => {
+  it("writes a 24-hour time the way a shop sign does", () => {
+    expect(clock("22:00", "ar")).toBe("10:00 م");
+    expect(clock("09:30", "ar")).toBe("9:30 ص");
+    expect(clock("00:15", "en")).toBe("12:15 am");
+    expect(clock("12:00", "en")).toBe("12:00 pm");
+  });
+});
+
+describe("Arabic counts", () => {
+  it("changes the noun at one, two, three to ten, and eleven up", () => {
+    expect(shopCount(1, "ar")).toBe("متجر واحد");
+    expect(shopCount(2, "ar")).toBe("متجران");
+    expect(shopCount(3, "ar")).toBe("3 متاجر");
+    expect(shopCount(10, "ar")).toBe("10 متاجر");
+    expect(shopCount(11, "ar")).toBe("11 متجرًا");
+    expect(pieceCount(2, "ar")).toBe("قطعتان");
+    expect(pieceCount(24, "ar")).toBe("24 قطعة");
+  });
+
+  it("keeps English to one and other", () => {
+    expect(shopCount(1, "en")).toBe("1 shop");
+    expect(pieceCount(4, "en")).toBe("4 pieces");
   });
 });

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import { fetchBrand, fetchBrandProducts } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
+import { pieceCount, shopFacts } from "@/lib/shop-hours";
 import { Shell } from "@/components/shell";
 import { ProductCard } from "@/components/product-card";
 
@@ -62,13 +63,13 @@ export async function generateMetadata({
    * title rather than printing the address as a name.
    */
   const page = await load(brand);
-  if (!page) return { title: "الصفحة مش موجودة" };
+  if (!page) return { title: "الصفحة غير موجودة" };
 
   const name = page.brand.name;
   const description =
     page.brand.description?.ar ??
     page.brand.description?.en ??
-    `تسوّق من ${name} على loqaaal — توصيل في نفس اليوم من محلات القاهرة والجيزة.`;
+    `تسوّق من ${name} على loqaaal — توصيل في اليوم نفسه من متاجر القاهرة والجيزة.`;
 
   return {
     title: name,
@@ -97,93 +98,86 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
 
   const locale = await getLocale();
   const ar = locale === "ar";
+  const t = (arText: string, en: string) => (ar ? arText : en);
   /** The shop's own name. `brand` stays what it is — the slug in the URL. */
   const name = page.brand.name;
+  const photo = page.brand.images[0] ?? page.brand.coverUrl ?? null;
+  const about =
+    page.brand.description?.[locale] ?? page.brand.description?.ar ?? page.brand.description?.en ?? null;
+  /* Only what the shop has said: its area and hours once it gives them, its
+     delivery terms until then. Never an invented address. */
+  const facts = shopFacts(page.brand, locale).slice(0, 3);
+  const { items, total } = page.products;
 
   return (
     <Shell title={name}>
-      <div className="lq-wrap">
-        {/* The trail back out. A shopper who arrived on a shop from a search
-            result has no other way up to the shop index. */}
-        <nav className="lq-pad lq-crumb" aria-label={ar ? "مسار" : "Breadcrumb"}>
-          <Link className="lq-eyebrow" href="/">
-            {ar ? "الرئيسية" : "Home"}
-          </Link>
-          <span className="lq-eyebrow" aria-hidden="true">
-            /
-          </span>
-          <Link className="lq-eyebrow" href="/shops">
-            {ar ? "المحلات" : "Shops"}
-          </Link>
-          <span className="lq-eyebrow" aria-hidden="true">
-            /
-          </span>
-          <span className="lq-eyebrow" data-bidi>
+      {/*
+        The shop sign: its own photograph full-bleed, darkened from the foot so
+        the name reads white over any picture. No photo is a green plate.
+
+        The NAME comes from `fetchBrand`, not from the route param — the slug
+        is the address and stays in the URL.
+      */}
+      <section className="lq-shophero" data-photo={photo ? "true" : undefined}>
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt="" fetchPriority="high" />
+        ) : null}
+        <div className="lq-shophero__in">
+          {/* The trail back out. A shopper who arrived on a shop from a search
+              result has no other way up to the shop index. */}
+          <nav className="lq-shophero__crumb" aria-label={t("مسار التصفح", "Breadcrumb")}>
+            <Link href="/">{t("الرئيسية", "Home")}</Link>
+            <span aria-hidden="true">/</span>
+            <Link href="/shops">{t("المتاجر", "Shops")}</Link>
+          </nav>
+          <h1 className="lq-shophero__name" data-bidi>
             {name}
-          </span>
-        </nav>
+          </h1>
+          <dl className="lq-facts">
+            {facts.map((fact) => (
+              <div key={fact.note}>
+                <dt>{fact.value}</dt>
+                <dd>{fact.note}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
 
-        {/*
-          The shop sign. Set large and light, the way the name sits over a real
-          shopfront — the shop is a place, not a seller label.
+      <p className="lq-lede lq-shoplede" data-bidi>
+        {about ? `${about} ` : ""}
+        {t(
+          "يجهّز هذا المتجر طلبك ويرسله بنفسه من رفوفه.",
+          "This shop prepares your order and sends it itself, from its own shelves.",
+        )}
+      </p>
 
-          The NAME comes from `fetchBrand`, not from the route param. The slug
-          is the address and stays in the URL — a shopper who came from a
-          search result was being shown `zara-zamalek` here.
-
-          NO neighbourhood and NO street, and that is still deliberate:
-          `publicBrandSchema` carries the name, the art, the delivery terms and
-          the return window, and nothing anywhere in it is a location. Printing
-          an address here would mean inventing one. `/shops` carries the same
-          note.
-        */}
-        <header
-          className="lq-pad lq-sec lq-rv"
-          style={{ "--lq-d": "0ms" } as React.CSSProperties}
-        >
-          <div className="lq-sec__head">
-            <h1
-              data-bidi
-              /* Size and the hairline under it carry the weight, so 300 rather
-                 than a bold. NO extra tracking: the shop name can be Arabic and
-                 letter-spacing pulls a cursive script apart at the joins — the
-                 base `h1` rule is the only tracking this heading gets. */
-              style={{ fontSize: "var(--text-3xl)", fontWeight: 300 }}
-            >
-              {name}
-            </h1>
-            {page.products.total > 0 ? (
-              <span className="lq-hint" data-num>
-                {page.products.total}
-              </span>
-            ) : null}
-          </div>
-
-          <p className="lq-eyebrow" style={{ maxInlineSize: "52ch" }}>
-            {ar
-              ? "المحل ده بيجهّز ويبعت بنفسه. إنت بتطلب أونلاين، والقطعة بتيجي من الرف بتاعه."
-              : "This shop prepares and sends every order itself. You buy online and the piece comes off its own shelf."}
-          </p>
+      <section className="lq-home__sec" aria-labelledby="shop-pieces">
+        <header className="lq-sec__head lq-home__head">
+          <h2 className="lq-sec__title" id="shop-pieces">
+            {t("قطع المتجر", "In this shop")}
+          </h2>
+          {total > 0 ? <span className="lq-biglist__n">{pieceCount(total, locale)}</span> : null}
         </header>
 
-        {page.products.items.length === 0 ? (
+        {items.length === 0 ? (
           /* Describes what will appear, never the emptiness. */
-          <p className="lq-pad lq-hint" style={{ paddingBlock: "var(--space-8)" }}>
-            {ar
-              ? "المحل لسه محطّش حاجات. أول ما يضيف قطعة، هتلاقيها هنا."
-              : "This shop has not listed anything yet. The first piece it adds shows up here."}
+          <p className="lq-shopempty">
+            {t(
+              "لم يعرض المتجر قطعًا بعد. ستظهر هنا أول قطعة يضيفها.",
+              "This shop has not listed anything yet. The first piece it adds shows up here.",
+            )}
           </p>
         ) : (
-          /* Cells SHARE their borders and `.lq-pgrid > *` supplies the paper
-             ground and the padding, so the card is the cell — a wrapper here
-             would only re-pad what the grid already padded. */
-          <div className="lq-pgrid">
-            {page.products.items.map((product, index) => (
+          <div className="lq-feed">
+            {items.map((product, index) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 brandSlug={brand}
                 brandName={name}
+                area={page.brand.neighbourhood}
                 locale={locale}
                 /* The first row is the LCP. Everything below it stays lazy. */
                 priority={index < 2}
@@ -196,14 +190,15 @@ export default async function ShopPage({ params }: { params: Promise<Params> }) 
 
         {/* The catalogue is paged and this screen shows page one. Said out loud
             rather than left as a silent truncation. */}
-        {page.products.total > page.products.items.length ? (
-          <p className="lq-pad lq-hint" style={{ paddingBlock: "var(--space-6)" }}>
-            {ar
-              ? `بتشوف أول ${page.products.items.length} قطعة من ${page.products.total}.`
-              : `Showing the first ${page.products.items.length} of ${page.products.total} pieces.`}
+        {total > items.length ? (
+          <p className="lq-hint lq-browsebody__more">
+            {t(
+              `تعرض هذه الصفحة أول ${items.length} قطعة من ${total}.`,
+              `Showing the first ${items.length} of ${total} pieces.`,
+            )}
           </p>
         ) : null}
-      </div>
+      </section>
     </Shell>
   );
 }

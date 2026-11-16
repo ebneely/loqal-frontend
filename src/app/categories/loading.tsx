@@ -1,34 +1,27 @@
 import { Shell } from "@/components/shell";
 
-/* Twelve, because the tile grid runs 2, 4 or 6 across and 12 leaves no track
-   bare — an empty track in a shared-hairline grid paints as a grey panel. */
-const TILES = Array.from({ length: 12 }, (_, index) => index);
+/** The category list while it arrives: the title, then big-list rows. */
+const ROWS = Array.from({ length: 6 }, (_, index) => index);
 
 export default function Loading() {
   return (
     <Shell>
-      <div className="lq-wrap lq-pad" aria-busy="true">
-        <section className="lq-sec">
-          <span className="lq-skel" style={{ blockSize: 26, inlineSize: "9rem", maxInlineSize: "100%" }} />
-          <span className="lq-skel" style={{ blockSize: 14, inlineSize: "18rem", maxInlineSize: "100%" }} />
-          <div className="lq-tiles">
-            {TILES.map((tile) => (
-              <div
-                key={tile}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "var(--space-5) var(--space-2)",
-                }}
-              >
-                <span className="lq-skel lq-tile__art" />
-                <span className="lq-skel" style={{ blockSize: 14, inlineSize: "4.5rem" }} />
-              </div>
+      <div aria-busy="true">
+        <div className="lq-browsehead">
+          <span className="lq-skel" style={{ display: "block", blockSize: 64, inlineSize: "14rem", maxInlineSize: "100%" }} />
+          <span className="lq-skel" style={{ display: "block", blockSize: 16, inlineSize: "22rem", maxInlineSize: "100%", marginBlockStart: 12 }} />
+        </div>
+        <div className="lq-browsebody">
+          <ul className="lq-biglist">
+            {ROWS.map((row) => (
+              <li key={row}>
+                <span className="lq-biglist__row">
+                  <span className="lq-skel" style={{ blockSize: "clamp(40px, 5cqi, 72px)", inlineSize: `${10 + (row % 3) * 3}rem`, maxInlineSize: "70%" }} />
+                </span>
+              </li>
             ))}
-          </div>
-        </section>
+          </ul>
+        </div>
       </div>
     </Shell>
   );
