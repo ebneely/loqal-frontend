@@ -8,6 +8,8 @@ import { fetchBrands, queryKeys } from "@/lib/catalog";
 import { useLocale } from "@/lib/locale-context";
 import { initialsOf } from "@/components/shop-card";
 import { MegaMenu } from "@/components/mega-menu";
+import { Distance } from "@/components/nearest";
+import { nearestKm, useDeliveryLocation } from "@/lib/delivery-location";
 
 /**
  * المحلات, as the rail of shops it is.
@@ -33,15 +35,21 @@ export function BrandsMenu() {
     staleTime: 5 * 60 * 1000,
   });
 
-  /* Promoted first — placement Loqal sold is placement Loqal shows — then by
-     name, so the order is a decision rather than whatever the page returned. */
+  /* Promoted first — placement Loqal sold is placement Loqal shows — then
+     nearest to the chosen delivery location (shops with no point after those
+     with one), then by name, so the order is a decision rather than whatever
+     the page returned. */
+  const here = useDeliveryLocation();
   const shops = useMemo(() => {
     const items = data?.items ?? [];
+    const km = (shop: (typeof items)[number]) => nearestKm(here, [shop.location]) ?? Infinity;
     return [...items].sort(
       (a, b) =>
-        Number(b.isPromoted) - Number(a.isPromoted) || a.name.localeCompare(b.name),
+        Number(b.isPromoted) - Number(a.isPromoted) ||
+        km(a) - km(b) || // Infinity − Infinity is NaN, which falls through to the name
+        a.name.localeCompare(b.name),
     );
-  }, [data]);
+  }, [data, here]);
 
   return (
     <MegaMenu
@@ -105,6 +113,7 @@ export function BrandsMenu() {
                 <span className="lq-catrail__name" data-bidi>
                   {shop.name}
                 </span>
+                <Distance points={[shop.location]} className="lq-dist lq-catrail__in" />
                 {shop.isPromoted ? (
                   <span className="lq-catrail__in">
                     {locale === "ar" ? "إعلان" : "Promoted"}

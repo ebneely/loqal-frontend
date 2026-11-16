@@ -12,6 +12,7 @@ import { CategoriesMenu } from "@/components/categories-menu";
 import { NavDrawer } from "@/components/nav-drawer";
 import { SiteFooter } from "@/components/site-footer";
 import { LocaleSwitch } from "@/components/locale-switch";
+import { LocationControl } from "@/components/location-picker";
 import { Reveal } from "@/components/reveal";
 import { Wordmark } from "@/components/wordmark";
 
@@ -157,6 +158,9 @@ export function Shell({
           </Link>
 
           <div className="lq-tools">
+            {/* Where it is going, first in the tools: it decides the order of
+                every shop list behind it. */}
+            <LocationControl variant="head" />
             {/* Not on /search, where the page owns the real input and a link
                 back to it would be a second search box. */}
             {onSearch ? null : (
@@ -231,6 +235,9 @@ export function Shell({
           </Link>
         )}
       </header>
+      {/* The delivery location, a full-width line under the phone bar. Hidden
+          from 720px by location.css, where the header carries it. */}
+      <LocationControl variant="bar" />
 
       {/* A SIBLING of the bar, never a child of it. It portals itself out to
           `document.body` from here; rendering it inside `.lq-topbar` would put

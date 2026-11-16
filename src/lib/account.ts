@@ -66,6 +66,9 @@ export const savedAddressSchema = z
     notes: z.string().nullable(),
     phone: z.string(),
     isDefault: z.boolean(),
+    /* Defaulted: the deployed API does not send the map point yet. */
+    latitude: z.number().nullable().default(null),
+    longitude: z.number().nullable().default(null),
     createdAt: z.string(),
     updatedAt: z.string(),
   })
@@ -114,6 +117,16 @@ export function useMakeDefaultAddress() {
   return useAddressWrite((id: string) =>
     api.patch(savedAddressSchema, `/v1/addresses/${encodeURIComponent(id)}`, {
       isDefault: true,
+    })
+  );
+}
+
+/** Pins a saved address on the map. The API takes both coordinates or neither. */
+export function useSetAddressPin() {
+  return useAddressWrite(({ id, latitude, longitude }: { id: string; latitude: number; longitude: number }) =>
+    api.patch(savedAddressSchema, `/v1/addresses/${encodeURIComponent(id)}`, {
+      latitude,
+      longitude,
     })
   );
 }

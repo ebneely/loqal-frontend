@@ -177,6 +177,16 @@ export const publicBrandSchema = z
       .strict()
       .nullable()
       .default(null),
+    /**
+     * The shop's map point, for "nearest first". Defaulted for the same reason
+     * as `hours`: the deployed API does not send it yet. Distances are worked
+     * out in the browser; the shopper's own position never goes to the API.
+     */
+    location: z
+      .object({ latitude: z.number(), longitude: z.number() })
+      .strict()
+      .nullable()
+      .default(null),
     deliveryFee: moneySchema.nullable(),
     minimumOrderValue: moneySchema.nullable(),
     returnWindowDays: z.number().int(),

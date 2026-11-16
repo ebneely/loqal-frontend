@@ -1,0 +1,70 @@
+/* ==========================================================================
+   The delivery location: the "التوصيل إلى" control in both chromes, its
+   picker dialog, and the distance figure on shop lists.
+
+   Width switches are container queries on `.lq-shell`, like the chrome. The
+   dialog is a native <dialog> in the top layer, but its flat-tree ancestor is
+   still the shell, so the same queries reach it.
+   ========================================================================== */
+
+/* ── The control ──────────────────────────────────────────────────────────── */
+.lq-loc{display:inline-flex;align-items:center;gap:var(--space-2);min-block-size:var(--tap-min);min-inline-size:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer}
+.lq-loc .lq-icon{flex:none;font-size:20px}
+.lq-loc__t{display:flex;flex-direction:column;min-inline-size:0;line-height:1.25}
+.lq-loc__k{font-size:var(--text-2xs);font-weight:var(--weight-light);opacity:1;color:inherit}
+.lq-loc__v{max-inline-size:16ch;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:var(--text-sm);font-weight:var(--weight-regular)}
+.lq-loc:hover .lq-loc__v{text-decoration:underline;text-underline-offset:3px}
+.lq-loc__chev.lq-icon{font-size:14px}
+/* Header tools beat the generic `.lq-tools .lq-icon` size. */
+.lq-tools .lq-loc .lq-icon{font-size:20px}
+.lq-tools .lq-loc .lq-loc__chev{font-size:14px}
+/* Narrow desktop: the caption goes, the place stays. */
+@container (max-width:1023px){
+  .lq-head .lq-loc__k{display:none}
+  .lq-head .lq-loc__v{max-inline-size:11ch}
+}
+
+/* Phone: a full-width line under the top bar. */
+.lq-locbar{display:flex;inline-size:100%;padding-inline:var(--gutter-phone);background:#fff;border-block-end:var(--border-width) solid var(--line);color:var(--ink)}
+.lq-locbar .lq-loc__t{flex-direction:row;align-items:baseline;gap:var(--space-2)}
+.lq-locbar .lq-loc__k{font-size:var(--text-xs);color:var(--ink-2)}
+.lq-locbar .lq-loc__v{max-inline-size:none;flex:1;min-inline-size:0}
+@container (min-width:720px){.lq-locbar{display:none}}
+
+/* ── The picker ───────────────────────────────────────────────────────────── */
+/* Phone: a bottom sheet with the `.lq-sheet` edge and shadow. */
+.lq-locdlg{position:fixed;inset:auto 0 0;margin:0;padding:0;inline-size:100%;max-inline-size:none;max-block-size:92dvh;border:0;border-block-start:2px solid var(--ink);background:#fff;color:var(--ink);font-size:var(--text-base);box-shadow:var(--shadow-sheet);text-align:start}
+.lq-locdlg[open]{display:flex;flex-direction:column;animation:lq-sheet-in var(--dur-base) var(--ease-out)}
+.lq-locdlg::backdrop{background:rgb(11 20 16 / .45)}
+.lq-locdlg .lq-icon{font-size:20px}
+.lq-locdlg .lq-sheet__body{flex:1;min-block-size:0}
+/* Desktop: a centred dialog, square, the menu shadow. */
+@container (min-width:720px){
+  .lq-locdlg{inset:0;margin:auto;inline-size:min(560px,calc(100% - 2 * var(--pad)));max-block-size:min(780px,90dvh);border:var(--border-width) solid var(--line-ink);border-block-start:2px solid var(--ink);box-shadow:var(--shadow-md)}
+  .lq-locdlg[open]{animation:lq-fade-in var(--dur-base) var(--ease-out)}
+  .lq-locdlg .lq-sheet__grab{display:none}
+}
+
+.lq-locpick{display:flex;flex-direction:column;gap:var(--space-3)}
+.lq-locpick__saved ul{margin:0;padding:0;list-style:none;border-block-start:var(--border-width) solid var(--line)}
+.lq-locpick__saved li{border-block-end:var(--border-width) solid var(--line)}
+.lq-locpick__saved .lq-row{padding-inline:var(--space-2)}
+.lq-locpick__saved button.lq-row:hover,.lq-locpick__saved [aria-current="true"],.lq-locpick__saved [data-pinning]{background:var(--green-soft)}
+.lq-locpick__saved .lq-label{display:block;margin-block-end:var(--space-2)}
+.lq-locpick__addr{display:flex;flex-direction:column;flex:1;min-inline-size:0}
+.lq-locpick__addr b{font-weight:var(--weight-regular)}
+.lq-locpick__addr small{font-size:var(--text-xs);color:var(--ink-2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.lq-locpick__area{min-block-size:1.65em;font-size:var(--text-sm);color:var(--ink-2)}
+
+/* The map: tiles under a pin fixed at the centre. */
+.lq-locmap{position:relative;flex:none;block-size:clamp(220px,34dvh,320px);background:var(--raise);border:var(--border-width) solid var(--line-ink)}
+.lq-locmap__box{position:absolute;inset:0;z-index:0}
+.lq-locmap__pin{position:absolute;inset-block-start:50%;inset-inline-start:50%;z-index:500;translate:-50% -100%;color:var(--green);pointer-events:none}
+[dir="rtl"] .lq-locmap__pin{translate:50% -100%}
+.lq-locmap__pin .lq-icon{font-size:36px}
+.lq-locmap .leaflet-container{font:inherit;font-size:var(--text-2xs)}
+
+/* ── The distance figure ──────────────────────────────────────────────────── */
+.lq-dist{white-space:nowrap}
+.lq-biglist__n .lq-dist{display:block}
+.lq-feature__dist{display:block;margin-block-end:14px;color:var(--well-ink-2);font-size:var(--text-sm)}

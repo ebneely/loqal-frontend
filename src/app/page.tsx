@@ -13,6 +13,7 @@ import { Garment, garmentFor } from "@/components/garment";
 import { Money } from "@/components/money";
 import { EmptyState } from "@/components/state";
 import { ReloadButton } from "@/components/reload";
+import { Distance, NearestFirst } from "@/components/nearest";
 
 /**
  * NOT ISR, and it cannot be: the language comes from a cookie, so the HTML is
@@ -103,6 +104,7 @@ export default async function HomePage() {
     name,
     count: list.length,
     photo: list.map(photoOf).find(Boolean) ?? null,
+    points: list.map((shop) => shop.location),
   }));
 
   /* The story needs two real pieces from two different shops, both priced. */
@@ -165,6 +167,11 @@ export default async function HomePage() {
           />
         ) : (
           <ul className="lq-biglist">
+            {/* Nearest first (an area by its nearest shop) once a delivery
+                location is chosen; worked out in the browser. */}
+            <NearestFirst
+              points={areas.length >= 2 ? areas.map((area) => area.points) : shops.map((shop) => [shop.location])}
+            >
             {areas.length >= 2
               ? areas.map((area) => (
                   <li key={area.name}>
@@ -178,7 +185,10 @@ export default async function HomePage() {
                       <b className="lq-biglist__name" data-bidi>
                         {area.name}
                       </b>
-                      <span className="lq-biglist__n">{shopCount(area.count, locale)}</span>
+                      <span className="lq-biglist__n">
+                        {shopCount(area.count, locale)}
+                        <Distance points={area.points} />
+                      </span>
                     </Link>
                   </li>
                 ))
@@ -204,15 +214,17 @@ export default async function HomePage() {
                         <b className="lq-biglist__name" data-bidi>
                           {shop.name}
                         </b>
-                        {note ? (
+                        {note || shop.location ? (
                           <span className="lq-biglist__n" data-bidi>
                             {note}
+                            <Distance points={[shop.location]} />
                           </span>
                         ) : null}
                       </Link>
                     </li>
                   );
                 })}
+            </NearestFirst>
           </ul>
         )}
       </section>
@@ -315,6 +327,7 @@ function Featured({ shop, locale }: { shop: PublicBrand; locale: "ar" | "en" }) 
           {shop.isPromoted ? (
             <span className="lq-badge lq-badge--tint">{t("إعلان", "Promoted")}</span>
           ) : null}
+          <Distance points={[shop.location]} className="lq-dist lq-feature__dist" />
           <h2 className="lq-feature__name" id="home-feature" data-bidi>
             {shop.name}
           </h2>

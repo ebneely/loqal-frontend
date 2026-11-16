@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import type { PublicBrand } from "@loqal/contracts/storefront.contract";
 import { Money } from "@/components/money";
+import { Distance } from "@/components/nearest";
 import { clock, initialsOf, isOpenNow } from "@/lib/shop-hours";
 import type { Locale } from "@/lib/locale";
 
@@ -175,6 +176,7 @@ export function ShopCard({
       ) : null}
 
       <span className="lq-shopcard__terms">
+        <Distance points={[shop.location]} />
         {shop.deliveryFee != null ? (
           <span>
             {t("التوصيل", "Delivery")}{" "}

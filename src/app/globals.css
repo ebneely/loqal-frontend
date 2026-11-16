@@ -13,6 +13,8 @@
 @import "./states.css";
 /* The emerald surfaces, after every area file so it decides their colour. */
 @import "./palette.css";
+/* The delivery location control, picker and distance figure. */
+@import "./location.css";
 /* LAST, so the phone chrome layer can refine a class components.css already
    set without reaching for !important. Nothing in it applies above 720px. */
 @import "./mobile-chrome.css";

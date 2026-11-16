@@ -5,6 +5,7 @@ import { fetchBrands } from "@/lib/catalog";
 import { getLocale } from "@/lib/locale-server";
 import { Shell } from "@/components/shell";
 import { ShopCard } from "@/components/shop-card";
+import { NearestFirst } from "@/components/nearest";
 import { EmptyState } from "@/components/state";
 import { ReloadButton } from "@/components/reload";
 
@@ -134,9 +135,12 @@ export default async function ShopsPage({
           />
         ) : (
           <div className="lq-shopgrid">
-            {list.map((shop, index) => (
-              <ShopCard key={shop.id} shop={shop} locale={locale} delayMs={(index % 3) * 70} />
-            ))}
+            {/* Nearest first once a delivery location is chosen, in the browser. */}
+            <NearestFirst points={list.map((shop) => [shop.location])}>
+              {list.map((shop, index) => (
+                <ShopCard key={shop.id} shop={shop} locale={locale} delayMs={(index % 3) * 70} />
+              ))}
+            </NearestFirst>
           </div>
         )}
 

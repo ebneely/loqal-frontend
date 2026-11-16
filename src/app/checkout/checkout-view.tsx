@@ -14,6 +14,7 @@ import {
 } from "@loqal/contracts/storefront.contract";
 import { ApiError } from "@/lib/api";
 import { useAddresses } from "@/lib/account";
+import { useDeliveryLocation } from "@/lib/delivery-location";
 import { useCart } from "@/lib/cart";
 import { useCheckoutKey, useCreateOrder, usePaymentLink } from "@/lib/orders";
 import { useSession } from "@/lib/auth-client";
@@ -232,7 +233,13 @@ export function CheckoutView() {
    * records which address was used, so this runs exactly once per address.
    */
   const { data: savedAddresses } = useAddresses(!anonymous && !sessionPending);
-  const defaultAddress = savedAddresses?.find((a) => a.isDefault) ?? null;
+  /* The saved address chosen as the delivery location in the chrome wins over
+     the default; otherwise the default, as before. */
+  const deliverTo = useDeliveryLocation();
+  const defaultAddress =
+    savedAddresses?.find((a) => a.id === deliverTo?.addressId) ??
+    savedAddresses?.find((a) => a.isDefault) ??
+    null;
   const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null);
 
   if (defaultAddress && prefilledFrom !== defaultAddress.id) {
