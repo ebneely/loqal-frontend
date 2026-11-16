@@ -20,7 +20,15 @@
      the one step off it, a pale green: a summary panel, a skeleton, an image
      well before the photo lands. */
   --paper: #ffffff;
-  --raise: #d8ebdf; /* a green you can see — panels, image wells, skeletons */
+  /* A hover, a disabled control, a skeleton: quiet, and never a surface that
+     holds content. Surfaces that hold content are --well below. */
+  --raise: #e7f2eb;
+  /* THE EMERALD. Image wells, the summary panel, a chosen size or filter:
+     a rich green with white on it (5.4:1), never a pastel. */
+  --well: #127a4c;
+  --well-ink: #ffffff;
+  --well-ink-2: #e4f5ea; /* secondary text on the emerald, 4.7:1 */
+  --well-rule: rgb(255 255 255 / 0.35);
   --field: #ffffff;
   --line-hair: #c7dccf; /* the 1px between rows */
   --line-ink: #a9c3b4; /* an input's edge, a hairline that must be found */

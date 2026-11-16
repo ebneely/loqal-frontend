@@ -1,0 +1,105 @@
+/* ==========================================================================
+   The emerald surfaces.
+
+   The storefront is white and green. Every surface that HOLDS something — an
+   image well, the order summary, a chosen size or filter — is the emerald
+   `--well` with white on it, never a pale tint. One file, so the rule lives in
+   one place instead of being repeated across the five area stylesheets; it
+   loads after them (unlayered, later wins).
+   ========================================================================== */
+
+/* ── Image wells ──────────────────────────────────────────────────────────── */
+.lq-pcard__well,
+.lq-pcard .lq-pcard__well,
+.lq-pdp__main,
+.lq-pdp__thumbs button,
+.lq-line__well,
+.lq-split__th,
+.lq-shopcard__ph,
+.lq-biglist__thumb,
+.lq-catrail__sign,
+.lq-wayon__logo {
+  background: var(--well);
+  color: var(--well-ink);
+}
+
+/* The line drawing that stands in for a missing photo, drawn in white. */
+.lq-pcard__well .lq-garment,
+.lq-pdp__main .lq-garment,
+.lq-pdp__thumbs .lq-garment,
+.lq-line__well .lq-garment,
+.lq-split__th .lq-garment,
+.lq-biglist__thumb .lq-garment,
+.lq-pcard .lq-pcard__well > .lq-garment {
+  stroke: var(--well-ink);
+}
+.lq-pcard__well .lq-garment [data-solid],
+.lq-pdp__main .lq-garment [data-solid],
+.lq-line__well .lq-garment [data-solid],
+.lq-split__th .lq-garment [data-solid] {
+  fill: rgb(255 255 255 / 0.14);
+}
+
+/* A shop with no photo shows its initials, white on the emerald. */
+.lq-shopcard__mark,
+.lq-biglist__initials,
+.lq-catrail__sign b,
+.lq-wayon__logo b,
+.lq-pcard__ph {
+  color: var(--well-ink-2);
+}
+
+/* ── The order summary panel ──────────────────────────────────────────────── */
+.lq-panel {
+  background: var(--well);
+  color: var(--well-ink);
+}
+.lq-panel .lq-panel__title,
+.lq-panel h2,
+.lq-panel h3,
+.lq-panel .lq-label,
+.lq-panel .lq-money,
+.lq-panel .lq-sum__row--total > :first-child {
+  color: var(--well-ink);
+}
+.lq-panel .lq-sum__row > :first-child,
+.lq-panel .lq-panel__note,
+.lq-panel .lq-panel__addr,
+.lq-panel .lq-hint {
+  color: var(--well-ink-2);
+}
+.lq-panel .lq-sum__row--total {
+  border-block-start-color: var(--well-rule);
+}
+.lq-panel a:not(.lq-btn),
+.lq-panel .lq-textlink {
+  color: var(--well-ink);
+}
+/* A failure on the emerald: white and heavier, since red on green is mud. */
+.lq-panel .lq-hint--error {
+  color: var(--well-ink);
+  font-weight: var(--weight-medium);
+}
+/* The primary action on the emerald is the deep brand green. */
+.lq-panel .lq-btn--primary {
+  background: var(--green);
+}
+.lq-panel .lq-btn--primary:hover {
+  background: #082c21;
+}
+/* Choice rows inside the panel (the delivery picker) stay white cards with
+   ink text, so they read as controls lying on the panel. */
+.lq-panel .lq-pay {
+  color: var(--ink);
+}
+
+/* ── Chosen ───────────────────────────────────────────────────────────────── */
+.lq-chip[aria-pressed="true"],
+.lq-btab[aria-selected="true"],
+.lq-btab[aria-current="true"],
+.lq-btab[aria-current="page"],
+.lq-cat[aria-selected="true"] {
+  background: var(--well);
+  border-color: var(--well);
+  color: var(--well-ink);
+}

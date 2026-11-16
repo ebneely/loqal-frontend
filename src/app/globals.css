@@ -11,6 +11,8 @@
 /* The empty and broken screens. After components.css, which it leans on for the
    button, row and hint classes it does not redefine. */
 @import "./states.css";
+/* The emerald surfaces, after every area file so it decides their colour. */
+@import "./palette.css";
 /* LAST, so the phone chrome layer can refine a class components.css already
    set without reaching for !important. Nothing in it applies above 720px. */
 @import "./mobile-chrome.css";
