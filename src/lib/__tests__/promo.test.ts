@@ -19,6 +19,9 @@ describe("promoErrorMessage", () => {
     expect(promoErrorMessage(refused("PROMO_USAGE_LIMIT"), "ar")).toBe("بلغ هذا الكود الحد الأقصى لمرات استخدامه.");
     expect(promoErrorMessage(refused("PROMO_PER_CUSTOMER_LIMIT"), "ar")).toBe("استخدمت هذا الكود بالعدد المسموح لك.");
     expect(promoErrorMessage(refused("PROMO_NOT_APPLICABLE"), "ar")).toBe("لا ينطبق هذا الكود على متاجر سلتك.");
+    expect(promoErrorMessage(refused("PROMO_ZERO_TOTAL_CARD"), "ar")).toBe(
+      "لا يمكن الدفع بالبطاقة بقيمة صفر. اختر الدفع عند الاستلام أو استخدم كودًا آخر."
+    );
   });
 
   it("names the minimum when the message carries it", () => {

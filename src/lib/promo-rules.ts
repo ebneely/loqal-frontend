@@ -21,6 +21,7 @@ const REASONS = [
   "PER_CUSTOMER_LIMIT",
   "MINIMUM_NOT_REACHED",
   "NOT_APPLICABLE",
+  "ZERO_TOTAL_CARD",
 ] as const;
 export type PromoReasonCode = (typeof REASONS)[number];
 
@@ -64,6 +65,11 @@ export function promoErrorMessage(error: unknown, locale: Locale): string {
         : t("لم يبلغ مجموع القطع الحد الأدنى لهذا الكود.", "Your items are under this code's minimum.");
     case "NOT_APPLICABLE":
       return notApplicable(locale);
+    case "ZERO_TOTAL_CARD":
+      return t(
+        "لا يمكن الدفع بالبطاقة بقيمة صفر. اختر الدفع عند الاستلام أو استخدم كودًا آخر.",
+        "A card cannot be charged zero. Choose cash on delivery or use another code."
+      );
     default:
       return t(
         "تعذّر التحقق من الكود الآن. يمكنك إتمام الطلب دونه.",
