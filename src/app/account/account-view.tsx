@@ -154,21 +154,33 @@ export function AccountView() {
    * and FAQ links send.
    *
    * Read on mount and on `hashchange`. A Next `<Link>` to a different hash on
-   * THIS page changes the address without firing `hashchange`, so from
-   * Account itself those links move the address but not the section; the rail
-   * is right there for that case.
+   * THIS page changes the address without firing `hashchange`, so a click
+   * that Next took over (`defaultPrevented`) on an `/account#…` link is read
+   * from the link's own href — the footer's Help links used to move the
+   * address here but leave the section where it was (issue #9, item 8).
    */
   useEffect(() => {
-    const read = () => {
-      const hash = window.location.hash.replace("#", "");
+    const read = (raw: string) => {
+      const hash = raw.replace("#", "");
       const answer = hash.startsWith("help-") ? hash.slice("help-".length) : null;
       const key = answer ? "help" : hash;
       if (TABS.some((t) => t.key === key)) setTab(key as TabKey);
       if (answer && HELP_ANSWERS.includes(answer)) setOpen(answer);
     };
-    read();
-    window.addEventListener("hashchange", read);
-    return () => window.removeEventListener("hashchange", read);
+    const onHash = () => read(window.location.hash);
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest?.("a[href]");
+      if (!event.defaultPrevented || !(link instanceof HTMLAnchorElement)) return;
+      const url = new URL(link.href);
+      if (url.pathname === window.location.pathname && url.hash) read(url.hash);
+    };
+    onHash();
+    window.addEventListener("hashchange", onHash);
+    document.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("hashchange", onHash);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
 
   const goTo = (key: TabKey) => {
@@ -225,7 +237,7 @@ export function AccountView() {
         },
         {
           q: "كيف أدفع؟",
-          a: "نقدًا عند الاستلام، أو ببطاقة بنكية، أو عبر فاليو، أو إنستاباي.",
+          a: "نقدًا عند الاستلام، أو ببطاقة بنكية، أو عبر فاليو، أو بمحفظة الهاتف، أو إنستاباي.",
         },
       ]
     : [
@@ -239,7 +251,7 @@ export function AccountView() {
         },
         {
           q: "How do I pay?",
-          a: "Cash on delivery, card, Valu or InstaPay.",
+          a: "Cash on delivery, card, ValU, mobile wallet or InstaPay.",
         },
       ];
 
@@ -539,8 +551,8 @@ export function AccountView() {
             <div {...paneProps("about")}>
               <p className="lq-acct__sub">
                 {t(
-                  "موقع التعريف منفصل عن المتجر، لذلك يُفتح في تبويب جديد.",
-                  "The campaign site is a separate surface, so it opens in a new tab."
+                  "صفحتا التعريف بـloqaaal وانضمام المتاجر تُفتحان في تبويب جديد.",
+                  "About loqaaal and Join as a shop open in a new tab."
                 )}
               </p>
               <div className="lq-acct__list">

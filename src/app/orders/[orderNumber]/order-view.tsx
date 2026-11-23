@@ -27,7 +27,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Shell } from "@/components/shell";
 import { Money } from "@/components/money";
 import { StatusPill, StatusRail } from "@/components/status-pill";
-import { Garment, garmentFor } from "@/components/garment";
 import { KeepNumber } from "@/components/keep-number";
 import { deliveryLabel } from "@/components/delivery-picker";
 import { RateShop } from "./rate-shop";
@@ -515,13 +514,10 @@ function OrderLine({ item, locale }: { item: ShopperOrderItem; locale: Locale })
 
   return (
     <article className="lq-line">
-      {/* THE DRAWING, NOT A PICTURE OF A MISSING PICTURE. `imageMediaId` is an
-          id with no public resolver behind it, so there is no photograph to
-          render — seeded from the variant id, or from the SKU once the variant
-          has been archived, so the piece keeps one drawing across reloads. */}
-      <span className="lq-line__well">
-        <Garment className="lq-garment" kind={garmentFor(item.variantId ?? item.productSnapshot.sku)} />
-      </span>
+      {/* AN EMPTY SHELF WELL, NOT A GUESSED DRAWING. `imageMediaId` is an id
+          with no public resolver behind it, so there is no photograph to
+          render, and a hashed garment drew a sock for a dress (issue #4). */}
+      <span className="lq-line__well" aria-hidden="true" />
 
       <div className="lq-line__body">
         <span className="lq-line__name" data-bidi>

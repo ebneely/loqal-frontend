@@ -543,7 +543,7 @@ export const publicReviewListSchema = z.union([
         were a name.
      2. `productSnapshot.imageMediaId` IS NOT A URL, and there is no public
         resolver for it. Nothing can render a product photo from an order, so
-        the garment line art stands in, exactly as it does everywhere else.
+        the order line shows an empty well (a hashed drawing guessed wrong).
      3. THERE IS NO `payments[]`. No payment status, no provider reference,
         and no way to re-read a `checkoutUrl` with a GET. A card order whose
         Paymob session was lost is recovered through
