@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState } from "react";
+import { flushSync } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 
 import { authClient, signIn } from "@/lib/auth-client";
@@ -11,6 +12,7 @@ import { useLocale } from "@/lib/locale-context";
 import { CodeBoxes } from "@/components/code-boxes";
 import { LocaleSwitch } from "@/components/locale-switch";
 import { Wordmark } from "@/components/wordmark";
+import { SignInArt } from "./sign-in-art";
 
 /**
  * Signing in — a number, then six digits, on a page of its own.
@@ -40,9 +42,16 @@ import { Wordmark } from "@/components/wordmark";
  * that is not there. If the call itself fails, it falls back to email and
  * password, which is the one route always mounted.
  *
- * THE PHOTO IS A REAL SHOP. `page.tsx` passes the first shop photo it can find,
- * tinted green; with none it is a plain green plate, never a stock picture. On
- * a phone it shrinks to a short band above the form.
+ * THE PANEL IS THREE SLOW PLANES (`sign-in-art.tsx`). Its front frames hold
+ * real shop photos `page.tsx` found, never a stock picture; with none they hold
+ * the storefront's garment line art. On a phone it shrinks to a short band
+ * above the form.
+ *
+ * ONE COLUMN. The bar and every control share one measure and one pair of
+ * edges. Motion is one system (tokens and timeline in pages-account.css): a
+ * first-paint sequence, step changes as view transitions, and a panel that
+ * answers the form — it leans toward a focused field, turns a page with the
+ * step, and converges on success.
  *
  * THE GUEST EXIT STAYS. Buying never required an account, and letting somebody
  * build one to find that out is the deceit this screen has always refused.
@@ -92,7 +101,7 @@ function pathFromReferrer(): string | null {
   }
 }
 
-export function SignInView({ photo = null }: { photo?: string | null }) {
+export function SignInView({ photos = [] }: { photos?: string[] }) {
   const locale = useLocale();
   const router = useRouter();
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
@@ -118,8 +127,39 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
+  /* Motion state. `arrive` holds the first-paint sequence (CSS, keyed on
+     data-arrive) until it has played; the other two steer the panel. */
+  const [arrive, setArrive] = useState(true);
+  const [lean, setLean] = useState(false);
+  const [converge, setConverge] = useState(false);
 
   const phoneNumber = `+20${digits}`;
+
+  useEffect(() => {
+    // Long enough for the sequence even behind the session's opening (+1.1s).
+    const timer = window.setTimeout(() => setArrive(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  /**
+   * A step change, as a view transition where the browser has one: the old
+   * step leaves toward the inline start, the new one arrives from the inline
+   * end, and the column's height morphs between them (pages-account.css,
+   * `lq-step`). `back` reverses the direction. Without the API, or under
+   * reduced motion, the change is simply applied.
+   */
+  const swap = (change: () => void, back = false) => {
+    setArrive(false);
+    if (
+      !document.startViewTransition ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      change();
+      return;
+    }
+    document.documentElement.dataset.lqSwap = back ? "back" : "fwd";
+    document.startViewTransition(() => flushSync(change));
+  };
 
   /**
    * Where to land afterwards.
@@ -162,10 +202,16 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
    *
    * `replace`, not `push`: back out of the account screen should reach wherever
    * they were shopping, not the form they just cleared.
+   *
+   * The panel's planes converge first, and the move waits the ~half second
+   * that takes; under reduced motion it does not wait.
    */
   const land = () => {
     router.refresh();
-    router.replace(safeNext(params.get("next")) ?? pathFromReferrer() ?? "/account");
+    setConverge(true);
+    const to = safeNext(params.get("next")) ?? pathFromReferrer() ?? "/account";
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.setTimeout(() => router.replace(to), still ? 0 : 480);
   };
 
   const unreachable = () =>
@@ -210,10 +256,15 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
         return;
       }
 
-      setAttempt((n) => n + 1);
-      setStep("code");
-      setLeft(RESEND_SECONDS);
-      setPending(false);
+      const toCode = () => {
+        setAttempt((n) => n + 1);
+        setStep("code");
+        setLeft(RESEND_SECONDS);
+        setPending(false);
+      };
+      // A resend from the code step stays put; only the first send moves.
+      if (step === "code") toCode();
+      else swap(toCode);
     } catch {
       setError(unreachable());
       setPending(false);
@@ -299,10 +350,11 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
     }
   };
 
-  const pick = (next: Door) => {
-    setChosen(next);
-    setError(null);
-  };
+  const pick = (next: Door) =>
+    swap(() => {
+      setChosen(next);
+      setError(null);
+    });
 
   const error_ = error ? (
     /* Inserted rather than hidden-then-shown: role="alert" on a node that
@@ -322,7 +374,7 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
   return (
     /* Its own container, because `.lq-shell` is not here to be one and every
        width rule on this page is a container query. */
-    <main className="lq-signin">
+    <main className="lq-signin" data-arrive={arrive || undefined}>
       <div className="lq-signin__grid">
       <div className="lq-signin__bar">
         <Link className="lq-mark" href="/">
@@ -336,13 +388,12 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
         </div>
       </div>
 
-      <div className="lq-signin__photo">
-        {photo ? (
-          // Presigned shop photos from the API's media host; `next/image` would
-          // need that host in `remotePatterns`, which a deployment may not set.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt="" fetchPriority="high" />
-        ) : null}
+      <SignInArt
+        photos={photos}
+        page={step === "code" ? 1 : 0}
+        lean={lean}
+        converge={converge}
+      >
         <div className="lq-signin__pitch">
           <p className="lq-signin__slogan">
             {t("متاجر منطقتك، في سلة واحدة", "Your neighbourhood shops, in one bag")}
@@ -354,9 +405,18 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
             )}
           </p>
         </div>
-      </div>
+      </SignInArt>
 
-      <div className="lq-signin__body">
+      {/* A focused field draws the panel's front planes toward the form. */}
+      <div
+        className="lq-signin__body"
+        onFocus={(event) => setLean(event.target instanceof HTMLInputElement)}
+        onBlur={() => setLean(false)}
+      >
+        {/* Keyed on the step and the door, so a swap remounts the column and
+            its entrance stagger plays again. State lives above, so nothing
+            typed is lost. */}
+        <div className="lq-signin__step" key={step === "code" ? "code" : door}>
         {step === "number" ? (
           <>
             <h1 className="lq-signin__title">{t("أدخل إلى حسابك", "Sign in")}</h1>
@@ -414,6 +474,7 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
                 <button
                   type="button"
                   className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                  data-busy={pending || undefined}
                   onClick={() => void sendCode()}
                   disabled={!ready || pending}
                 >
@@ -459,6 +520,7 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
                 <button
                   type="button"
                   className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                  data-busy={pending || undefined}
                   onClick={() => void sendCode()}
                   disabled={!ready || pending}
                 >
@@ -519,6 +581,7 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
                 <button
                   type="submit"
                   className="lq-btn lq-btn--primary lq-btn--lg lq-btn--block"
+                  data-busy={pending || undefined}
                   aria-disabled={pending}
                 >
                   {pending ? t("جارٍ الدخول", "Signing you in") : t("دخول", "Sign in")}
@@ -592,18 +655,22 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
               <Link className="lq-textlink" href="/account#help">
                 {t("تحتاج إلى مساعدة؟", "Need help?")}
               </Link>
-            </div>
 
-            {/* THE PASSWORD ROUTE, DEMOTED TO A LINE OF TEXT. It is how brand
-                staff and admins sign in, and the way in if both code routes
-                are down. A shopper should not be offered it first: a password
-                is a second thing to invent at the moment they wanted to buy a
-                shirt. */}
-            {door !== "password" && (methods.phoneOtp || methods.emailOtp) ? (
-              <button type="button" className="lq-signin__staff" onClick={() => pick("password")}>
-                {t("لديك كلمة مرور؟ ادخل بها", "Have a password? Sign in with it")}
-              </button>
-            ) : null}
+              {/* THE PASSWORD ROUTE, DEMOTED TO A LINE OF TEXT. It is how
+                  brand staff and admins sign in, and the way in if both code
+                  routes are down. A shopper should not be offered it first: a
+                  password is a second thing to invent at the moment they
+                  wanted to buy a shirt. Last in the row, at its far edge. */}
+              {door !== "password" && (methods.phoneOtp || methods.emailOtp) ? (
+                <button
+                  type="button"
+                  className="lq-textlink lq-signin__staff"
+                  onClick={() => pick("password")}
+                >
+                  {t("لديك كلمة مرور؟ ادخل بها", "Have a password? Sign in with it")}
+                </button>
+              ) : null}
+            </div>
           </>
         ) : (
           <>
@@ -649,10 +716,12 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
               <button
                 type="button"
                 className="lq-textlink"
-                onClick={() => {
-                  setStep("number");
-                  setError(null);
-                }}
+                onClick={() =>
+                  swap(() => {
+                    setStep("number");
+                    setError(null);
+                  }, true)
+                }
               >
                 {door === "phone"
                   ? t("تغيير الرقم", "Change the number")
@@ -664,6 +733,7 @@ export function SignInView({ photo = null }: { photo?: string | null }) {
             </div>
           </>
         )}
+        </div>
       </div>
       </div>
     </main>
