@@ -18,12 +18,12 @@
 /* THE SEAM SITS IN THE GAP BETWEEN THE TWO WORDS, never through a letter.
    A fixed 57% split cut «حيّك» in half at some widths and left its shadda
    floating on the photo like a stray glyph. So the split is derived from the
-   heading instead: «متاجر» plus half the word gap measures 1.993em in Reem
-   Kufi 500, so the photo starts exactly that far past the heading's start.
+   heading instead: «متاجر» plus half the word gap measures 2.495em in Noto
+   Kufi Arabic, so the photo starts exactly that far past the heading's start.
    The first word is ink on paper, the second white on the photo, at every
    width. Re-measure (scratch script: width of the first word + half a space,
    divided by font-size) if the heading's words or face ever change. */
-.lq-hero{--hero-fs:clamp(84px,14cqi,216px);--hero-split:calc(100% - var(--pad) - 1.993 * var(--hero-fs));
+.lq-hero{--hero-fs:clamp(84px,14cqi,216px);--hero-split:calc(100% - var(--pad) - 2.495 * var(--hero-fs));
   --hero-foot:clamp(28px,6svh,60px);--inset-w:clamp(168px,16.4cqi,236px);
   position:relative;block-size:max(100svh,680px);overflow:hidden;background:var(--paper)}
 /* English words differ; its heading wraps to two lines and crosses wherever

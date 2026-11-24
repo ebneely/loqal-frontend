@@ -32,11 +32,11 @@
    ========================================================================== */
 
 @theme inline {
-  --font-sans: var(--font-alexandria), "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-noto-kufi), "Segoe UI", system-ui, -apple-system, sans-serif;
   /* Figures are Alexandria too, with tabular lining numerals switched on where
      they are set. A monospace price reads as a terminal, not a shop. */
-  --font-mono: var(--font-alexandria), "Segoe UI", system-ui, sans-serif;
-  --font-display: var(--font-reem-kufi), var(--font-alexandria), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-noto-kufi), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-noto-kufi), "Segoe UI", system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -174,7 +174,7 @@
 @layer base {
   :root {
     color-scheme: light;
-    --font-arabic: var(--font-alexandria), "Noto Sans Arabic", Tahoma, sans-serif;
+    --font-arabic: var(--font-noto-kufi), "Noto Sans Arabic", Tahoma, sans-serif;
   }
 
   * {
